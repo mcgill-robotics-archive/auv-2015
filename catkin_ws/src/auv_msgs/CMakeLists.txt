@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(arduino_msgs)
+project(auv_msgs)
 
 find_package(catkin REQUIRED COMPONENTS message_generation)
 
 add_message_files(FILES
                   Solenoid.msg
                   Motor.msg
+                  SetPosition.msg
+                  SetVelocity.msg
                  )
 
 #add_service_files(FILES
