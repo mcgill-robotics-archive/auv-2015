@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 import rospy
+from geometry_msgs.msg import Wrench
 from std_msgs.msg import Float64
 from std_msgs.msg import String
 from auv_msgs.msg import SetPosition
 from auv_msgs.msg import SetVelocity
+
+wrenchPublisher = None
 
 xPos = 0.0
 yPos = 0.0
@@ -46,17 +49,20 @@ def getDepth_callback(data):
     estimated_depth = data.data
 
 
-def listener():
+def rosInit():
     rospy.init_node('controls', anonymous=True)
 
+    global wrenchPublisher
     rospy.Subscriber("autonomy/setPosition", SetPosition, setPosition_callback)
     rospy.Subscriber("autonomy/setVelocity", SetVelocity, setVelocity_callback)
     rospy.Subscriber("state_estimation/filteredDepth", Float64, getDepth_callback)
 
+    wrenchPublisher = rospy.Publisher("controls/wrench", Wrench, queue_size=100)
+
     #rospy.spin()
 
 if __name__ == '__main__':
-    listener()
+    rosInit()
 
     r = rospy.Rate(1)
 
@@ -67,9 +73,9 @@ if __name__ == '__main__':
 
     prev_ep_depth = 0.0
 
-    kp_depth = 0.0
-    ki_depth = 0.0
-    kd_depth = 0.0   
+    kp_depth = 1.0
+    ki_depth = 1.0
+    kd_depth = 1.0   
 
     fx = 0.0
     fy = 0.0
@@ -88,8 +94,16 @@ if __name__ == '__main__':
         ed_depth = (ep_depth - prev_ep_depth)/dt
         fz = kp_depth*ep_depth + ki_depth*ei_depth + kd_depth*ed_depth
         
+        wrenchMsg = Wrench()
 
+        wrenchMsg.force.x = 0;
+        wrenchMsg.force.y = 0;
+        wrenchMsg.force.z = fz;
+        wrenchMsg.torque.x = 0;
+        wrenchMsg.torque.y = 0;
+        wrenchMsg.torque.z = 0;
 
+        wrenchPublisher.publish(wrenchMsg)
 
         r.sleep()
 
