@@ -72,3 +72,7 @@ logs
 # Dependencies
 node_modules
 bower_components
+
+# Compiled files
+*.css
+*.html
