@@ -56,3 +56,19 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# OSX
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# OSX Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+# NodeJS logs
+logs
+*.log
+
+# Dependencies
+node_modules
+bower_components

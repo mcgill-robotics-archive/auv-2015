@@ -1,0 +1,31 @@
+doctype html
+html(lang='en')
+  head
+
+    //- Compatibility
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0, maximum-scale=1.0')
+    meta(name='mobile-web-app-capable' content='yes')
+    meta(name='apple-mobile-web-app-capable' content='yes')
+    meta(name='description', content='Robotics AUV 2015 webpage')
+
+    //- Title
+    title= title
+
+    //- Scripts
+    link(rel='stylesheet', href='style/style.css', shim-shadowdom)
+    script(src='platform/platform.js')
+    link(rel='import', href='components/elements/index_elements.html')
+    script(src='/socket.io/socket.io.js')
+  body(fullbleed unresolved)
+    auv-card
+        h3.heading Hello World!
+    polymer-ui-card
+        h3.heading Hello World!
+    auv-card
+        h3.heading Hello Polymer!
+    polymer-ui-card
+        img(src='img/favicon.gif')
+    script.
+      var socket = io();

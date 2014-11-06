@@ -1,0 +1,9 @@
+link(rel='import', href='../../polymer/polymer.html')
+
+polymer-element(name='example-child' extends='example')
+    template
+        link(rel='stylesheet', href='example-child.css')
+        //- Add template html for custom element here
+        shadow
+            //- parent template goes here
+    script(src='example-child.js')
