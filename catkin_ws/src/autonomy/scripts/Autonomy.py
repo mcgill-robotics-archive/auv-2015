@@ -74,8 +74,8 @@ def rosInit():
 	rospy.Subscriber("state_estimation/target_pose", Pose, target_pose_callback)
 	rospy.Subscriber("front_cv/target_info", String, target_info_callback)
 
-	velocityPublisher = rospy.Publisher("autonomy/setVelocity", SetVelocity, queue_size = 1000)
-	positionPublisher = rospy.Publisher("autonomy/setPosition", SetPosition, queue_size = 1000)
+	velocityPublisher = rospy.Publisher("autonomy/set_velocity", SetVelocity, queue_size = 1000)
+	positionPublisher = rospy.Publisher("autonomy/set_position", SetPosition, queue_size = 1000)
 	CVTargetPublisher = rospy.Publisher("autonomy/cv_target", CVTarget, queue_size = 1000)	
 	SonarTargetPublisher = rospy.Publisher("autonomy/sonar_target", SonarTarget, queue_size = 1000)
 

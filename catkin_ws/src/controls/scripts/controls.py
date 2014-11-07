@@ -53,8 +53,8 @@ def rosInit():
     rospy.init_node('controls', anonymous=True)
 
     global wrenchPublisher
-    rospy.Subscriber("autonomy/setPosition", SetPosition, setPosition_callback)
-    rospy.Subscriber("autonomy/setVelocity", SetVelocity, setVelocity_callback)
+    rospy.Subscriber("autonomy/set_position", SetPosition, setPosition_callback)
+    rospy.Subscriber("autonomy/set_velocity", SetVelocity, setVelocity_callback)
     rospy.Subscriber("state_estimation/filteredDepth", Float64, getDepth_callback)
 
     wrenchPublisher = rospy.Publisher("controls/wrench", Wrench, queue_size=100)
