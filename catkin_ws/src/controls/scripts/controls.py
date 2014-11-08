@@ -22,6 +22,7 @@ yaw = 0.0
 isSettingPosition = 0
 
 estimated_depth = 0.0
+estimated_pitch = 0.0
 
 def setPosition_callback(data):
     rospy.loginfo(rospy.get_caller_id()+"I heard setPosition xPos = %f, yPos = %f, depth = %f, roll = %f, pitch = %f, yaw = %f", data.xPos, data.yPos, data.depth, data.roll, data.pitch, data.yaw)
@@ -71,28 +72,52 @@ if __name__ == '__main__':
     ei_depth = 0.0
     ed_depth = 0.0
 
+    ep_pitch = 0.0
+    ei_pitch = 0.0
+    ed_pitch = 0.0
+
     prev_ep_depth = 0.0
+    prev_ep_pitch = 0.0
 
     kp_depth = 1.0
     ki_depth = 1.0
-    kd_depth = 1.0   
+    kd_depth = 1.0
+
+    kp_pitch = 0.0
+    ki_pitch = 0.0
+    kd_pitch = 0.0     
 
     fx = 0.0
     fy = 0.0
     fz = 0.0
+
+    tx = 0.0
+    ty = 0.0
+    tz =0.0
+
 
     dt = 0.1
     r = rospy.Rate(1/dt)
 
     while not rospy.is_shutdown():
         #rospy.loginfo("isSettingPosition: %d, xPos is: %f, yPos is: %f, depth is: %f, surgeSpeed is: %f, swaySpeed is: %f", isSettingPosition, xPos, yPos, depth, surgeSpeed, swaySpeed)
-        rospy.loginfo("estimated_depth is: %f", estimated_depth)
+        rospy.loginfo("estimated_pitch is: %f", estimated_pitch)
 
-        prev_ep_depth = ep_depth
-        ep_depth = depth - estimated_depth
-        ei_depth += ep_depth*dt
-        ed_depth = (ep_depth - prev_ep_depth)/dt
-        fz = kp_depth*ep_depth + ki_depth*ei_depth + kd_depth*ed_depth
+
+        #Pitch closed loop control
+        prev_ep_pitch = ep_pitch
+        ep_pitch = pitch - estimated_pitch
+        ei_pitch += ep_pitch*dt
+        ed_pitch = (ep_pitch - prev_ep_pitch)/dt
+        ty = kp_pitch*ep_pitch + ki_pitch*ei_pitch + ki_pitch*ei_pitch
+
+
+        #depth is taken out while the dpeth sensor is broken
+        # prev_ep_depth = ep_depth
+        # ep_depth = depth - estimated_depth
+        # ei_depth += ep_depth*dt
+        # ed_depth = (ep_depth - prev_ep_depth)/dt
+        # fz = kp_depth*ep_depth + ki_depth*ei_depth + kd_depth*ed_depth
         
         wrenchMsg = Wrench()
 
@@ -100,7 +125,7 @@ if __name__ == '__main__':
         wrenchMsg.force.y = 0;
         wrenchMsg.force.z = fz;
         wrenchMsg.torque.x = 0;
-        wrenchMsg.torque.y = 0;
+        wrenchMsg.torque.y = ty;
         wrenchMsg.torque.z = 0;
 
         wrenchPublisher.publish(wrenchMsg)
