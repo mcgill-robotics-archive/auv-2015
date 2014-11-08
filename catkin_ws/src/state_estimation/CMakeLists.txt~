@@ -26,7 +26,7 @@ catkin_package(
 ## Build ##
 ###########
 
-include_directories(Eigen)
+include_directory(Eigen)
 add_subdirectory(pose)
 add_subdirectory(tf)
 add_subdirectory(ukf)
