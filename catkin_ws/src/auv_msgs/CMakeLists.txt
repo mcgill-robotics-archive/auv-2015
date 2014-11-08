@@ -4,7 +4,7 @@ project(auv_msgs)
 find_package(catkin REQUIRED COMPONENTS message_generation)
 
 add_message_files(FILES
-				#added by Elec Interface
+                #added by Elec Interface
                   Solenoid.msg
                   Motor.msg
 

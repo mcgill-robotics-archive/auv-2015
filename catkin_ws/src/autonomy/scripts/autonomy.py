@@ -1,9 +1,7 @@
 #!/usr/bin/env python
 
-#notes fo me:
-#shouldn't need getters as modules will let globals be accessible
-
 import rospy
+import task_controller
 from multiprocessing import Process
 
 from std_msgs.msg import Int8
@@ -81,8 +79,12 @@ def rosInit():
 
 if __name__ == '__main__':
 	rosInit()
+	task_controller.populate_tasks()
+	task_controller.populate_routine()
 #test block should not be kept in actual code
 	r = rospy.Rate(10)
+	task_controller.temp()
+	task_controller.next_task('maneuver')
 	while not rospy.is_shutdown():
 		CVmsg = CVTarget()
 		Sonarmsg = SonarTarget()
