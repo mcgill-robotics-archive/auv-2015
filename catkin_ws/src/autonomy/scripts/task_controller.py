@@ -34,5 +34,5 @@ def next_task(next_task):
 	print task_directory[routine[next_task]]	
 ###################
 def temp():
-	my_task = gate_task.Gate_Task(99)
+	my_task = gate_task.Gate_Task(1)
 	my_task.execute()	
