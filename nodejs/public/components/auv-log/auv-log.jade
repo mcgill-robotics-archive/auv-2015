@@ -1,10 +1,16 @@
 link(rel='import', href='../../polymer/polymer.html')
 link(rel='import', href='../../core-list/core-list.html')
+link(rel='import', href='../auv-globals/auv-globals.html')
 link(rel='import', href='../auv-card/auv-card.html')
 
 polymer-element(name='auv-log')
     template
+        auv-globals#globals
         link(rel='stylesheet', href='auv-log.css')
-        auv-card(z='1')
-            core-list
+        auv-card(title='Log' controls?='{{$.globals.values.controls === "true"}}')
+            #listDiv(main)
+                core-list#list(data='{{data}}' selectionEnabled='{{selectionEnabled}}' selection='{{selection}}' height='20px' flex)
+                    template
+                        .item(class='{{ {selected: selected} | tokenList }}')
+                            .line(class='{{model.level}}') {{model.level}}:  {{model.str}}
     script(src='auv-log.js')

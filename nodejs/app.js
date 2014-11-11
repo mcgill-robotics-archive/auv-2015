@@ -18,11 +18,6 @@ var socketio = require('socket.io');
 var compiler = require('./modules/compile');
 
 /*
- * Get routes
- */
-var routes = require('./routes/index');
-
-/*
  * Server vars
  */
 var usersConnected = 0;
@@ -98,9 +93,14 @@ app.use(function(req, res, next) {
 });
 
 /*
+ * Get routes
+ */
+var index = require('./routes/index')(app.get('env') === 'development');
+
+/*
  * Server set routes
  */
-app.use('/', routes);
+app.use('/', index);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

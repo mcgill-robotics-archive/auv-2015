@@ -1,10 +1,25 @@
 link(rel='import', href='../../polymer/polymer.html')
+link(rel='import', href='../../core-icons/core-icons.html')
+//link(rel='import', href='../../core-header-panel/core-header-panel.html')
+link(rel='import', href='../../core-toolbar/core-toolbar.html')
+link(rel='import', href='../../paper-icon-button/paper-icon-button.html')
 link(rel='import', href='../../paper-shadow/paper-shadow.html')
 
-polymer-element(name='auv-card' attributes='movable')
+polymer-element(name='auv-card' attributes='title shadow controls movable')
     template
         link(rel='stylesheet', href='auv-card.css')
-        #cardcontent
-            content
-        //paper-shadow(target='{{}}' z='{{height}}' animated)
+        #outerContainer(vertical layout)
+            template(if='{{title}}')
+                core-toolbar#toolbarContent
+                    span(flex) {{title}}
+                    template(if='{{controls}}')
+                        paper-icon-button(icon='refresh' fill)
+            #mainPanel(flex vertical layout)
+                #mainContainer(flex)
+                    content#mainContent(select='[main]')
+                    template(if='{{controls}}')
+                        hr
+                        content#controlsContent(select='[control]')
+        template(if='{{shadow}}')
+            paper-shadow(target='{{}}' z='{{z}}' animated)
     script(src='auv-card.js')

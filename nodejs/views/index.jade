@@ -19,13 +19,37 @@ html(lang='en')
     link(rel='import', href='components/elements/index_elements.html')
     script(src='/socket.io/socket.io.js')
   body(fullbleed unresolved)
-    auv-card
-        h3.heading Hello World!
-    polymer-ui-card
-        h3.heading Hello World!
-    auv-card
-        h3.heading Hello Polymer!
-    polymer-ui-card
-        img(src='img/favicon.gif')
+    #positionContainer
+        #elementContainer
+            auv-globals#globals(controls='false')
+            //(controls= dev ? 'true': 'false')
+            //auv-card#scroll(title='Title' controls)
+                .cont(main)
+                    h3 Content
+                    p this
+                    p is
+                    p a
+                    p test
+                    p to
+                    p see
+                    p some
+                    p scrolling
+                    p lets
+                    p see
+                    p what
+                    p happens
+                #controls(control)
+                    h3 Controls
+            //auv-card
+                .cont(main)
+                    h3 More content
+            //auv-card(title='Image' shadow z=1)
+                .cont(main)
+                    img(src='img/favicon.gif')
+            auv-log
     script.
-      var socket = io();
+        var socket = io();
+        window.addEventListener('polymer-ready', function(e) {
+            var globals = document.getElementById('globals');
+            console.log(globals.values);
+        });
