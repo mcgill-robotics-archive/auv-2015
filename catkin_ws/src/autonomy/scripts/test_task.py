@@ -22,6 +22,6 @@ class Test_Task(task.Task):
 	def phase1(self):
 		desired = [3, 0, 0, 0, 0, 0]
 		while(True):
-			desired[0] = self.my_autonomy.filtered_depth
+			#desired[0] = self.my_autonomy.filtered_depth
 			self.my_autonomy.set_velocity(desired)
 			rospy.sleep(1)
