@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from math import pi
 import rospy
 from geometry_msgs.msg import Wrench
 from std_msgs.msg import Float64
@@ -30,7 +31,6 @@ isSettingPosition = 0
 
 
 def setPosition_callback(data):
-    rospy.loginfo(rospy.get_caller_id()+"I heard setPosition xPos = %f, yPos = %f, depth = %f, roll = %f, pitch = %f, yaw = %f", data.xPos, data.yPos, data.depth, data.roll, data.pitch, data.yaw)
 
     global xPos, yPos, depth, roll, pitch, yaw, isSettingPosition
     xPos = data.xPos
@@ -44,7 +44,6 @@ def setPosition_callback(data):
 
 
 def setVelocity_callback(data):
-    rospy.loginfo(rospy.get_caller_id()+"I heard setVelocity surgeSpeed = %f, swaySpeed = %f, depth = %f, roll = %f, pitch = %f, yaw = %f", data.surgeSpeed, data.swaySpeed, data.depth, data.roll, data.pitch, data.yaw)
 
     global surgeSpeed, swaySpeed, depth, roll, pitch, yaw, isSettingPosition
     surgeSpeed = data.surgeSpeed
@@ -66,8 +65,6 @@ def rosInit():
 
 if __name__ == '__main__':
     rosInit()
-
-    r = rospy.Rate(1)
 
     ei_xPos = 0.0
     ed_xPos = 0.0
@@ -134,26 +131,28 @@ if __name__ == '__main__':
     dt = 0.1
     r = rospy.Rate(1/dt)
 
-    while not rospy.is_shutdown():
 
-    	rospy.Subscriber("autonomy/set_position", SetPosition, setPosition_callback)
-    	rospy.Subscriber("autonomy/set_velocity", SetVelocity, setVelocity_callback)
+    rospy.Subscriber("autonomy/set_position", SetPosition, setPosition_callback)
+    rospy.Subscriber("autonomy/set_velocity", SetVelocity, setVelocity_callback)
+
+
+    while not rospy.is_shutdown():
 
     	rospy.loginfo("pitch gain is: %f, yaw is: %f, surgeSpeed is: %f, swaySpeed is: %f", kp_pitch, yaw, surgeSpeed, swaySpeed,)
 
-    	if(isSettingPosition == 1):
+    	if (isSettingPosition == 1):
     		pass
 
       	  #X position PID control: Taken out for testing with Asimov
-       	 # prev_xPos = xPos
         	# ei_xPos += xPos*dt
         	# ed_xPos = (xPos - prev_xPos)/dt
+        	# prev_xPos = xPos
         	# fx = kp_xPos*xPos + ki_xPos*ei_xPos + kd_xPos*ed_xPos
 
         	#Y position PID control: Taken out for testing with Asimov
-        	# prev_yPos = yPos
        		# ei_yPos += yPos*dt
         	# ed_yPos = (yPos - prev_yaw)/dt
+        	# prev_yPos = yPos
         	# fy = kp_yPos*yPos + ki_yPos*ei_xPos + kd_yPos*ed_yPos
 
         else:
@@ -161,27 +160,35 @@ if __name__ == '__main__':
         	fy = sway_coeff*swaySpeed	#by 5 and published it as a force
 
         #Depth PID control: Taken out while the dpeth sensor is broken
-        # prev_depth = depth
         # ei_depth += depth*dt
         # ed_depth = (depth - prev_depth)/dt
+        # prev_depth = depth
         # fz = kp_depth*depth + ki_depth*ei_depth + kd_depth*ed_depth
 
         # Roll PID control: Taken out for test on Asimov who can't control roll
-        # prev_roll = roll
         # ei_roll += roll*dt
         # ed_roll = (roll - prev_roll)/dt
+        # prev_roll = roll
         # tx = kp_roll*roll + ki_roll*ei_roll + kd_roll*ed_roll
 
         #Pitch PID control
-        prev_pitch = pitch
         ei_pitch += pitch*dt
         ed_pitch = (pitch - prev_pitch)/dt
+        prev_pitch = pitch
         ty = kp_pitch*pitch + ki_pitch*ei_pitch + kd_pitch*ed_pitch
 
+        
+        #Correct angle error for wrap aroud
+        if (yaw > pi):
+        	yaw -= 2*pi
+
+        elif (yaw < -pi):
+        	yaw += 2*pi
+
         #Yaw PID control
-        prev_yaw = yaw
         ei_yaw += yaw*dt
         ed_yaw = (yaw - prev_yaw)/dt
+        prev_yaw = yaw
         tz = kp_yaw*yaw + ki_yaw*ei_yaw + kd_yaw*ed_yaw
 
 
