@@ -87,36 +87,40 @@ if __name__ == '__main__':
     ei_yaw = 0.0
     ed_yaw = 0.0
 
-    prev_ep_xPos = 0.0
-    prev_ep_yPos = 0.0
-    prev_ep_depth = 0.0
-    prev_ep_roll = 0.0
-    prev_ep_pitch = 0.0
-    prev_ep_yaw = 0.0
+    prev_xPos = 0.0
+    prev_yPos = 0.0
+    prev_depth = 0.0
+    prev_roll = 0.0
+    prev_pitch = 0.0
+    prev_yaw = 0.0
 
-    kp_xPos = 0.0
-    ki_xPos = 0.0
-    kd_xPos = 0.0
+    kp_xPos = rospy.get_param("/kp_xPos")
+    ki_xPos = rospy.get_param("/ki_xPos")
+    kd_xPos = rospy.get_param("/kd_xPos")
 
-    kp_yPos = 0.0
-    ki_yPos = 0.0
-    kd_yPos = 0.0
+    kp_yPos = rospy.get_param("/kp_yPos")
+    ki_yPos = rospy.get_param("/ki_yPos")
+    kd_yPos = rospy.get_param("/kd_yPos")
 
-    kp_depth = 0.0
-    ki_depth = 0.0
-    kd_depth = 0.0
+    kp_depth = rospy.get_param("/kp_depth")
+    ki_depth = rospy.get_param("/ki_depth")
+    kd_depth = rospy.get_param("/kd_depth")
 
-    kp_pitch = 0.0
-    ki_pitch = 0.0
-    kd_pitch = 0.0     
+    kp_pitch = rospy.get_param("/kp_pitch")
+    ki_pitch = rospy.get_param("/ki_pitch")
+    kd_pitch = rospy.get_param("/kd_pitch")  
 
-    kp_roll = 0.0
-    ki_roll = 0.0
-    kd_roll = 0.0 
+    kp_roll = rospy.get_param("/kp_roll")
+    ki_roll = rospy.get_param("/ki_roll")
+    kd_roll = rospy.get_param("/kd_roll")
 
-    kp_yaw = 0.0
-    ki_yaw = 0.0
-    kd_yaw = 0.0 
+    kp_yaw = rospy.get_param("/kp_yaw")
+    ki_yaw = rospy.get_param("/ki_yaw")
+    kd_yaw = rospy.get_param("/kd_yaw")
+
+    surge_coeff = rospy.get_param("/surge_coeff")
+    sway_coeff = rospy.get_param("/sway_coeff")
+
 
     fx = 0.0
     fy = 0.0
@@ -135,49 +139,49 @@ if __name__ == '__main__':
     	rospy.Subscriber("autonomy/set_position", SetPosition, setPosition_callback)
     	rospy.Subscriber("autonomy/set_velocity", SetVelocity, setVelocity_callback)
 
-    	rospy.loginfo("pitch is: %f, yaw is: %f, surgeSpeed is: %f, swaySpeed is: %f", pitch, yaw, surgeSpeed, swaySpeed,)
+    	rospy.loginfo("pitch gain is: %f, yaw is: %f, surgeSpeed is: %f, swaySpeed is: %f", kp_pitch, yaw, surgeSpeed, swaySpeed,)
 
     	if(isSettingPosition == 1):
     		pass
 
       	  #X position PID control: Taken out for testing with Asimov
-       	 # prev_ep_xPos = xPos
+       	 # prev_xPos = xPos
         	# ei_xPos += xPos*dt
-        	# ed_xPos = (xPos - prev_ep_xPos)/dt
+        	# ed_xPos = (xPos - prev_xPos)/dt
         	# fx = kp_xPos*xPos + ki_xPos*ei_xPos + kd_xPos*ed_xPos
 
         	#Y position PID control: Taken out for testing with Asimov
-        	# prev_ep_yPos = yPos
+        	# prev_yPos = yPos
        		# ei_yPos += yPos*dt
-        	# ed_yPos = (yPos - prev_ep_yaw)/dt
+        	# ed_yPos = (yPos - prev_yaw)/dt
         	# fy = kp_yPos*yPos + ki_yPos*ei_xPos + kd_yPos*ed_yPos
 
         else:
-        	fx = 5*surgeSpeed
-        	fy = 5*swaySpeed
+        	fx = surge_coeff*surgeSpeed	#This is based on Nick's code, he simply multiplied the the speed command
+        	fy = sway_coeff*swaySpeed	#by 5 and published it as a force
 
         #Depth PID control: Taken out while the dpeth sensor is broken
-        # prev_ep_depth = depth
+        # prev_depth = depth
         # ei_depth += depth*dt
-        # ed_depth = (depth - prev_ep_depth)/dt
+        # ed_depth = (depth - prev_depth)/dt
         # fz = kp_depth*depth + ki_depth*ei_depth + kd_depth*ed_depth
 
         # Roll PID control: Taken out for test on Asimov who can't control roll
-        # prev_ep_roll = roll
+        # prev_roll = roll
         # ei_roll += roll*dt
-        # ed_roll = (roll - prev_ep_roll)/dt
+        # ed_roll = (roll - prev_roll)/dt
         # tx = kp_roll*roll + ki_roll*ei_roll + kd_roll*ed_roll
 
         #Pitch PID control
-        prev_ep_pitch = pitch
+        prev_pitch = pitch
         ei_pitch += pitch*dt
-        ed_pitch = (pitch - prev_ep_pitch)/dt
+        ed_pitch = (pitch - prev_pitch)/dt
         ty = kp_pitch*pitch + ki_pitch*ei_pitch + kd_pitch*ed_pitch
 
         #Yaw PID control
-        prev_ep_yaw = yaw
+        prev_yaw = yaw
         ei_yaw += yaw*dt
-        ed_yaw = (yaw - prev_ep_yaw)/dt
+        ed_yaw = (yaw - prev_yaw)/dt
         tz = kp_yaw*yaw + ki_yaw*ei_yaw + kd_yaw*ed_yaw
 
 
