@@ -4,10 +4,17 @@ project(auv_msgs)
 find_package(catkin REQUIRED COMPONENTS message_generation)
 
 add_message_files(FILES
+                #added by Elec Interface
                   Solenoid.msg
                   Motor.msg
+
+                #added by Controls
                   SetPosition.msg
                   SetVelocity.msg
+
+                #added by Autonomy
+                  CVTarget.msg
+                  SonarTarget.msg
                  )
 
 #add_service_files(FILES
