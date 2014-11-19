@@ -10,6 +10,7 @@ import tf
 from tf.transformations import euler_from_quaternion
 
 wrenchPublisher = None
+listener = None
 
 #error relative to object
 xPos = 0.0
@@ -57,7 +58,9 @@ def setVelocity_callback(data):
 
 
 def get_transform(origin_frame, target_frame):
-    listener = tf.TransformListener()
+    global listener
+    if not listener:
+        listener = tf.TransformListener()
     t = rospy.Time(0)
     found = False
     while not found:
@@ -191,13 +194,13 @@ if __name__ == '__main__':
 
         before_transform = rospy.Time.now()
 
-        (trans, rot) = get_transform("/robot/initial_horizon", "/robot")
+        (trans, rot) = get_transform("/initial_horizon", "/robot")
 
         if (rot):
             (estimated_roll, estimated_pitch, estimated_yaw) = euler_from_quaternion(rot)
 
         after_transform = rospy.Time.now()
-        dt = after_transform.to_sec() - before_transform.to_sec()
+        #dt = after_transform.to_sec() - before_transform.to_sec()
 
         rospy.loginfo("Duration: %f", dt)
 
