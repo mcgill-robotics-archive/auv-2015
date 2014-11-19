@@ -1,0 +1,3 @@
+Polymer('aimee-card', {
+    //
+});
