@@ -20,10 +20,10 @@ depth = 0.0
 
 #error relative to horizon
 roll = 0.0
-pitch = 0.0
 
 #absolute yaw relative to initial_frame
 desired_yaw = 0.0
+desired_pitch = 0.0
 
 #absolute value
 surgeSpeed = 0.0
@@ -193,11 +193,7 @@ if __name__ == '__main__':
         # tx = kp_roll*roll + ki_roll*ei_roll + kd_roll*ed_roll
 
         #Pitch PID control
-        ei_pitch += pitch*dt
-        ed_pitch = (pitch - prev_pitch)/dt
-        prev_pitch = pitch
-        ty = kp_pitch*pitch + ki_pitch*ei_pitch + kd_pitch*ed_pitch
-
+       
         ep_yaw_prev = ep_yaw
 
         (trans, rot) = get_transform("/robot/initial_horizon", "/robot")
@@ -205,14 +201,22 @@ if __name__ == '__main__':
         if (rot):
             (estimated_roll, estimated_pitch, estimated_yaw) = euler_from_quaternion(rot)
 
+        #imu/initial to imu
 
         ep_yaw = desired_yaw - estimated_yaw
+        ep_pitch = desired_pitch - estimated_pitch
+
         #Correct angle error for wrap aroud
         if (ep_yaw > pi):
         	ep_yaw -= 2*pi
 
         elif (ep_yaw < -pi):
         	ep_yaw += 2*pi
+
+        #Pitch PID control
+        ei_pitch += ep_pitch*dt
+        ed_pitch = (ep_pitch - ep_pitch_prev)/dt
+        ty = kp_pitch*ep_pitch + ki_pitch*ei_pitch + kd_pitch*ed_pitch
 
         #Yaw PID control
         ei_yaw += ep_yaw*dt
