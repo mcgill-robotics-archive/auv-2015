@@ -20,10 +20,10 @@ depth = 0.0
 
 #error relative to horizon
 roll = 0.0
-pitch = 0.0
 
 #absolute yaw relative to initial_frame
 desired_yaw = 0.0
+desired_pitch = 0.0
 
 #absolute value
 surgeSpeed = 0.0
@@ -38,7 +38,7 @@ def setPosition_callback(data):
     yPos = data.yPos
     depth = data.depth
     roll = data.roll
-    pitch = data.pitch
+    desired_pitch = data.pitch
     desired_yaw = data.yaw
 
     isSettingPosition = 1
@@ -50,7 +50,7 @@ def setVelocity_callback(data):
     swaySpeed = data.swaySpeed
     depth = data.depth
     roll = data.roll
-    pitch = data.pitch
+    desired_pitch = data.pitch
     desired_yaw = data.yaw
 
     isSettingPosition = 0
@@ -98,19 +98,13 @@ if __name__ == '__main__':
     ei_roll = 0.0
     ed_roll = 0.0
 
+    ep_pitch = 0.0
     ei_pitch = 0.0
     ed_pitch = 0.0
 
     ep_yaw = 0.0
     ei_yaw = 0.0
     ed_yaw = 0.0
-
-    prev_xPos = 0.0
-    prev_yPos = 0.0
-    prev_depth = 0.0
-    prev_roll = 0.0
-    prev_pitch = 0.0
-    prev_yaw = 0.0
 
     kp_xPos = rospy.get_param("/kp_xPos")
     ki_xPos = rospy.get_param("/ki_xPos")
@@ -192,27 +186,37 @@ if __name__ == '__main__':
         # prev_roll = roll
         # tx = kp_roll*roll + ki_roll*ei_roll + kd_roll*ed_roll
 
-        #Pitch PID control
-        ei_pitch += pitch*dt
-        ed_pitch = (pitch - prev_pitch)/dt
-        prev_pitch = pitch
-        ty = kp_pitch*pitch + ki_pitch*ei_pitch + kd_pitch*ed_pitch
-
         ep_yaw_prev = ep_yaw
+        ep_pitch_prev = ep_pitch
+
+        before_transform = rospy.Time.now()
 
         (trans, rot) = get_transform("/robot/initial_horizon", "/robot")
 
         if (rot):
             (estimated_roll, estimated_pitch, estimated_yaw) = euler_from_quaternion(rot)
 
+        after_transform = rospy.Time.now()
+        dt = after_transform.to_sec() - before_transform.to_sec()
+
+        rospy.loginfo("Duration: %f", dt)
+
+        #imu/initial to imu
 
         ep_yaw = desired_yaw - estimated_yaw
+        ep_pitch = desired_pitch - estimated_pitch
+
         #Correct angle error for wrap aroud
         if (ep_yaw > pi):
         	ep_yaw -= 2*pi
 
         elif (ep_yaw < -pi):
         	ep_yaw += 2*pi
+
+        #Pitch PID control
+        ei_pitch += ep_pitch*dt
+        ed_pitch = (ep_pitch - ep_pitch_prev)/dt
+        ty = kp_pitch*ep_pitch + ki_pitch*ei_pitch + kd_pitch*ed_pitch
 
         #Yaw PID control
         ei_yaw += ep_yaw*dt
