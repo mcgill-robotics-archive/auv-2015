@@ -14,7 +14,7 @@
 using namespace boost;
 
 static unsigned int sequence = 0;
-ros::Publisher pub, pub2, rawPub;
+ros::Publisher pub, pub2, pub3, pub4, rawPub;
 geometry_msgs::Pose pos;
 geometry_msgs::PoseStamped posStamped;
 double* q = new double[4];
@@ -54,6 +54,18 @@ void spin() {
             acc.y = ims.accY;
             acc.z = ims.accZ;
             pub2.publish(acc);
+
+            geometry_msgs::Vector3 gyro = geometry_msgs::Vector3();
+            gyro.x = ims.gyrX;
+            gyro.y = ims.gyrY;
+            gyro.z = ims.gyrZ;
+            pub3.publish(gyro);
+
+  	 geometry_msgs::Vector3 mag = geometry_msgs::Vector3();
+            mag.x = ims.magX;
+            mag.y = ims.magY;
+            mag.z = ims.magZ;
+            pub4.publish(mag);
 
             // IMU raw data
             sensor_msgs::Imu imu;
@@ -97,6 +109,8 @@ int main(int argc, char** argv) {
 
     pub = node.advertise<geometry_msgs::PoseStamped>("state_estimation/pose", 100);
     pub2 = node.advertise<geometry_msgs::Vector3>("state_estimation/acc", 100);
+    pub3 = node.advertise<geometry_msgs::Vector3>("state_estimation/gyro", 100);
+    pub4 = node.advertise<geometry_msgs::Vector3>("state_estimation/mag", 100);
     // Publish raw data
     rawPub = node.advertise<sensor_msgs::Imu>("state_estimation/raw", 100);
 
