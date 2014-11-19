@@ -10,38 +10,17 @@ const double INITIAL_COVARIANCE = 0.0000001;
 const double PROCESS_VARIANCE = 0.00000004;
 const double MEASUREMENT_VARIANCE = 0.025;
 
+const double pi = std::acos(-1.0);
 
-
-void prettyPrint(double* augCovar, int dim1, int dim2)
+//Method to print matrix or vector
+void Print(m) 
 {
-	for(int i = 0; i < dim1; i++)
-	{
-		for(int j = 0; j < dim2; j++)
-		{
-			printf("%e,", augCovar[i*dim2+j]);
-		}
-		printf("\n");
-	}
-	printf("\n");
+cout << "Printing: \n" << m << endl;
 }
+
 
 ukf::ukf(int dim)
 {
-	//DIM = dim;
-
-	// Create our initial pose estimate and covariance
-	// Our internal representation of pose has to be a rotation vector since
-	// that is the only chart on SO(3) which is a vector
-
-	//initialize our state, covariance, and sigmas
-	/*augState = new double[DIM]();
-	augCovar = new double[DIM*DIM]();
-	sigmas = new double[2*DIM*DIM]();
-	gammas = new double[2*DIM*DIM]();
-	predMsmt = new double[DIM]();
-	measCovar = new double[DIM*DIM]();
-	crossCovar = new double[DIM*DIM]();*/
-	
 	Vector3d state;
 	Matrix3d covarianceMatrix;
 	Matrix3X6d sigmas;
@@ -52,47 +31,29 @@ ukf::ukf(int dim)
 
 	Vector3d covarianceValues(INITIAL_COVARIANCE,INITIAL_COVARIANCE,INITIAL_COVARIANCE);
 	covarianceMatrix = covarianceValues.asDiagonal();
-	
-		
-
-	//They are hopefully now set to zero
-
-	//Now we need to set our initial covariance
-	//diagonalMatrix(INITIAL_COVARIANCE, augCovar, DIM);
-	
-
 }
 
 void ukf::generateSigmas()
 {
-	//Here we generate 2*DIM states distributed on
-	//a hypersphere around augPose
 
-	//This writes the square root of covar into the first DIM sigmas
-	cholesky(augCovar, sigmas, DIM);
+//This method generates 2*DIM states distributed on a hypersphere around augPose
 
-	//prettyPrint(sigmas, DIM, DIM);
+	//Replaces Cholesky method
+	sigmas= augCovar.llt(); 
 
-	//Now we make a copy of it into the second
-	vectorCopy(sigmas, &(sigmas[DIM*DIM]), DIM*DIM);
+	//Initialize temporary matrix to have size 3 by 6
+	MatrixXd T(sigmas.rows(), 2*sigmas.rows()); 
 
-	//Now we scale the sigmas
-	scaleVector(sqrt(DIM), sigmas, DIM*DIM);
-	scaleVector(-1.0*sqrt(DIM), sigma(DIM), DIM*DIM);
-
-	for (int i = 0; i < 2*DIM; i++)
-	{
-		addVectors(sigma(i), augState, DIM);
-	}
-	//So we end up with the augPose added to all the different columns
-	//of the matrix square root of augCovar
+	//Concatenate both scaled sigmas to give T
+	T << sigmas.scale(-sqrt(3)) , sigmas.scale(sqrt(3)) ;
 }
+
 
 void propogate(double *rotation, double* state)
 {
 	//double rotationEarth[3] = {-rotation[0], -rotation[1], -rotation[2]};
 	double result[3] = {};
-	double tau = 2*3.141592653589793238462643383279502884197169399375105820974944;
+	double tau = 2*pi;
 
 	composeRotations(rotation, state, result);
 
@@ -113,14 +74,31 @@ void propogate(double *rotation, double* state)
 
 void ukf::recoverPrediction()
 {
-	averageVectors(sigmas, augState, 2*DIM, DIM);
+	//Average of sigmas (3x6) stored in augState (3x1)
+	augState = sigmas.rowwise().mean();
+	augCovar = 
+
+//SMALL PROBLEM: In order to transpose a matrix need the size to be resizeable!!! 
+
+
+
+
+
+//Subtraction:
+
+	Matrix3X6d tempSigmas;
+	tempSigmas << augState, augState, augState, augState, augState, augState;
 
 	subtractMultipleVectors(sigmas, augState, 2*DIM, DIM);
 
 	averageOuterProduct(sigmas, sigmas, augCovar
 			,2*DIM, DIM, DIM);
 
-	addDiagonal(augCovar, PROCESS_VARIANCE, DIM);
+	//We add process_variance to each diagonal of the augCovar matrix
+	Vector3d processVarianceAsVector (PROCESS_VARIANCE, PROCESS_VARIANCE, PROCESS_VARIANCE);
+	processVarianceAsMatrix = processVarianceAsVector.asDiagonal();
+
+	augCovar = augCovar + processVarianceAsMatrix;;
 }
 
 void ukf::predict(double rotation[3])
@@ -200,7 +178,6 @@ void ukf::recoverCorrection(double *acc)
 
 void fixState(double* state)
 {
-	double pi = 3.141592653589793238462643383279502884197169399375105820974944;
 	double angle = norm(state);
 	if (angle > pi)
 	{

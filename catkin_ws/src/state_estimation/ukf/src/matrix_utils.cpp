@@ -21,35 +21,8 @@ void diagonalMatrix(double value, double* matrix, int width)
 	}
 }
 
-void cholesky(double *A, double *L, int n) {
-    for (int i = 0; i < n; i++)
-    {
-    	int j = 0;
-        for (; j <= i; j++)
-        {
-            double sum = 0;
-            for (int k = 0; k < j; k++)
-            {
-                sum += L[i * n + k] * L[j * n + k];
-            }
 
-            if (i == j)
-            {
-            	L[i * n + j] = sqrt(fmax(A[i * n + i] - sum, 1e-10));
-            	//TODO: Log an error if the argument of sqrt would have been negative without the max
-            }else
-            {
-            	L[i * n + j] = (A[i * n + j] - sum)/ L[j * n + j];
-            }
-        }
-
-        for (;j<n; j++)
-        {
-        	L[i*n + j] = 0.0;
-        }
-    }
-}
-
+//Can delete vector copy
 void vectorCopy(double A[],double B[], int length)
 {
 
@@ -58,7 +31,7 @@ void vectorCopy(double A[],double B[], int length)
 		B[i] = A[i];
 	}
 }
-
+//Can delete
 void addVectors(double A[], double B[], int length)
 {//Adds A and B and stores result in A
 	for ( int i = 0; i < length; i++)
@@ -97,6 +70,7 @@ void outerProductAdd(double* A, double* B, double* C, int dim1, int dim2)
 	}
 }
 
+//can delete
 void averageVectors(double* vectors, double *dest,
 		int num_vectors, int vector_length)
 {
@@ -228,6 +202,7 @@ void transposedMultiplyAdd(double* A, double* B, double* C, int dim1, int dim2, 
 	}
 }
 
+//can delete
 void addDiagonal(double* matrix, double value, int dim)
 {
 	//Adds a diagonal matrix with value value
