@@ -7,6 +7,7 @@ from std_msgs.msg import String
 from auv_msgs.msg import SetPosition
 from auv_msgs.msg import SetVelocity
 import tf
+from tf.transformations import euler_from_quaternion
 
 wrenchPublisher = None
 
@@ -199,10 +200,10 @@ if __name__ == '__main__':
 
         ep_yaw_prev = ep_yaw
 
-        (trans, rot) = get_transform("/initial_horizon", "/robot")
+        (trans, rot) = get_transform("/robot/initial_horizon", "/robot")
 
         if (rot):
-            (estimated_roll, estimated_pitch, estimated_yaw) = tf.euler_from_quaternion(rot)
+            (estimated_roll, estimated_pitch, estimated_yaw) = euler_from_quaternion(rot)
 
 
         ep_yaw = desired_yaw - estimated_yaw
@@ -216,7 +217,7 @@ if __name__ == '__main__':
         #Yaw PID control
         ei_yaw += ep_yaw*dt
         ed_yaw = (ep_yaw - ep_yaw_prev)/dt
-        tz = kp_yaw*yaw + ki_yaw*ei_yaw + kd_yaw*ed_yaw
+        tz = kp_yaw*ep_yaw + ki_yaw*ei_yaw + kd_yaw*ed_yaw
         
         wrenchMsg = Wrench()
 
