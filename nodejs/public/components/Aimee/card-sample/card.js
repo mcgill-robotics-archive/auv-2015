@@ -1,0 +1,3 @@
+Polymer('card', {
+    foo: false,
+});

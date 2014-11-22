@@ -1,0 +1,40 @@
+doctype html
+html(lang='en')
+  head
+
+    //- Compatibility
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0, maximum-scale=1.0')
+    meta(name='mobile-web-app-capable' content='yes')
+    meta(name='apple-mobile-web-app-capable' content='yes')
+    meta(name='description', content='Robotics AUV 2015 webpage')
+
+    //- Title
+    title= title
+
+    //- Links
+    link(rel='stylesheet', href='style/map.css', shim-shadowdom)
+    link(rel='stylesheet', href='style/style.css', shim-shadowdom)
+    script(src='platform/platform.js')
+    link(rel='import', href='components/auv-card/auv-card.html')
+    link(rel='import', href='components/map/map-element.html')
+    script(src='/socket.io/socket.io.js')
+    
+    
+  body(fullbleed unresolved)
+    h1 McGill Robotics Tools and Sim Map 
+    p(id='date')
+    
+    auv-card(width='700px', height= '500px')
+        .cont(main)
+            h3 this is an AUV card
+            
+    
+    script.
+        var socket = io();
+        window.addEventListener('polymer-ready', function(e) {
+            var globals = document.getElementById('globals');
+            console.log(globals.values);
+        });
+        document.getElementById('date').innerHTML = Date();
