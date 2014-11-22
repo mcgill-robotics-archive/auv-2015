@@ -1,13 +1,12 @@
 link(rel='import', href='../../../polymer/polymer.html')
 link(rel='import', href='../../auv-card/auv-card.html')
-link(rel='import', href='../../../../canvasjs-1.5.6')
-
 
 polymer-element(name='depth-graph' attributes="width height labels values colors")
     template
         link(rel='stylesheet', href='depth-graph.css')
         auv-card
             canvas(id="canvas" width="{{width}}" height="{{height}}")
+
     script(src='depth-graph.js')
-    script(src='../../../script/canvasjs-1.5.6/canvasjs.min.js')
+   // script(src='Chart.js')
 
