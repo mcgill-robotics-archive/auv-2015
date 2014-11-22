@@ -39,7 +39,7 @@ void ukf::generateSigmas()
 //This method generates 2*DIM states distributed on a hypersphere around augPose
 
 	//Replaces Cholesky method
-	sigmas= augCovar.llt(); 
+	sigmas= covarianceMatrix.llt(); 
 
 	//Initialize temporary matrix to have size 3 by 6
 	MatrixXd T(sigmas.rows(), 2*sigmas.rows()); 
@@ -76,35 +76,21 @@ void ukf::recoverPrediction()
 {
 	//Average of sigmas (3x6) stored in augState (3x1)
 	augState = sigmas.rowwise().mean();
-	augCovar = 
+	Matrix3X6 Temp;
+	Temp << augState, augState, augState, augState, augState, augState;
+	Matrix2d processVarianceMatrix;
+	processVarianceMatrix << PROCESS_VARIANCE, PROCESS_VARIANCE,
+	PROCESS_VARIANCE, PROCESS_VARIANCE;
+	covarianceMatrix = ((sigmas - Temp) * (sigmas - Temp).transpose() ) - processVarianceMatrix;
+
 
 //SMALL PROBLEM: In order to transpose a matrix need the size to be resizeable!!! 
-
-
-
-
-
-//Subtraction:
-
-	Matrix3X6d tempSigmas;
-	tempSigmas << augState, augState, augState, augState, augState, augState;
-
-	subtractMultipleVectors(sigmas, augState, 2*DIM, DIM);
-
-	averageOuterProduct(sigmas, sigmas, augCovar
-			,2*DIM, DIM, DIM);
-
-	//We add process_variance to each diagonal of the augCovar matrix
-	Vector3d processVarianceAsVector (PROCESS_VARIANCE, PROCESS_VARIANCE, PROCESS_VARIANCE);
-	processVarianceAsMatrix = processVarianceAsVector.asDiagonal();
-
-	augCovar = augCovar + processVarianceAsMatrix;;
 }
 
 void ukf::predict(double rotation[3])
 {
 	generateSigmas();
-	//prettyPrint(sigma(0), 2*DIM, DIM);
+
 	for (int i = 0; i < 2*DIM; i++)
 	{
 		propogate(rotation, sigma(i));
@@ -115,12 +101,16 @@ void ukf::predict(double rotation[3])
 	//prettyPrint(augCovar, DIM, DIM);
 }
 
+
+
+
 void h(double *sigma, double *gamma)
-{
+{/*
 	double gravity[] = {0, 0, 9.8};
 	double inverted[3] = {};
 	inverse(sigma, inverted);
 	rotateThisByThat(gravity, inverted, gamma);
+*/
 }
 
 void ukf::correct(double acc[3])
@@ -133,7 +123,7 @@ void ukf::correct(double acc[3])
 	//for every sigma and store in the gammas
 	for (int i = 0; i < 2* DIM; i++)
 	{
-		h(sigma(i), gamma(i));
+	//	h(sigma(i), gamma(i));
 	}
 
 	//prettyPrint(gamma(0), 2*DIM, DIM);
@@ -143,37 +133,37 @@ void ukf::correct(double acc[3])
 void ukf::recoverCorrection(double *acc)
 {
 
-	averageVectors(gammas, predMsmt, 2*DIM, DIM);
+	predMsmt = gammas.rowwise().mean();
 
-	subtractMultipleVectors(sigmas, augState, 2*DIM, DIM);
-	subtractMultipleVectors(gammas, predMsmt, 2*DIM, DIM);
+	Matrix3X6 Temp1;
+	Temp1 << augState, augState, augState, augState, augState, augState;
+	Matrix3X6 Temp2;
+	Temp2 << predMsmt, predMsmt, predMsmt, predMsmt, predMsmt, predMsmt;
 
-	averageOuterProduct(gammas, gammas, measCovar, 2*DIM, DIM, DIM);
-	averageOuterProduct(sigmas, gammas, crossCovar, 2*DIM, DIM, DIM);
+	processVarianceMatrix << PROCESS_VARIANCE, PROCESS_VARIANCE,
+	PROCESS_VARIANCE, PROCESS_VARIANCE;
 
+	measCovar = ( (sigmas - Temp1) * (sigmas - Temp1).transpose() ) - processVarianceMatrix;
+	crossCovar = ( (sigmas - Temp2) * (gammas - Temp2).transpose() ) - processVarianceMatrix;
 
-	//Include measurement variance
-	addDiagonal(measCovar, MEASUREMENT_VARIANCE, DIM);
+	Vector3f v(MEASUREMENT_VARIANCE,MEASUREMENT_VARIANCE,MEASUREMENT_VARIANCE);
+	measureVarDiag = v.asDiagonal();
 
+	measCovar = measCovar + measureVarDiag;
+	// double *gain = new double[DIM*DIM]();
+	Matrix3d gain = measCovar.ldlt().solve(crossCovar);
+	
+	Vector3d Temp3(acc, acc, acc);
 
-	//prettyPrint(measCovar, DIM, DIM);
-	//prettyPrint(crossCovar, DIM, DIM);
+	acc = acc - predMsmt;
 
+	augState = gain * acc;
 
-	double *gain = new double[DIM*DIM]();
-    solve(crossCovar, measCovar, gain, DIM, DIM);
+	crossCovar.scale(-1.0);
 
+	augCovar += crossCovar * gain.traspose();
 
-    subtractVectors(acc, predMsmt, DIM);
-    leftMultiplyAdd(gain, acc, augState, DIM, DIM, 1);
-
-    //prettyPrint(gain, DIM, DIM);
-
-    scaleVector(-1.0, crossCovar, DIM*DIM);
-    transposedMultiplyAdd(crossCovar, gain, augCovar, DIM, DIM, DIM);
-    //prettyPrint(augCovar, DIM, DIM);
-
-    delete gain;
+	delete gain;
 }
 
 void fixState(double* state)
