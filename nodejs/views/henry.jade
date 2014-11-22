@@ -44,8 +44,17 @@ html(lang='en')
         <p>I did it and it works!</p>
         </post-card>
         </div>
+    button(type='button') This is a button
+    p(id='demo') Testing
                 
     script.
+        var button = document.querySelector('button');
+        button.addEventListener('click', function() 
+        {document.getElementById('demo').innerHTML = Date();
+            });
+        
+        h1.addEventListener('click',function() 
+        { alert('Hello World'); }) ;
         var tabs = document.querySelector('paper-tabs');
         tabs.addEventListener('core-select', function() {
             console.log("Selected: " + tabs.selected);
