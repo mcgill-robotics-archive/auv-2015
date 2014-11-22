@@ -1,0 +1,57 @@
+// View Page for Henry's test page
+//Testing random elements and playing with different styles 
+//Nov 21, 2014
+
+
+doctype html
+html(lang='en')
+  head
+
+    //- Compatibility
+    meta(charset='utf-8')
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0, maximum-scale=1.0')
+    meta(name='mobile-web-app-capable' content='yes')
+    meta(name='apple-mobile-web-app-capable' content='yes')
+    meta(name='description', content='Robotics AUV 2015 webpage')
+
+    //- Title
+    title= title
+
+    //- Links/Requirements
+    link(rel='import', href='/polymer/polymer.html')
+    link(rel='import', href='/core-header-panel/core-header-panel.html')
+    link(rel='import', href='/core-toolbar/core-toolbar.html')
+    link(rel='import', href='/paper-tabs/paper-tabs.html')
+    link(rel='import', href='components/Henry/post-card/post-card.html')
+    
+    link(rel='stylesheet', href='style/henry.css', shim-shadowdom)
+    script(src='platform/platform.js')
+    link(rel='import', href='components/elements/aimee_elements.html')
+    script(src='/socket.io/socket.io.js')
+  body(fullbleed unresolved)
+    h1 Hello , I am testing the server using the sample polymer project
+    core-header-panel
+        core-toolbar
+            <paper-tabs id="tabs" selected="all" self-end>
+            <paper-tab name="all">All</paper-tab>
+            <paper-tab name="favorites">Favorites</paper-tab>
+            </paper-tabs>
+        <div class="container" layout vertical center>
+        <post-card>
+        <img width="70" height="70" src="img/favicon.gif">
+        <h2>Henry Yu</h2>
+        <p>I did it and it works!</p>
+        </post-card>
+        </div>
+                
+    script.
+        var tabs = document.querySelector('paper-tabs');
+        tabs.addEventListener('core-select', function() {
+            console.log("Selected: " + tabs.selected);
+            });
+        var socket = io();
+        window.addEventListener('polymer-ready', function(e) {
+            var globals = document.getElementById('globals');
+            console.log(globals.values);
+        });
