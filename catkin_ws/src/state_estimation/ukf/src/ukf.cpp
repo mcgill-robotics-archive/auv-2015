@@ -18,7 +18,6 @@ void Print(m)
 cout << "Printing: \n" << m << endl;
 }
 
-
 ukf::ukf(int dim)
 {
 	Vector3d state;
@@ -30,7 +29,15 @@ ukf::ukf(int dim)
 	Matrix3d crossCovar;
 
 	Vector3d covarianceValues(INITIAL_COVARIANCE,INITIAL_COVARIANCE,INITIAL_COVARIANCE);
+
 	covarianceMatrix = covarianceValues.asDiagonal();
+
+	Matrix2d processVarianceMatrix;
+
+	processVarianceMatrix << PROCESS_VARIANCE, PROCESS_VARIANCE,
+	PROCESS_VARIANCE, PROCESS_VARIANCE;
+
+
 }
 
 void ukf::generateSigmas()
@@ -38,14 +45,11 @@ void ukf::generateSigmas()
 
 //This method generates 2*DIM states distributed on a hypersphere around augPose
 
-	//Replaces Cholesky method
-	sigmas= covarianceMatrix.llt(); 
-
-	//Initialize temporary matrix to have size 3 by 6
-	MatrixXd T(sigmas.rows(), 2*sigmas.rows()); 
+	//Cholesky Decomposition
+	MatrixXd T = covarianceMatrix.llt();
 
 	//Concatenate both scaled sigmas to give T
-	T << sigmas.scale(-sqrt(3)) , sigmas.scale(sqrt(3)) ;
+	sigmas << T.scale(-sqrt(3)) , T.scale(sqrt(3));
 }
 
 
@@ -76,15 +80,11 @@ void ukf::recoverPrediction()
 {
 	//Average of sigmas (3x6) stored in augState (3x1)
 	augState = sigmas.rowwise().mean();
-	Matrix3X6 Temp;
+	Matrix3X6d Temp;
 	Temp << augState, augState, augState, augState, augState, augState;
-	Matrix2d processVarianceMatrix;
-	processVarianceMatrix << PROCESS_VARIANCE, PROCESS_VARIANCE,
-	PROCESS_VARIANCE, PROCESS_VARIANCE;
+
 	covarianceMatrix = ((sigmas - Temp) * (sigmas - Temp).transpose() ) - processVarianceMatrix;
 
-
-//SMALL PROBLEM: In order to transpose a matrix need the size to be resizeable!!! 
 }
 
 void ukf::predict(double rotation[3])
@@ -116,9 +116,6 @@ void h(double *sigma, double *gamma)
 void ukf::correct(double acc[3])
 {
 	generateSigmas();
-
-	//prettyPrint(sigma(0), 2*DIM, DIM);
-
 	//Here we predict the outcome of the acceleration measurement
 	//for every sigma and store in the gammas
 	for (int i = 0; i < 2* DIM; i++)
@@ -132,24 +129,21 @@ void ukf::correct(double acc[3])
 
 void ukf::recoverCorrection(double *acc)
 {
-
 	predMsmt = gammas.rowwise().mean();
 
-	Matrix3X6 Temp1;
+	Matrix3X6d Temp1;
 	Temp1 << augState, augState, augState, augState, augState, augState;
-	Matrix3X6 Temp2;
+	Matrix3X6d Temp2;
 	Temp2 << predMsmt, predMsmt, predMsmt, predMsmt, predMsmt, predMsmt;
-
-	processVarianceMatrix << PROCESS_VARIANCE, PROCESS_VARIANCE,
-	PROCESS_VARIANCE, PROCESS_VARIANCE;
 
 	measCovar = ( (sigmas - Temp1) * (sigmas - Temp1).transpose() ) - processVarianceMatrix;
 	crossCovar = ( (sigmas - Temp2) * (gammas - Temp2).transpose() ) - processVarianceMatrix;
 
-	Vector3f v(MEASUREMENT_VARIANCE,MEASUREMENT_VARIANCE,MEASUREMENT_VARIANCE);
+	Vector3f v(MEASUREMENT_VARIANCE, MEASUREMENT_VARIANCE, MEASUREMENT_VARIANCE);
 	measureVarDiag = v.asDiagonal();
 
 	measCovar = measCovar + measureVarDiag;
+
 	// double *gain = new double[DIM*DIM]();
 	Matrix3d gain = measCovar.ldlt().solve(crossCovar);
 	
@@ -161,7 +155,7 @@ void ukf::recoverCorrection(double *acc)
 
 	crossCovar.scale(-1.0);
 
-	augCovar += crossCovar * gain.traspose();
+	augCovar += crossCovar * gain.transpose();
 
 	delete gain;
 }
@@ -171,8 +165,10 @@ void fixState(double* state)
 	double angle = norm(state);
 	if (angle > pi)
 	{
+
+	state.scale(-(2*pi-angle)/angle);
 		//This represents the same rotation, but with norm < pi
-		scaleVector(-(2*pi-angle)/angle, state, 3);
+		//scaleVector(-(2*pi-angle)/angle, state, 3);
 	}
 }
 
