@@ -10,12 +10,11 @@
 ros::Publisher pub;
 ros::Subscriber sub;
 ukf estimator(3);
-double acc[3], gyro[3], quaternion[4];
+Vector3d acc, gyro;
+double quaternion[4];
 
-void vectorToArray(double array[3], geometry_msgs::Vector3 vector) {
-	array[0] = vector.x;
-	array[1] = vector.y;
-	array[2] = vector.z;
+void msgVectorToEigenVector(Ref<Vector3d> vector3d, geometry_msgs::Vector3 vector) {
+	vector3d << vector.x, vector.y, vector.z;
 }
 
 void arrayToQuaternion(geometry_msgs::Quaternion* quaternion, double array[4]) {
@@ -26,8 +25,8 @@ void arrayToQuaternion(geometry_msgs::Quaternion* quaternion, double array[4]) {
 }
 
 void dataCallback(const sensor_msgs::Imu::ConstPtr& imu) {
-	vectorToArray(acc, imu->linear_acceleration);
-	vectorToArray(gyro, imu->angular_velocity);
+	msgVectorToEigenVector(acc, imu->linear_acceleration);
+	msgVectorToEigenVector(gyro, imu->angular_velocity);
 
 	double accNorm = sqrt(acc[0]*acc[0]+acc[1]*acc[1]+acc[2]*acc[2]);
 	if (accNorm == 0) accNorm = 1;

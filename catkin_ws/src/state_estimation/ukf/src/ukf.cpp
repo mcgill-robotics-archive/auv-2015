@@ -3,7 +3,7 @@
 #include "rotation_vector_utils.h"
 #include <math.h>
 #include <stdio.h>
-#include <Eigen/Dense>
+
 
 //Length of the state vector
 const double INITIAL_COVARIANCE = 0.0000001;
@@ -13,24 +13,19 @@ const double MEASUREMENT_VARIANCE = 0.025;
 const double pi = std::acos(-1.0);
 
 //Method to print matrix or vector
-void Print(m) 
+/*void Print(MatrixXd m) 
 {
 cout << "Printing: \n" << m << endl;
-}
+}*/
+
+
 
 ukf::ukf(int dim)
 {
-	Vector3d state;
-	Matrix3d covarianceMatrix;
-	Matrix3X6d sigmas;
-	Matrix3X6d gammas;
-	Vector3d predMsmt;
-	Matrix3d measCovar;
-	Matrix3d crossCovar;
 
 	Vector3d covarianceValues(INITIAL_COVARIANCE,INITIAL_COVARIANCE,INITIAL_COVARIANCE);
 
-	covarianceMatrix = covarianceValues.asDiagonal();
+	covariance = covarianceValues.asDiagonal();
 
 	Matrix2d processVarianceMatrix;
 
@@ -46,15 +41,15 @@ void ukf::generateSigmas()
 //This method generates 2*DIM states distributed on a hypersphere around augPose
 
 	//Cholesky Decomposition
-	MatrixXd T = covarianceMatrix.llt();
+	Matrix3d T = covariance.llt().matrixL();
 
 	//Concatenate both scaled sigmas to give T
-	sigmas << T.scale(-sqrt(3)) , T.scale(sqrt(3));
+	sigmas << (-sqrt(3))*T , sqrt(3)*T;
 }
 
 
-void propogate(double *rotation, double* state)
-{
+void propogate(constVector rotation, constVector state)
+{/*
 	//double rotationEarth[3] = {-rotation[0], -rotation[1], -rotation[2]};
 	double result[3] = {};
 	double tau = 2*pi;
@@ -73,32 +68,29 @@ void propogate(double *rotation, double* state)
 	for (int j = 0; j < 3; j++)
 	{
 		state[j] = angle * result[j];
-	}
+	}*/
 }
 
 void ukf::recoverPrediction()
 {
-	//Average of sigmas (3x6) stored in augState (3x1)
-	augState = sigmas.rowwise().mean();
+	//Average of sigmas (3x6) stored in state (3x1)
+	state = sigmas.rowwise().mean();
 	Matrix3X6d Temp;
-	Temp << augState, augState, augState, augState, augState, augState;
+	Temp << state, state, state, state, state, state;
 
-	covarianceMatrix = ((sigmas - Temp) * (sigmas - Temp).transpose() ) - processVarianceMatrix;
+	covariance = ((sigmas - Temp) * (sigmas - Temp).transpose() ) - processCovariance;
 
 }
 
-void ukf::predict(double rotation[3])
+void ukf::predict(constVector rotation)
 {
 	generateSigmas();
 
 	for (int i = 0; i < 2*DIM; i++)
 	{
-		propogate(rotation, sigma(i));
+		propogate(rotation, sigmas.col(i));
 	}
-	//prettyPrint(sigma(0), 2*DIM, DIM);
-	//prettyPrint(augCovar, DIM, DIM);
 	recoverPrediction();
-	//prettyPrint(augCovar, DIM, DIM);
 }
 
 
@@ -113,7 +105,7 @@ void h(double *sigma, double *gamma)
 */
 }
 
-void ukf::correct(double acc[3])
+void ukf::correct(constVector acc)
 {
 	generateSigmas();
 	//Here we predict the outcome of the acceleration measurement
@@ -127,78 +119,49 @@ void ukf::correct(double acc[3])
 	recoverCorrection(acc);
 }
 
-void ukf::recoverCorrection(double *acc)
+void ukf::recoverCorrection(constVector acc)
 {
 	predMsmt = gammas.rowwise().mean();
 
 	Matrix3X6d Temp1;
-	Temp1 << augState, augState, augState, augState, augState, augState;
+	Temp1 << state, state, state, state, state, state;
 	Matrix3X6d Temp2;
 	Temp2 << predMsmt, predMsmt, predMsmt, predMsmt, predMsmt, predMsmt;
 
-	measCovar = ( (sigmas - Temp1) * (sigmas - Temp1).transpose() ) - processVarianceMatrix;
-	crossCovar = ( (sigmas - Temp2) * (gammas - Temp2).transpose() ) - processVarianceMatrix;
-
-	Vector3f v(MEASUREMENT_VARIANCE, MEASUREMENT_VARIANCE, MEASUREMENT_VARIANCE);
-	measureVarDiag = v.asDiagonal();
-
-	measCovar = measCovar + measureVarDiag;
+	measCovar = ( (sigmas - Temp1) * (sigmas - Temp1).transpose() ) + measurementCovariance;
+	crossCovar = ( (sigmas - Temp2) * (gammas - Temp2).transpose() );
 
 	// double *gain = new double[DIM*DIM]();
 	Matrix3d gain = measCovar.ldlt().solve(crossCovar);
-	
-	Vector3d Temp3(acc, acc, acc);
 
-	acc = acc - predMsmt;
 
-	augState = gain * acc;
+	state = gain * (acc - predMsmt);
 
-	crossCovar.scale(-1.0);
 
-	augCovar += crossCovar * gain.transpose();
-
-	delete gain;
+	covariance -= crossCovar * gain.transpose();
 }
 
 void fixState(double* state)
 {
-	double angle = norm(state);
+	/*double angle = norm(state);
 	if (angle > pi)
 	{
 
 	state.scale(-(2*pi-angle)/angle);
 		//This represents the same rotation, but with norm < pi
 		//scaleVector(-(2*pi-angle)/angle, state, 3);
-	}
+	}*/
 }
 
 
-void ukf::update(double* acc, double* rotation, double *quaternion)
+void ukf::update(constVector acc, constVector rotation, double *quaternion)
 {
-	//printf("%3f %3f\n", rotation[1], augState[1]);
-	fixState(augState);
+	//fixState(state);
 
     predict(rotation);
     correct(acc);
 
-    quaternionFromRotationVector(quaternion, augState);
+    //quaternionFromRotationVector(quaternion, state);
 }
 
-double *ukf::sigma(int index)
-{//Returns a pointer to the desired sigma array
-	return vectorIndex(sigmas, index, DIM);
-}
-
-double *ukf::gamma(int index)
-{//Returns a pointer to the desired sigma array
-	return vectorIndex(gammas, index, DIM);
-}
-
-/*int main()
-{
-	ukf filter(3);
-	double gyro [3] = {};
-	filter.update(gyro, gyro);
-	return 0;
-}*/
 

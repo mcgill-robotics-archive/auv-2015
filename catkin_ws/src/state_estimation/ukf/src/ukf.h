@@ -1,6 +1,13 @@
 #ifndef UKF_H_
 #define UKF_H_
 
+#include <eigen3/Eigen/Dense>
+
+using namespace Eigen;
+
+typedef Matrix<double, 3, 6> Matrix3X6d;
+typedef const Ref<const Vector3d> constVector;
+
 void h(double *sigma, double *gamma);
 void propogate(double* rotation, double* state);
 
@@ -8,25 +15,24 @@ class ukf
 {
 	public:
     	ukf(int dim);
-    	void update(double* acc, double* gyro, double* quaternion);
+    	void update(constVector acc, constVector rotation, double *quaternion);
 
 	private:
     	int DIM;
-    	double* augState;
-    	double* augCovar;
-    	double* predMsmt;
-    	double* measCovar;
-    	double* crossCovar;
-    	double* sigmas;
-    	double* gammas;
-    	void predict(double rotation[3]);
-    	void correct(double acc[3]);
+    	Vector3d state;
+	Matrix3d covariance;
+	Matrix3X6d sigmas;
+	Matrix3X6d gammas;
+	Vector3d predMsmt;
+	Matrix3d measCovar;
+	Matrix3d crossCovar;
+	Matrix3d processCovariance;//TODO: Initialize this matrix
+	Matrix3d measurementCovariance;//And this one too
+    	void predict(constVector);
+    	void correct(constVector);
     	void generateSigmas();
     	void recoverPrediction();
-    	void recoverCorrection(double acc[3]);
-
-    	double *sigma(int index);
-    	double *gamma(int index);
+    	void recoverCorrection(constVector);
 
 
 };

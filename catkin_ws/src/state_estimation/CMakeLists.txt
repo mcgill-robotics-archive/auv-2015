@@ -7,6 +7,7 @@ project(state_estimation)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  cmake_modules
   message_generation
   nav_msgs
   std_msgs
@@ -15,6 +16,10 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   rospy
 )
+
+## Have to put this in a separate find_package because we need to
+## find cmake_modules first
+find_package(Eigen REQUIRED)
 
 catkin_package(
   CATKIN_DEPENDS
@@ -26,7 +31,6 @@ catkin_package(
 ## Build ##
 ###########
 
-include_directories(Eigen)
 add_subdirectory(pose)
 add_subdirectory(tf)
 add_subdirectory(ukf)

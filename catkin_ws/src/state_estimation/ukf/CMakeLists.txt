@@ -2,8 +2,6 @@
 add_executable(pose_ukf
   src/ros_pose.cpp 
   src/ukf.cpp
-  src/matrix_utils.cpp
-  src/rotation_vector_utils.cpp
 )
 
 ## Specify libraries to link a library or executable target against
@@ -20,7 +18,5 @@ target_link_libraries(pose_ukf ${catkin_LIBRARIES})
 include_directories(src)
 catkin_add_gtest(${PROJECT_NAME}-test 
   test/test_ukf.cpp
-  src/matrix_utils.cpp
   src/ukf.cpp
-  src/rotation_vector_utils.cpp
 )
