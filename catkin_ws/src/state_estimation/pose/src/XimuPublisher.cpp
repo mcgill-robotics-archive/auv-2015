@@ -16,7 +16,7 @@ using namespace boost;
 static unsigned int sequence = 0;
 ros::Publisher pub, pub2, pub3, pub4, rawPub;
 geometry_msgs::Pose pos;
-//geometry_msgs::PoseStamped posStamped;
+geometry_msgs::PoseStamped posStamped;
 double* q = new double[4];
 asio::io_service serial_io;
 asio::serial_port port(serial_io);
