@@ -1,0 +1,6 @@
+{
+    "jscodehints.detectedExclusions": [
+        "C:/Users/Arun Rawlani/auv/nodejs/bower_components/google-code-prettify/src/prettify.js",
+        "C:/Users/Arun Rawlani/auv/nodejs/bower_components/google-code-prettify/src/lang-lua.js"
+    ]
+}
