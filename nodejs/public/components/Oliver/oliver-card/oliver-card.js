@@ -1,3 +1,3 @@
-Polymer('oliver-test', {
+Polymer('oliver-card', {
 	//
 });
