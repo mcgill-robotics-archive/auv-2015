@@ -27,7 +27,6 @@ html(lang='en')
     
     link(rel='stylesheet', href='style/henry.css', shim-shadowdom)
     script(src='platform/platform.js')
-    link(rel='import', href='components/elements/aimee_elements.html')
     script(src='/socket.io/socket.io.js')
   body(fullbleed unresolved)
     h1 Hello , I am testing the server using the sample polymer project
@@ -44,6 +43,11 @@ html(lang='en')
         <p>I did it and it works!</p>
         </post-card>
         </div>
+        div(class='container' layout vertical center)
+            post-card
+                img(width='70', height='70', src='img/henry-images/avatar-01.svg')
+                h2 Arun
+                p Testing 
     button(type='button') This is a button
     p(id='demo') Testing
                 
