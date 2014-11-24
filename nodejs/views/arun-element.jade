@@ -1,0 +1,23 @@
+doctype html
+html(lang='en')
+    head
+    
+    //- Compatibiltiy
+    meta(charset='utf-8)
+    meta(http-equiv='X-UA-Compatible', content='IE=edge')
+    meta(name='viewport', content='width=device-width, initial-scale=1.0, maximum scale=1.0')
+    meta(name='description', content='Robotics AUV 2015 webpage'
+    
+    //-Title
+    title= title
+    
+    //-Scripts
+    link(rel='stylesheet', href='style/arun-element.css', shim-shadowdom)
+    script(src='platform/platform.js')
+    link(rel='import', href='components/elements/arun_elements.html')
+    script(scr='/socket.io/socket.io.js')
+    body(fullbleed unresolved)
+    arun
+        h1 hello world
+    script.
+    var socket = io();
