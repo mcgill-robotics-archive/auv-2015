@@ -49,23 +49,42 @@ void ukf::generateSigmas()
 
 
 void propogate(constVector rotation, constVector state)
-{/*
+{
 	//double rotationEarth[3] = {-rotation[0], -rotation[1], -rotation[2]};
-	double result[3] = {};
+	
+	//double result[3] = {};
+	Vector3d result(0,0,0);
 	double tau = 2*pi;
 
-	composeRotations(rotation, state, result);
+	//Get rotation and state as AngleAxis'
+	AngleAxisf rotationAngleAxis = AngleAxisf(rotation.norm(), rotation.normalize());
+	AngleAxisf stateAngleAxis = AngleAxisf(state.norm(), state.normalize());
+	
+	//Construct transforms from AngleAxis' and compose the transforms
+	Transform rotationTransform(rotationAngleAxis);
+	Transform stateTransform(stateAngleAxis);
+	Transform resultTransform = rotationTransform * stateTransform;
+	
+	Matrix3d resultMatrix = resultTransform.rotation(); //Convert to rotation matrix
+	AngleAxisf resultAngleAxis = AngleAxisf(resultMatrix); //Convert to AngleAxis representation
+	result = resultAngleAxis.angle()*resultAngleAxis.axis(); //Get a vector back
+	
+	//composeRotations(rotation, state, result);
+	
 
-	double angle = norm(result);
+	double angle = result.norm();
 	if (angle != 0)
 	{
-		scaleVector(1/angle, result, 3);
+		result = (1/angle)*result
+		//scaleVector(1/angle, result, 3);
 	}
 
 	//We want to choose the rotation vector closest to sigma
-	angle += tau*floor(0.5 + (dot(state, result)-angle)/tau);
+	angle += tau*floor(0.5 + (state.dot(result)-angle)/tau);
 
-	for (int j = 0; j < 3; j++)
+	state = angle * result;
+	
+	/*for (int j = 0; j < 3; j++)
 	{
 		state[j] = angle * result[j];
 	}*/
