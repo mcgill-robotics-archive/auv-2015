@@ -6,7 +6,7 @@
 
 // Tests that gtest is working.
 TEST(sanity, one_equals_one) {
-  EXPECT_EQ(1,1);
+  EXPECT_EQ(1,2);
 }
 
 TEST(matrix_utils_scaleVector, times_zero_is_zero) {
