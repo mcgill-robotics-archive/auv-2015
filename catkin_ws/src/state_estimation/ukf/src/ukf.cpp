@@ -22,7 +22,7 @@ cout << "Printing: \n" << m << endl;
 
 ukf::ukf(int dim)
 {
-
+	DIM = dim;
 	Vector3d covarianceValues(INITIAL_COVARIANCE,INITIAL_COVARIANCE,INITIAL_COVARIANCE);
 
 	covariance = covarianceValues.asDiagonal();
@@ -48,7 +48,7 @@ void ukf::generateSigmas()
 }
 
 
-void propogate(constVector rotation, constVector state)
+void propogate(Vector3d rotation, Ref<Vector3d> state)
 {
 	//double rotationEarth[3] = {-rotation[0], -rotation[1], -rotation[2]};
 	
@@ -56,18 +56,17 @@ void propogate(constVector rotation, constVector state)
 	Vector3d result(0,0,0);
 	double tau = 2*pi;
 
-	//Get rotation and state as AngleAxis'
-	AngleAxisf rotationAngleAxis = AngleAxisf(rotation.norm(), rotation.normalize());
-	AngleAxisf stateAngleAxis = AngleAxisf(state.norm(), state.normalize());
 	
-	//Construct transforms from AngleAxis' and compose the transforms
-	Transform rotationTransform(rotationAngleAxis);
-	Transform stateTransform(stateAngleAxis);
-	Transform resultTransform = rotationTransform * stateTransform;
 	
-	Matrix3d resultMatrix = resultTransform.rotation(); //Convert to rotation matrix
-	AngleAxisf resultAngleAxis = AngleAxisf(resultMatrix); //Convert to AngleAxis representation
-	result = resultAngleAxis.angle()*resultAngleAxis.axis(); //Get a vector back
+	//Construct transforms as AngleAxis' and compose the transforms
+	Vector3d normalizedRotation = rotation.normalized();	//Normalize vector to construct AngleAxis
+	AngleAxisd rotationTransform(rotation.norm(), normalizedRotation); //Rotation as AngleAxis
+	Vector3d normalizedState = state.normalized();	//Normalize vector to construct AngleAxis
+	AngleAxisd stateTransform(state.norm(), normalizedState);
+	AngleAxisd resultTransform(rotationTransform * stateTransform);
+	
+	
+	result = resultTransform.angle()*resultTransform.axis(); //Get a vector back
 	
 	//composeRotations(rotation, state, result);
 	
@@ -75,7 +74,7 @@ void propogate(constVector rotation, constVector state)
 	double angle = result.norm();
 	if (angle != 0)
 	{
-		result = (1/angle)*result
+		result = (1/angle)*result;
 		//scaleVector(1/angle, result, 3);
 	}
 
@@ -104,24 +103,34 @@ void ukf::recoverPrediction()
 void ukf::predict(constVector rotation)
 {
 	generateSigmas();
-
+	
 	for (int i = 0; i < 2*DIM; i++)
 	{
+		//propogate();
 		propogate(rotation, sigmas.col(i));
 	}
 	recoverPrediction();
+	
 }
 
 
 
 
-void h(double *sigma, double *gamma)
-{/*
-	double gravity[] = {0, 0, 9.8};
-	double inverted[3] = {};
-	inverse(sigma, inverted);
-	rotateThisByThat(gravity, inverted, gamma);
-*/
+//void h(double *sigma, double *gamma)
+void h(Vector3d sigma, Ref<Vector3d> gamma)
+{
+	Vector3d gravity(0,0,9.8);
+
+	//double gravity[] = {0, 0, 9.8};
+	Vector3d inverted = -sigma;
+	//double inverted[3] = {};
+	//inverse(sigma, inverted);
+	//rotateThisByThat(gravity, inverted, gamma);
+	Vector3d normalizedInverted = inverted.normalized();
+	AngleAxisd invertedAngleAxis(inverted.norm(), normalizedInverted);
+	//Transform invertedTransform(invertedAngleAxis);
+	gamma = invertedAngleAxis * gravity; //Apply the transform to gravity
+
 }
 
 void ukf::correct(constVector acc)
