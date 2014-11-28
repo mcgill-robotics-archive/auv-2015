@@ -6,6 +6,8 @@ from std_msgs.msg import Float64
 from std_msgs.msg import String
 from auv_msgs.msg import SetPosition
 from auv_msgs.msg import SetVelocity
+import tf
+from tf.transformations import euler_from_quaternion
 
 wrenchPublisher = None
 
@@ -20,8 +22,8 @@ depth = 0.0
 roll = 0.0
 pitch = 0.0
 
-#error relative to object
-yaw = 0.0
+#absolute yaw relative to initial_frame
+desired_yaw = 0.0
 
 #absolute value
 surgeSpeed = 0.0
@@ -31,30 +33,48 @@ isSettingPosition = 0
 
 
 def setPosition_callback(data):
-
     global xPos, yPos, depth, roll, pitch, yaw, isSettingPosition
     xPos = data.xPos
     yPos = data.yPos
     depth = data.depth
     roll = data.roll
     pitch = data.pitch
-    yaw = data.yaw
+    desired_yaw = data.yaw
 
     isSettingPosition = 1
 
 
 def setVelocity_callback(data):
-
     global surgeSpeed, swaySpeed, depth, roll, pitch, yaw, isSettingPosition
     surgeSpeed = data.surgeSpeed
     swaySpeed = data.swaySpeed
     depth = data.depth
     roll = data.roll
     pitch = data.pitch
-    yaw = data.yaw
+    desired_yaw = data.yaw
 
     isSettingPosition = 0
-    
+
+
+def get_transform(origin_frame, target_frame):
+    listener = tf.TransformListener()
+    t = rospy.Time(0)
+    found = False
+    while not found:
+        try:
+            (trans, rot) = listener.lookupTransform(
+                # FROM
+                origin_frame,
+                # TO
+                target_frame,
+                # NOW
+                rospy.Time(0)
+            )
+            return (trans, rot)
+        except (tf.LookupException, tf.ConnectivityException,
+                tf.ExtrapolationException):
+            continue
+
 
 def rosInit():
     rospy.init_node('controls', anonymous=True)
@@ -81,6 +101,7 @@ if __name__ == '__main__':
     ei_pitch = 0.0
     ed_pitch = 0.0
 
+    ep_yaw = 0.0
     ei_yaw = 0.0
     ed_yaw = 0.0
 
@@ -138,7 +159,7 @@ if __name__ == '__main__':
 
     while not rospy.is_shutdown():
 
-    	rospy.loginfo("pitch gain is: %f, yaw is: %f, surgeSpeed is: %f, swaySpeed is: %f", kp_pitch, yaw, surgeSpeed, swaySpeed,)
+    	rospy.loginfo("pitch gain is: %f, desired_yaw is: %f, surgeSpeed is: %f, swaySpeed is: %f", kp_pitch, desired_yaw, surgeSpeed, swaySpeed,)
 
     	if (isSettingPosition == 1):
     		pass
@@ -177,23 +198,26 @@ if __name__ == '__main__':
         prev_pitch = pitch
         ty = kp_pitch*pitch + ki_pitch*ei_pitch + kd_pitch*ed_pitch
 
-        
-        #Correct angle error for wrap aroud
-        if (yaw > pi):
-        	yaw -= 2*pi
+        ep_yaw_prev = ep_yaw
 
-        elif (yaw < -pi):
-        	yaw += 2*pi
+        (trans, rot) = get_transform("/robot/initial_horizon", "/robot")
+
+        if (rot):
+            (estimated_roll, estimated_pitch, estimated_yaw) = euler_from_quaternion(rot)
+
+
+        ep_yaw = desired_yaw - estimated_yaw
+        #Correct angle error for wrap aroud
+        if (ep_yaw > pi):
+        	ep_yaw -= 2*pi
+
+        elif (ep_yaw < -pi):
+        	ep_yaw += 2*pi
 
         #Yaw PID control
-        ei_yaw += yaw*dt
-        ed_yaw = (yaw - prev_yaw)/dt
-        prev_yaw = yaw
-        tz = kp_yaw*yaw + ki_yaw*ei_yaw + kd_yaw*ed_yaw
-
-
-
-
+        ei_yaw += ep_yaw*dt
+        ed_yaw = (ep_yaw - ep_yaw_prev)/dt
+        tz = kp_yaw*ep_yaw + ki_yaw*ei_yaw + kd_yaw*ed_yaw
         
         wrenchMsg = Wrench()
 
@@ -207,5 +231,3 @@ if __name__ == '__main__':
         wrenchPublisher.publish(wrenchMsg)
 
         r.sleep()
-
-
