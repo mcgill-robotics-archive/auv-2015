@@ -1,13 +1,14 @@
 link(rel='import', href='../../../polymer/polymer.html')
 link(rel='import', href='../../auv-card/auv-card.html')
-link(rel='import', href='chartjs-import.html')
 
-polymer-element(name='depth-graph' attributes='width height labels values colors')
+script(type='text/javascript', src='http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js')
+script(src='highcharts.js')
+script(src='exporting.js')
+
+polymer-element(name='depth-graph' attributes ='title')
     template
         link(rel='stylesheet', href='depth-graph.css')
-        auv-card
-            canvas(id="canvas" width="{{width}}" height="{{height}}")
+        auv-card(title='Depth graph')
+            #container(style='min-width: 310px; height: 400px; margin: 0 auto', data-highcharts-chart='0')
 
     script(src='depth-graph.js')
-
-
