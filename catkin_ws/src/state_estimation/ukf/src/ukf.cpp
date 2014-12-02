@@ -103,10 +103,9 @@ void ukf::recoverPrediction()
 void ukf::predict(constVector rotation)
 {
 	generateSigmas();
-	
+	Vector3d gravity(0,0,0);
 	for (int i = 0; i < 2*DIM; i++)
 	{
-		//propogate();
 		propogate(rotation, sigmas.col(i));
 	}
 	recoverPrediction();
