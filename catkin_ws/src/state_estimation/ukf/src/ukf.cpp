@@ -120,7 +120,6 @@ void h(Vector3d sigma, Ref<Vector3d> gamma)
 {
 	Vector3d gravity(0,0,9.8);
 
-	//double gravity[] = {0, 0, 9.8};
 	Vector3d inverted = -sigma;
 	//double inverted[3] = {};
 	//inverse(sigma, inverted);
@@ -139,7 +138,7 @@ void ukf::correct(constVector acc)
 	//for every sigma and store in the gammas
 	for (int i = 0; i < 2* DIM; i++)
 	{
-	//	h(sigma(i), gamma(i));
+		h(sigmas.col(i), gammas.col(i));
 	}
 
 	//prettyPrint(gamma(0), 2*DIM, DIM);
@@ -168,22 +167,23 @@ void ukf::recoverCorrection(constVector acc)
 	covariance -= crossCovar * gain.transpose();
 }
 
-void fixState(double* state)
+void fixState(Ref<Vector3d> state)
 {
-	/*double angle = norm(state);
+	double angle = state.norm();
 	if (angle > pi)
 	{
 
-	state.scale(-(2*pi-angle)/angle);
+	
+	state = state * (-(2*pi-angle)/angle);	//Scales it
 		//This represents the same rotation, but with norm < pi
 		//scaleVector(-(2*pi-angle)/angle, state, 3);
-	}*/
+	}
 }
 
 
-void ukf::update(constVector acc, constVector rotation, double *quaternion)
+void ukf::update(constVector acc, constVector rotation, double *quaternion) //acc as constVector ?
 {
-	//fixState(state);
+	fixState(state);
 
     predict(rotation);
     correct(acc);
