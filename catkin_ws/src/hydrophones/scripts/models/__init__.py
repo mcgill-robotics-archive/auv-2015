@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Hydrophone task models."""
 
 __author__ = "Anass Al-Wohoush"
