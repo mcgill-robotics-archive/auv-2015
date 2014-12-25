@@ -14,12 +14,12 @@ class Mic(object):
     """Microphone properties.
 
     Microphone IDs range from 0 (origin) to the number of microphones in the
-    array exclusively. Origin transducer is placed at (0,0).
+    array exclusively. Origin microphone is placed at (0,0).
 
     Attributes:
         id: Mic id (int).
-        x: X coordinate relative to origin transducer in meters.
-        y: Y coordinate relative to origin transducer in meters.
+        x: X coordinate relative to origin microphone in meters.
+        y: Y coordinate relative to origin microphone in meters.
     """
 
     PARAM_PATH = "/hydrophones/mic/"
@@ -35,12 +35,12 @@ class Mic(object):
         self._path_y = os.path.join(Mic.PARAM_PATH, str(self.id), 'y')
 
     def __repr__(self):
-        """Return string representation of transducer."""
+        """Return string representation of microphone."""
         return "<Mic x: {mic.x:+4.2f} m y: {mic.y:+4.2f} m>".format(mic=self)
 
     @property
     def x(self):
-        """X coordinate relative to origin transducer in meters.
+        """X coordinate relative to origin microphone in meters.
 
         Raises:
             KeyError: ROS parameter is not set.
@@ -54,7 +54,7 @@ class Mic(object):
 
     @property
     def y(self):
-        """Y coordinate relative to origin transducer in meters.
+        """Y coordinate relative to origin microphone in meters.
 
         Raises:
             KeyError: ROS parameter is not set.

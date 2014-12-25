@@ -15,7 +15,7 @@ class Audio(object):
 
     Attributes:
         buffersize: Buffersize of incoming audio stream.
-        fs: Sampling frequency in Hz.
+        freq: Sampling frequency in Hz.
     """
 
     PARAM_PATH = "/hydrophones/audio/"
@@ -37,19 +37,19 @@ class Audio(object):
         rospy.set_param(path, int(value))
 
     @property
-    def fs(self):
+    def freq(self):
         """Sampling frequency in Hz.
 
         Raises:
             KeyError: ROS parameter is not set.
         """
-        path = os.path.join(Audio.PARAM_PATH, "fs")
+        path = os.path.join(Audio.PARAM_PATH, "freq")
         return float(rospy.get_param(path))
 
-    @fs.setter
-    def fs(self, value):
+    @freq.setter
+    def freq(self, value):
         """Set sampling frequency in Hz."""
-        path = os.path.join(Audio.PARAM_PATH, "fs")
+        path = os.path.join(Audio.PARAM_PATH, "freq")
         rospy.set_param(path, float(value))
 
 

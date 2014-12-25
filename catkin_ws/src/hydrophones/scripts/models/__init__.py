@@ -7,4 +7,5 @@ __version__ = "1.0"
 
 from env import env
 from audio import audio
+from pinger import target, dummy
 from mic import mics, NUMBER_OF_MICS
