@@ -34,17 +34,17 @@ html(lang='en')
             div(id='chartContainer' style='height:500px; width:90%;')
             form(method='GET')
                 p X value
-                input(type='text' id='xvalue') 
+                input(type='text' id='xvalue' value='value') 
                 br
                 p Y Value
-                input(type='text' id='yvalue')
+                input(type='text' id='yvalue' value= 'value')
                 br
                 input(type='submit' value='submit')
     
     script.
         var socket = io();
         window.addEventListener('polymer-ready', function(e) {
-            var globals = document.getElementById('globals');
-            console.log(globals.values);
+            //var globals = document.getElementById('globals');
+            //console.log(globals.values);
         });
         document.getElementById('date').innerHTML = Date();
