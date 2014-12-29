@@ -9,6 +9,10 @@
 
 tf::Vector3 zero(0,0,0);
 
+tf::Quaternion imuMountToRobotFrame;
+
+tf::Quaternion imuInternalHorizonToRobot;
+
 void imuCallBack(const geometry_msgs::PoseStamped::ConstPtr& msg) {
   ros::Time time(ros::Time::now());
   tf::TransformBroadcaster broadcaster;
@@ -20,25 +24,18 @@ void imuCallBack(const geometry_msgs::PoseStamped::ConstPtr& msg) {
     msg->pose.orientation.w
   );
 
-  tf::Quaternion imuMountToRobotFrame;
-  imuMountToRobotFrame.setRPY(PI/2,0,0);
-
-  tf::Quaternion imuInternalHorizonToMountPoint;
-  imuInternalHorizonToMountPoint.setRPY(PI/2,0,0);
-
-  tf::Quaternion initialHorizonToRobot;
   initialHorizonToRobot = imuMountToRobotFrame.inverse() * imuInternalHorizonToMountPoint.inverse() * 
                           orientation.inverse()*imuMountToRobotFrame;
  
-
-  broadcaster.sendTransform(tf::StampedTransform(
+  broadcaster.sendTransform(
+    tf::StampedTransform(
       tf::Transform(initialHorizonToRobot, zero),
       time,
       "/initial_horizon",
-      "/robot"   
-  ));
+      "/robot"
+    )
+  );
 
-  
   double roll,pitch,yaw;
   tf::Matrix3x3(initialHorizonToRobot).getRPY(roll,pitch,yaw);
 
@@ -50,13 +47,13 @@ void imuCallBack(const geometry_msgs::PoseStamped::ConstPtr& msg) {
     "/initial_horizon",
     "/horizon"
   ));
-  
-
 }
 
 int main(int argc, char** argv) {
   ros::init(argc, argv, "tf_broadcaster");
-  ros::NodeHandle node;  
+  ros::NodeHandle node;
+  imuMountToRobotFrame.setRPY(PI/2,0,0);
+  imuInternalHorizonToMountPoint.setRPY(PI/2,0,0);  
 
   // TODO: Figure out why nothing gets broadcast without this line
   tf::TransformBroadcaster broadcaster;

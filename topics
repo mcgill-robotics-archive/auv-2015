@@ -1,0 +1,59 @@
+; updated: 2014-12-24
+
+;
+; This is a sample topics configuration file to be used with the McGill
+; Robotics' ROS Bagger -- `bag`. It must be in the root of the project's git
+; repository (i.e. ${ROBOTIC_PATH}/${ROBOT}/topics).
+;
+; The structure is as follows:
+;
+; [UNIQUE NAME]
+; shortcut: UNIQUE ONE CHARACTER SHORTCUT FOR CLI
+; description: SHORT DESCRIPTION OF TOPICS FOR --help
+; topics: TOPIC/NUMBER/ONE
+;         TOPIC/NUMBER/TWO
+;
+
+[battery]
+shortcut: b
+description: battery voltages
+topics: electrical_interface/batteryVoltage1
+        electrical_interface/batteryVoltage2
+
+[camera]
+shortcut: c
+description: all camera feeds
+topics: camera_down/camera_out/camera_info
+        camera_down/image_rect
+        camera_front_left/camera_out/camera_info
+        camera_front_left/image_rect
+        camera_front_right/camera_out/camera_info
+        camera_front_right/image_rect
+
+[depth]
+shortcut: d
+description: raw and filtered depth
+topics: electrical_interface/depth
+        state_estimation/filteredDepth
+
+[hydrophones]
+shortcut: h
+description: hydrophone audio feeds
+topics: hydrophones/audio
+
+[motor]
+shortcut: m
+description: sent motor commands
+topics: electrical_interface/motor
+
+[state estimation]
+shortcut: s
+description: IMU pose and TFs
+topics: state_estimation/pose
+        state_estimation/raw
+        tf
+
+[temperature]
+shortcut: t
+description: CPU temperatures
+topics: status/temperature
