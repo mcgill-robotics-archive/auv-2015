@@ -10,17 +10,17 @@
 tf::Vector3 zero(0,0,0);
 
 tf::Quaternion imuMountToRobotFrame;
-
-tf::Quaternion imuInternalHorizonToRobot;
+tf::Quaternion imuInternalHorizonToMountPoint;
+tf::Quaternion initialHorizonToRobot;
 
 void imuCallBack(const geometry_msgs::PoseStamped::ConstPtr& msg) {
   ros::Time time(ros::Time::now());
   tf::TransformBroadcaster broadcaster;
 
   tf::Quaternion orientation(
-    msg->pose.orientation.x, 
-    msg->pose.orientation.y, 
-    msg->pose.orientation.z, 
+    msg->pose.orientation.x,
+    msg->pose.orientation.y,
+    msg->pose.orientation.z,
     msg->pose.orientation.w
   );
 
