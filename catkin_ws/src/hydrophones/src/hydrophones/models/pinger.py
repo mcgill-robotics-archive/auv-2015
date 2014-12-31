@@ -3,7 +3,7 @@
 """Pinger model."""
 
 __author__ = "Anass Al-Wohoush"
-__version__ = "1.0"
+__version__ = "1.0.0"
 
 import os
 import rospy
@@ -13,12 +13,14 @@ class Pinger(object):
 
     """Pinger properties.
 
-    Pinger IDs vary from 0 (target) to an arbitrary number of pingers.
+    Pinger IDs are as in parameter server.
 
     Attributes:
-        id: Mic id (int).
+        id: Pinger ID.
         freq: Frequency of sound in Hz.
-        pulse: Length of pulse in seconds.
+        period: Pulse period in seconds.
+        length: Pulse length in seconds.
+        delay: Pulse delay relative to competition pinger in seconds.
         x: X coordinate relative to origin transducer in meters.
         y: Y coordinate relative to origin transducer in meters.
     """
@@ -29,7 +31,7 @@ class Pinger(object):
         """Construct Pinger object.
 
         Args:
-            id: Mic id (int).
+            id: Pinger ID.
         """
         self.id = id
 
@@ -37,43 +39,84 @@ class Pinger(object):
         """Return string representation of pinger."""
         return (
             "<Pinger"
-            "freq: {pinger.freq} Hz"
-            "pulse: {pinger.pulse:5.4f} s"
-            "x: {pinger.x:+4.2f} m"
-            "y: {pinger.y:+4.2f} m"
+            " id: {pinger.id}"
+            " freq: {pinger.freq} Hz"
+            " delay: {pinger.delay:4.3f} s"
             ">"
         ).format(pinger=self)
 
     @property
     def freq(self):
-        """Frequency in Hz.
+        """Pinger frequency in Hz.
 
         Raises:
             KeyError: ROS parameter is not set.
         """
-        path = os.path.join(Pinger.PARAM_PATH, "freq")
+        path = os.path.join(Pinger.PARAM_PATH, str(self.id), "freq")
         return float(rospy.get_param(path))
 
     @freq.setter
     def freq(self, value):
-        """Set frequency in Hz."""
-        path = os.path.join(Pinger.PARAM_PATH, "freq")
+        """Set pinger frequency in Hz."""
+        path = os.path.join(Pinger.PARAM_PATH, str(self.id), "freq")
         rospy.set_param(path, float(value))
 
     @property
-    def pulse(self):
-        """Pulse length in seconds.
+    def delay(self):
+        """Pulse delay relative to competition pinger in seconds.
 
         Raises:
             KeyError: ROS parameter is not set.
         """
-        path = os.path.join(Pinger.PARAM_PATH, "pulse")
+        path = os.path.join(Pinger.PARAM_PATH, str(self.id), "delay")
         return float(rospy.get_param(path))
 
-    @pulse.setter
-    def pulse(self, value):
-        """Set pulse length in seconds."""
-        path = os.path.join(Pinger.PARAM_PATH, "pulse")
+    @delay.setter
+    def delay(self, value):
+        """Set pulse delay relative to competition pinger in seconds."""
+        path = os.path.join(Pinger.PARAM_PATH, str(self.id), "delay")
+        rospy.set_param(path, float(value))
+
+    @property
+    def length(self):
+        """Pulse length in seconds.
+
+        This property is shared by all pingers.
+
+        Raises:
+            KeyError: ROS parameter is not set.
+        """
+        path = os.path.join(Pinger.PARAM_PATH, "length")
+        return float(rospy.get_param(path))
+
+    @length.setter
+    def length(self, value):
+        """Set pulse length in seconds.
+
+        This property is shared by all pingers.
+        """
+        path = os.path.join(Pinger.PARAM_PATH, "length")
+        rospy.set_param(path, float(value))
+
+    @property
+    def period(self):
+        """Pulse period in seconds.
+
+        This property is shared by all pingers.
+
+        Raises:
+            KeyError: ROS parameter is not set.
+        """
+        path = os.path.join(Pinger.PARAM_PATH, "period")
+        return float(rospy.get_param(path))
+
+    @period.setter
+    def period(self, value):
+        """Set pulse period in seconds.
+
+        This property is shared by all pingers.
+        """
+        path = os.path.join(Pinger.PARAM_PATH, "period")
         rospy.set_param(path, float(value))
 
     @property
@@ -83,13 +126,13 @@ class Pinger(object):
         Raises:
             KeyError: ROS parameter is not set.
         """
-        path = os.path.join(Pinger.PARAM_PATH, "x")
+        path = os.path.join(Pinger.PARAM_PATH, str(self.id), "x")
         return float(rospy.get_param(path))
 
     @x.setter
     def x(self, value):
         """Set X coordinate in meters."""
-        path = os.path.join(Pinger.PARAM_PATH, "x")
+        path = os.path.join(Pinger.PARAM_PATH, str(self.id), "x")
         rospy.set_param(path, float(value))
 
     @property
@@ -99,14 +142,11 @@ class Pinger(object):
         Raises:
             KeyError: ROS parameter is not set.
         """
-        path = os.path.join(Pinger.PARAM_PATH, "y")
+        path = os.path.join(Pinger.PARAM_PATH, str(self.id), "y")
         return float(rospy.get_param(path))
 
     @y.setter
     def y(self, value):
         """Set Y coordinate in meters."""
-        path = os.path.join(Pinger.PARAM_PATH, "y")
+        path = os.path.join(Pinger.PARAM_PATH, str(self.id), "y")
         rospy.set_param(path, float(value))
-
-target = Pinger(0)
-dummy = Pinger(1)

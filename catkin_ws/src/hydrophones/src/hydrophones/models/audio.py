@@ -3,7 +3,7 @@
 """Audio model."""
 
 __author__ = "Anass Al-Wohoush"
-__version__ = "1.0"
+__version__ = "1.0.0"
 
 import os
 import rospy
@@ -51,6 +51,3 @@ class Audio(object):
         """Set sampling frequency in Hz."""
         path = os.path.join(Audio.PARAM_PATH, "freq")
         rospy.set_param(path, float(value))
-
-
-audio = Audio()

@@ -3,7 +3,7 @@
 """Microphone model."""
 
 __author__ = "Anass Al-Wohoush"
-__version__ = "1.0"
+__version__ = "1.0.0"
 
 import os
 import rospy
@@ -13,11 +13,12 @@ class Mic(object):
 
     """Microphone properties.
 
-    Microphone IDs range from 0 (origin) to the number of microphones in the
-    array exclusively. Origin microphone is placed at (0,0).
+    Microphone IDs are as in parameter server and range from 0 (origin) to the
+    number of microphones in the array exclusively. Origin microphone is placed
+    at (0,0).
 
     Attributes:
-        id: Mic id (int).
+        id: Mic ID.
         x: X coordinate relative to origin microphone in meters.
         y: Y coordinate relative to origin microphone in meters.
     """
@@ -28,7 +29,7 @@ class Mic(object):
         """Construct Mic object.
 
         Args:
-            id: Mic id (int).
+            id: Mic ID.
         """
         self.id = id
         self._path_x = os.path.join(Mic.PARAM_PATH, str(self.id), 'x')
@@ -36,7 +37,13 @@ class Mic(object):
 
     def __repr__(self):
         """Return string representation of microphone."""
-        return "<Mic x: {mic.x:+4.2f} m y: {mic.y:+4.2f} m>".format(mic=self)
+        return (
+            "<Mic"
+            " id: {mic.id}"
+            " x: {mic.x:+4.2f} m"
+            " y: {mic.y:+4.2f} m"
+            ">"
+        ).format(mic=self)
 
     @property
     def x(self):
@@ -65,8 +72,3 @@ class Mic(object):
     def y(self, value):
         """Set Y coordinate in meters."""
         rospy.set_param(self._path_y, float(value))
-
-
-# Microphone array
-NUMBER_OF_MICS = 4
-mics = [Mic(id) for id in range(NUMBER_OF_MICS)]

@@ -3,7 +3,7 @@
 """Task environment model."""
 
 __author__ = "Anass Al-Wohoush"
-__version__ = "1.0"
+__version__ = "1.0.0"
 
 import os
 import rospy
@@ -14,6 +14,7 @@ class Environment(object):
     """Environment properties.
 
     Attributes:
+        is_practice: Whether on practice side of the pool.
         is_simulated: Whether the environment is simulated.
         speed: Speed of sound of environment in meters per second.
     """
@@ -21,22 +22,31 @@ class Environment(object):
     PARAM_PATH = "/hydrophones/env/"
 
     @property
-    def is_simulated(self):
-        """Whether the environment is simulated.
+    def is_practice(self):
+        """Whether on practice side of the pool.
 
         Raises:
             KeyError: ROS parameter is not set.
         """
-        path = os.path.join(Environment.PARAM_PATH, "sim")
-        if rospy.has_param(path):
-            return bool(rospy.get_param(path))
-        else:
-            return False
+        path = os.path.join(Environment.PARAM_PATH, "is_practice")
+        return str(rospy.get_param(path))
+
+    @is_practice.setter
+    def is_practice(self, value):
+        """Set whether on practice side of the pool."""
+        path = os.path.join(Environment.PARAM_PATH, "is_practice")
+        rospy.set_param(path, bool(value))
+
+    @property
+    def is_simulated(self):
+        """Whether the environment is simulated."""
+        path = os.path.join(Environment.PARAM_PATH, "is_simulation")
+        return bool(rospy.get_param(path, False))
 
     @is_simulated.setter
     def is_simulated(self, value):
-        """Set if environment is simulated."""
-        path = os.path.join(Environment.PARAM_PATH, "sim")
+        """Set whether environment is simulated."""
+        path = os.path.join(Environment.PARAM_PATH, "is_simulation")
         rospy.set_param(path, bool(value))
 
     @property
@@ -54,5 +64,3 @@ class Environment(object):
         """Set speed of sound in meters per second."""
         path = os.path.join(Environment.PARAM_PATH, "speed")
         rospy.set_param(path, float(value))
-
-env = Environment()
