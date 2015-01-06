@@ -3,11 +3,11 @@
 		name="XimuPublisher"
 		type="XimuPublisher"
 		pkg="state_estimation"
-	/node>
+	/>
 	
 	<node
 		name="tf_broadcaster"
 		type="tf_broadcaster"
 		pkg="state_estimation"
-	/node>
+	/>
 </launch>
