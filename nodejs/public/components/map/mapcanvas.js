@@ -47,13 +47,41 @@ window.onload = function () {
         y:40,
         name:"initial"
     }]; 
+    
+    var static = [{
+        x: -40,  
+        y: -67,
+        name: "second"
+    }]
     chart.options.data = [{
         type: "scatter",
         toolTipContent: "<span style='\"'color: {color};'\"'><strong>{name}</strong></span> <br/> <strong>Y-Position</strong> {y} <br/> <strong>X-Position</strong> {x} ",
         name: "Object 1",
         showInLegend: true,
         dataPoints:dps 
-    }];
+    },
+    {
+        type: "scatter",
+        toolTipContent: "<span style='\"'color: {color};'\"'><strong>{name}</strong></span> <br/> <strong>Y-Position</strong> {y} <br/> <strong>X-Position</strong> {x} ",
+        name: "Object 2",
+        showInLegend: true,
+        dataPoints:static 
+    }
+    ];
+    
+    //hides and unhide legend
+    chart.options.legend = {
+        cursor: "pointer",
+        itemclick: function(e) {
+            if (typeof (e.dataSeries.visible) === "undefined" || e.dataSeries.visible) {
+                    e.dataSeries.visible = false;
+                } else {
+                    e.dataSeries.visible = true;
+                }
+ 
+            chart.render();
+        }
+    }
 		//});
 
     //rendering the chart when the page loads 
