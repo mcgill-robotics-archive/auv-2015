@@ -12,11 +12,11 @@
   <!-- don't need this as it is run in the state_estimation launch file, Nick March 25 -->
   <!-- <node name="sim_depth" pkg = "state_estimation" type="sim_depth"/> -->
 
-  <!-- OPTIONALY run tf broadcaster -->
-  <arg name="dontBroadcastTF" default="0" />
+  <!-- OPTIONALLY run tf broadcaster -->
+  <arg name="dontBroadcastTF" default="1" />
   <node name="tf_broadcaster_simulator" pkg="simulator" type="tf_broadcaster_simulator" unless="$(arg dontBroadcastTF)"/>
 
-  <!-- OPTIONALY LAUNCH RVIZ -->
+  <!-- OPTIONALLY LAUNCH RVIZ -->
   <arg name="useRviz" default="0"/>
   <group if="$(arg useRviz)">
  	<node name="rviz" pkg="rviz" type="rviz" />

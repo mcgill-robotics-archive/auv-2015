@@ -33,7 +33,7 @@
     <model name="robot">
       <plugin name="robot" filename="librobot.so"></plugin>
       <static>false</static>
-      <pose> 1.58725 -3.98664 4.5 0 -0 -3.14159 </pose>
+      <pose> 1.58725 -3.98664 4.5 0 0 1.57079632679 </pose>
 
       <link name='body'>
 	    <!-- Metric Inertial Properties -->
@@ -63,21 +63,12 @@
 		  <geometry>
 			<mesh>
 			  <uri>file://../models/RobotColorGazebo.dae</uri>
-			  <scale> .008 .008 .008</scale>
+			  <scale> .008 .008 .008</scale>			
 			</mesh>
 		  </geometry>
+		  <pose> 0 0 0 0 0 1.57079632679 </pose>
 		</visual>
       </link>
-
-	<joint name="rrf_joint" type="revolute">
-		<parent>body</parent>
-		<child>robot_reference_frame</child>
-		<axis>0 0 1</axis>
-	</joint>
-	
-	<link name="robot_reference_frame">
-		<pose>0 0 0 3.14159265359 0 1.57079632679</pose> <!--is this still good?-->
-	</link>
 
 	  <!-- camera1 -->
       <joint name='camera1' type='revolute'>
@@ -88,7 +79,7 @@
       </joint>
 
       <link name='camera1_link'>
-	<pose>0.1 0 0 0 0 -1.507</pose>
+	<pose>0 0.1 0 0 0 0</pose>
 
 	<collision name='collision'>
 	  <geometry>
@@ -121,7 +112,7 @@
 	      <far>300</far>
 	    </clip>
 	    <noise>
-	      <type>gaussian</type>-->
+	      <type>gaussian</type>
 	      <mean>0.0</mean>
 	      <stddev>0.007</stddev>
 	    </noise>
@@ -156,7 +147,7 @@
       </joint>
 
       <link name='camera2_link'>
-	<pose>-.1 0 0 0 0 -1.507</pose>
+	<pose>0 -.1 0 0 0 0</pose>
 
 	<collision name='collision'>
 	  <geometry>
@@ -189,7 +180,7 @@
 	      <far>300</far>
 	    </clip>
 	    <noise>
-	      <type>gaussian</type>-->
+	      <type>gaussian</type>
 	      <mean>0.0</mean>
 	      <stddev>0.007</stddev>
 	    </noise>
@@ -223,7 +214,7 @@
       </joint>
 
       <link name='camera3_link'>
-	<pose>0 .2 -.2 0 1.5 1.57079632679</pose>
+	<pose>-.2 0 -.2 0 1.57079632679 3.14159</pose>
 
 	<collision name='collision'>
 	  <geometry>
@@ -256,7 +247,7 @@
 	      <far>300</far>
 	    </clip>
 	    <noise>
-	      <type>gaussian</type>-->
+	      <type>gaussian</type>
 	      <mean>0.0</mean>
 	      <stddev>0.007</stddev>
 	    </noise>

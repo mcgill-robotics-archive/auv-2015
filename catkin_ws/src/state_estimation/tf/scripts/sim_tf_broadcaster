@@ -1,0 +1,49 @@
+#!/usr/bin/env python2.7
+
+import rospy
+from std_msgs.msg import Float64
+from geometry_msgs.msg import PoseStamped
+from gazebo_msgs.msg import ModelStates
+from tf import TransformBroadcaster as broadcaster
+from tf.transformations import quaternion_from_euler, euler_from_quaternion
+from math import pi
+
+FREQUENCY = 500 # Hz
+
+time = None
+zero = (0, 0, 0)
+
+def callback(modelStates):
+    global time
+    if time:
+        if (rospy.get_time() - time)*FREQUENCY > 1:
+            index = modelStates.name.index('robot')
+            q_msg = modelStates.pose[index].orientation
+            q = [q_msg.x, -q_msg.y, -q_msg.z, q_msg.w]
+            q_yaw = quaternion_from_euler(0, 0, euler_from_quaternion(q)[2])
+            time = rospy.get_time()
+            broadcaster.sendTransform(zero, q, time,
+                '/robot/initial_horizon', '/robot')
+            broadcaster.sendTransform(zero, q_yaw, time, 
+                '/robot/initial_horizon', '/robot/horizon')
+            
+    else:
+        time = rospy.get_time()
+
+
+# Init the ros node, subscribers and publishers
+# And run the node
+def init():
+    global pub, time
+    rospy.init_node('sim_depth')
+
+    # Subscribe to different inputing topics
+    rospy.Subscriber('/gazebo/model_states', ModelStates, callback)
+
+    rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        init()
+    except rospy.ROSInterruptException:
+        pass
