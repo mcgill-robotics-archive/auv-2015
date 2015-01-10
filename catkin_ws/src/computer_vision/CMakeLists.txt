@@ -52,9 +52,9 @@ include_directories(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_executable(downsample_a src/downsample_a.cpp)
+add_executable(computer_vision_a src/computer_vision_a.cpp)
 
-target_link_libraries(downsample_a
+target_link_libraries(computer_vision_a
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )
