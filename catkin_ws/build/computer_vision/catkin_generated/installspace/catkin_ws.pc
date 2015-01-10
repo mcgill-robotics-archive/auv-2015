@@ -1,0 +1,8 @@
+prefix=/home/vivi/auv/catkin_ws/install
+
+Name: catkin_ws
+Description: Description of catkin_ws
+Version: 0.0.0
+Cflags: -I/home/vivi/auv/catkin_ws/install/include
+Libs: -L/home/vivi/auv/catkin_ws/install/lib -ltest_zone
+Requires: roscpp std_msgs message_runtime cv_bridge image_transport

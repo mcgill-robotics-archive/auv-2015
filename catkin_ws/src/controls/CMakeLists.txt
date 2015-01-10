@@ -106,6 +106,7 @@ include_directories(
 ## Declare a cpp executable
 # add_executable(controls_node src/controls_node.cpp)
 add_executable(thrust_mapper src/thrust_mapper.cpp)
+add_dependencies(thrust_mapper auv_msgs_generate_messages_cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes

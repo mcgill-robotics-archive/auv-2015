@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "controls")
+set(controls_MAINTAINER "raabuchanan <raabuchanan@todo.todo>")
+set(controls_DEPRECATED "")
+set(controls_VERSION "0.0.0")
+set(controls_BUILD_DEPENDS "roscpp" "rospy" "std_msgs" "auv_msgs")
+set(controls_RUN_DEPENDS "roscpp" "rospy" "std_msgs" "auv_msgs")
+set(controls_BUILDTOOL_DEPENDS "catkin")
