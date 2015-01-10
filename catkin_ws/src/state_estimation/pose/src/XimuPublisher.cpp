@@ -1,6 +1,8 @@
 #include <boost/asio.hpp>
 #include <boost/asio/serial_port.hpp>
 
+#include <iostream>
+
 #include "XimuReceiver.h"
 #include "XimuPublisher.h"
 
@@ -36,8 +38,13 @@ void multiplyQuaternions(double q[],double p[])
 }
 
 void spin() {
-    port.open("/dev/ttyUSB0");
-    port.set_option(asio::serial_port_base::baud_rate(115200));
+	try{
+		port.open("/dev/ttyUSB0");
+		port.set_option(asio::serial_port_base::baud_rate(115200));
+	}
+	catch(exception& e) {
+		std::cerr "The IMU is not connected or doesn't have permission to read the serial port\n";
+	}
 
     char c;
 
