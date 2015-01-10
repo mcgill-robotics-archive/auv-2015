@@ -5,7 +5,7 @@ from std_msgs.msg import Float64
 from geometry_msgs.msg import PoseStamped
 from gazebo_msgs.msg import ModelStates
 from tf import TransformBroadcaster
-from tf.transformations import quaternion_from_euler, euler_from_quaternion
+from tf.transformations import *
 from math import pi
 
 FREQUENCY = 500 # Hz
@@ -13,20 +13,59 @@ FREQUENCY = 500 # Hz
 time = None
 zero = (0, 0, 0)
 
+# Converts position message into list
+def positionToList(pos):
+    return [pos.x, -pos.y, -pos.z]
+
+# Converts quaternion message into list
+def quaternionToList(q):
+    return [q.x, -q.y, -q.z, q.w]
+
+# Inverts a transform
+def invertTransform(pos, rot):
+    # Where rot is a quaternion [x, y, z, w] and pos is a translation [x, y, z]
+    _, _, angles, x, _ = decompose_matrix(inverse_matrix(concatenate_matrices(
+        quaternion_matrix(rot), translation_matrix(pos))))
+    return (x, quaternion_from_euler(*angles))
+
+# Sends the robot's orientation
+def broadcastIMU(modelStates):
+    index = modelStates.name.index('robot')
+    pose = modelStates.pose[index]
+    q_msg = pose.orientation
+    q = [q_msg.x, -q_msg.y, -q_msg.z, q_msg.w]
+    t = rospy.get_rostime()
+    broadcaster.sendTransform(zero, q, t,
+        '/robot', '/robot/initial_horizon')
+    q_yaw = quaternion_from_euler(0, 0, euler_from_quaternion(q)[2])
+    broadcaster.sendTransform(zero, q_yaw, t, 
+        '/robot/horizon', '/robot/initial_horizon')
+
+    q, x = invertTransform([pose.position.x, -pose.position.y, -pose.position.z], q)
+    broadcaster.sendTransform(q, x, t, '/simulation/world', '/robot')
+
+# Sends the position of objects in the world
+def broadcastTransform(modelStates, name):
+    target = modelStates.pose[modelStates.name.index(name)]
+    t = rospy.get_rostime()
+    broadcaster.sendTransform(positionToList(target.position), 
+        quaternionToList(target.orientation), t, name, '/simulation/world')
+
+# Sends the world's position relative to the robot
+def broadcastWorld(modelStates):
+    robot = modelStates.pose[modelStates.name.index('robot')]
+
 def callback(modelStates):
     global time, broadcaster
     if time:
         if (rospy.get_time() - time)*FREQUENCY > 1:
-            index = modelStates.name.index('robot')
-            q_msg = modelStates.pose[index].orientation
-            q = [q_msg.x, -q_msg.y, -q_msg.z, q_msg.w]
-            q_yaw = quaternion_from_euler(0, 0, euler_from_quaternion(q)[2])
-            t = rospy.get_rostime()
-            broadcaster.sendTransform(zero, q, t,
-                '/robot', '/robot/initial_horizon')
-            broadcaster.sendTransform(zero, q_yaw, t, 
-                '/robot/horizon', '/robot/initial_horizon')
             time = rospy.get_time()
+            broadcastIMU(modelStates)
+            for name in modelStates.name:
+                if name != 'robot':
+                    broadcastTransform(modelStates, name)
+            
+            
     else:
         time = rospy.get_time()
 
