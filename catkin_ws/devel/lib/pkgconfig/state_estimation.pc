@@ -1,8 +1,0 @@
-prefix=/home/vivi/auv/catkin_ws/devel
-
-Name: state_estimation
-Description: Description of state_estimation
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/vivi/auv/catkin_ws/devel/lib 
-Requires: roscpp rospy

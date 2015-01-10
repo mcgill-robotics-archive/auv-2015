@@ -1,2 +1,0 @@
-set(auv_msgs_MESSAGE_FILES "/home/vivi/auv/catkin_ws/src/auv_msgs/msg/Solenoid.msg;/home/vivi/auv/catkin_ws/src/auv_msgs/msg/Motor.msg;/home/vivi/auv/catkin_ws/src/auv_msgs/msg/SetPosition.msg;/home/vivi/auv/catkin_ws/src/auv_msgs/msg/SetVelocity.msg;/home/vivi/auv/catkin_ws/src/auv_msgs/msg/MotorCommands.msg;/home/vivi/auv/catkin_ws/src/auv_msgs/msg/CVTarget.msg;/home/vivi/auv/catkin_ws/src/auv_msgs/msg/SonarTarget.msg")
-set(auv_msgs_SERVICE_FILES "")

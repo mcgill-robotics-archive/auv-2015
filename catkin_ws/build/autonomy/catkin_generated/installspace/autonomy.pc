@@ -1,8 +1,0 @@
-prefix=/home/vivi/auv/catkin_ws/install
-
-Name: autonomy
-Description: Description of autonomy
-Version: 0.0.0
-Cflags: 
-Libs: -L/home/vivi/auv/catkin_ws/install/lib 
-Requires: 

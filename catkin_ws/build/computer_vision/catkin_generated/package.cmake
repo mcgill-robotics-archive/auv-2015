@@ -1,7 +1,0 @@
-set(_CATKIN_CURRENT_PACKAGE "catkin_ws")
-set(catkin_ws_MAINTAINER "Jean-Sebastien Dery <jean-sebastien.dery@mail.mcgill.ca>")
-set(catkin_ws_DEPRECATED "")
-set(catkin_ws_VERSION "0.0.0")
-set(catkin_ws_BUILD_DEPENDS "message_generation" "cv_bridge" "opencv2" "image_transport" "roscpp" "sensor_msgs" "std_msgs")
-set(catkin_ws_RUN_DEPENDS "message_runtime" "cv_bridge" "opencv2" "image_transport" "roscpp" "sensor_msgs" "std_msgs")
-set(catkin_ws_BUILDTOOL_DEPENDS "catkin")

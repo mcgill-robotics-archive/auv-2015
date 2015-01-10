@@ -1,7 +1,0 @@
-set(_CATKIN_CURRENT_PACKAGE "state_estimation")
-set(state_estimation_MAINTAINER "Max <maxkrogius@gmail.com>, Alan <alan.yang1994@gmail.com>")
-set(state_estimation_DEPRECATED "")
-set(state_estimation_VERSION "0.0.0")
-set(state_estimation_BUILD_DEPENDS "roscpp" "rospy" "std_msgs" "geometry_msgs" "sensor_msgs" "nav_msgs" "message_generation" "tf")
-set(state_estimation_RUN_DEPENDS "roscpp" "rospy" "std_msgs" "geometry_msgs" "sensor_msgs" "nav_msgs" "message_runtime" "tf")
-set(state_estimation_BUILDTOOL_DEPENDS "catkin")
