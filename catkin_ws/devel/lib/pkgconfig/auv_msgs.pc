@@ -1,8 +1,0 @@
-prefix=/home/vivi/auv/catkin_ws/devel
-
-Name: auv_msgs
-Description: Description of auv_msgs
-Version: 0.0.0
-Cflags: -I/home/vivi/auv/catkin_ws/devel/include
-Libs: -L/home/vivi/auv/catkin_ws/devel/lib 
-Requires: message_runtime
