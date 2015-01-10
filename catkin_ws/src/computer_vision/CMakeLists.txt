@@ -59,6 +59,20 @@ target_link_libraries(computer_vision_a
 			${OpenCV_LIBRARIES}
 )
 
+add_executable(computer_vision_COLOR src/computer_vision_COLOR.cpp)
+
+target_link_libraries(computer_vision_COLOR
+			${catkin_LIBRARIES}
+			${OpenCV_LIBRARIES}
+)
+
+add_executable(computer_vision_OBJECT src/computer_vision_OBJECT.cpp)
+
+target_link_libraries(computer_vision_OBJECT
+			${catkin_LIBRARIES}
+			${OpenCV_LIBRARIES}
+)
+
 
 # This makes sure message headers are generated before being used
 ##add_dependencies(distanceCalculator ${catkin_EXPORTED_TARGETS})
