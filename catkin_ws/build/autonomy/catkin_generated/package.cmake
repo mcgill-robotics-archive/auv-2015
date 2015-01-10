@@ -1,7 +1,0 @@
-set(_CATKIN_CURRENT_PACKAGE "autonomy")
-set(autonomy_MAINTAINER "Alex Reiff <alexander.reiff@mail.mcgill.ca>")
-set(autonomy_DEPRECATED "")
-set(autonomy_VERSION "0.0.0")
-set(autonomy_BUILD_DEPENDS "roscpp" "rospy" "std_msgs")
-set(autonomy_RUN_DEPENDS "roscpp" "rospy" "std_msgs")
-set(autonomy_BUILDTOOL_DEPENDS "catkin")

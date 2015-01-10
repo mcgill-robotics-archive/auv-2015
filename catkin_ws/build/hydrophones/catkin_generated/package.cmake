@@ -1,7 +1,0 @@
-set(_CATKIN_CURRENT_PACKAGE "hydrophones")
-set(hydrophones_MAINTAINER "anass <mr@anassinator.com>")
-set(hydrophones_DEPRECATED "")
-set(hydrophones_VERSION "0.0.0")
-set(hydrophones_BUILD_DEPENDS "geometry_msgs" "roscpp" "rospy" "std_msgs")
-set(hydrophones_RUN_DEPENDS "geometry_msgs" "roscpp" "rospy" "std_msgs")
-set(hydrophones_BUILDTOOL_DEPENDS "catkin")
