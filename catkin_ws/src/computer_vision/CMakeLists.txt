@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(catkin_ws)
+project(computer_vision)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
