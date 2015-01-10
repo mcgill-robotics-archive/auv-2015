@@ -90,12 +90,17 @@ public:
       return;
     }
 
+    //
+    cv::Mat hsvIm, threshImage;
+    cvtColor(cv_ptr->image,hsvIm,CV_BGR2HSV);
+    inRange(hsvIm,cv::Scalar(80,0,0),cv::Scalar(110,255,255),threshImage);
+
     // Draw an example circle on the video stream
-    if (cv_ptr->image.rows > 60 && cv_ptr->image.cols > 60)
-      cv::circle(cv_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
+    //if (cv_ptr->image.rows > 60 && cv_ptr->image.cols > 60)
+    //  cv::circle(cv_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
 
     // Update GUI Window
-    cv::imshow(OPENCV_WINDOW, cv_ptr->image);
+    cv::imshow(OPENCV_WINDOW, threshImage);
     cv::waitKey(3);
     
     // Output modified video stream
