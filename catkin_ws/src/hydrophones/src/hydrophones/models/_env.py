@@ -3,7 +3,7 @@
 """Task environment model."""
 
 __author__ = "Anass Al-Wohoush"
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 import os
 import rospy
@@ -29,7 +29,7 @@ class Environment(object):
             KeyError: ROS parameter is not set.
         """
         path = os.path.join(Environment.PARAM_PATH, "is_practice")
-        return str(rospy.get_param(path))
+        return bool(rospy.get_param(path))
 
     @is_practice.setter
     def is_practice(self, value):
@@ -64,3 +64,6 @@ class Environment(object):
         """Set speed of sound in meters per second."""
         path = os.path.join(Environment.PARAM_PATH, "speed")
         rospy.set_param(path, float(value))
+
+
+env = Environment()

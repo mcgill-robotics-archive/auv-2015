@@ -6,19 +6,20 @@ hydrophones:
         is_practice: False
         is_simulation: False
         speed: 1500.00
+    method: multilateration
     mic:
         "0":
             x: 0.00
             y: 0.00
         "1":
-            x: 0.01
+            x: 0.50
             y: 0.00
         "2":
-            x: 0.01
-            y: 0.01
+            x: 0.50
+            y: 0.32
         "3":
             x: 0.00
-            y: 0.01
+            y: 0.32
     pinger:
         length: 0.004
         period: 2.00

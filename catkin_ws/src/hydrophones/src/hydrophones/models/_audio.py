@@ -51,3 +51,6 @@ class Audio(object):
         """Set sampling frequency in Hz."""
         path = os.path.join(Audio.PARAM_PATH, "freq")
         rospy.set_param(path, float(value))
+
+
+audio = Audio()

@@ -3,10 +3,11 @@
 """Pinger model."""
 
 __author__ = "Anass Al-Wohoush"
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 import os
-import rospy
+from textwrap import dedent
+from rospy import get_param, set_param
 
 
 class Pinger(object):
@@ -35,15 +36,15 @@ class Pinger(object):
         """
         self.id = id
 
-    def __repr__(self):
+    def __str__(self):
         """Return string representation of pinger."""
-        return (
-            "<Pinger"
-            " id: {pinger.id}"
-            " freq: {pinger.freq} Hz"
-            " delay: {pinger.delay:4.3f} s"
-            ">"
-        ).format(pinger=self)
+        return dedent(
+            '''
+            Pinger {pinger.id}
+             freq: {pinger.freq} Hz
+             delay: {pinger.delay:4.3f} s
+            '''
+        ).format(sol=self)
 
     @property
     def freq(self):
@@ -53,13 +54,13 @@ class Pinger(object):
             KeyError: ROS parameter is not set.
         """
         path = os.path.join(Pinger.PARAM_PATH, str(self.id), "freq")
-        return float(rospy.get_param(path))
+        return float(get_param(path))
 
     @freq.setter
     def freq(self, value):
         """Set pinger frequency in Hz."""
         path = os.path.join(Pinger.PARAM_PATH, str(self.id), "freq")
-        rospy.set_param(path, float(value))
+        set_param(path, float(value))
 
     @property
     def delay(self):
@@ -69,13 +70,13 @@ class Pinger(object):
             KeyError: ROS parameter is not set.
         """
         path = os.path.join(Pinger.PARAM_PATH, str(self.id), "delay")
-        return float(rospy.get_param(path))
+        return float(get_param(path))
 
     @delay.setter
     def delay(self, value):
         """Set pulse delay relative to competition pinger in seconds."""
         path = os.path.join(Pinger.PARAM_PATH, str(self.id), "delay")
-        rospy.set_param(path, float(value))
+        set_param(path, float(value))
 
     @property
     def length(self):
@@ -87,7 +88,7 @@ class Pinger(object):
             KeyError: ROS parameter is not set.
         """
         path = os.path.join(Pinger.PARAM_PATH, "length")
-        return float(rospy.get_param(path))
+        return float(get_param(path))
 
     @length.setter
     def length(self, value):
@@ -96,7 +97,7 @@ class Pinger(object):
         This property is shared by all pingers.
         """
         path = os.path.join(Pinger.PARAM_PATH, "length")
-        rospy.set_param(path, float(value))
+        set_param(path, float(value))
 
     @property
     def period(self):
@@ -108,7 +109,7 @@ class Pinger(object):
             KeyError: ROS parameter is not set.
         """
         path = os.path.join(Pinger.PARAM_PATH, "period")
-        return float(rospy.get_param(path))
+        return float(get_param(path))
 
     @period.setter
     def period(self, value):
@@ -117,7 +118,7 @@ class Pinger(object):
         This property is shared by all pingers.
         """
         path = os.path.join(Pinger.PARAM_PATH, "period")
-        rospy.set_param(path, float(value))
+        set_param(path, float(value))
 
     @property
     def x(self):
@@ -127,13 +128,13 @@ class Pinger(object):
             KeyError: ROS parameter is not set.
         """
         path = os.path.join(Pinger.PARAM_PATH, str(self.id), "x")
-        return float(rospy.get_param(path))
+        return float(get_param(path))
 
     @x.setter
     def x(self, value):
         """Set X coordinate in meters."""
         path = os.path.join(Pinger.PARAM_PATH, str(self.id), "x")
-        rospy.set_param(path, float(value))
+        set_param(path, float(value))
 
     @property
     def y(self):
@@ -143,10 +144,10 @@ class Pinger(object):
             KeyError: ROS parameter is not set.
         """
         path = os.path.join(Pinger.PARAM_PATH, str(self.id), "y")
-        return float(rospy.get_param(path))
+        return float(get_param(path))
 
     @y.setter
     def y(self, value):
         """Set Y coordinate in meters."""
         path = os.path.join(Pinger.PARAM_PATH, str(self.id), "y")
-        rospy.set_param(path, float(value))
+        set_param(path, float(value))
