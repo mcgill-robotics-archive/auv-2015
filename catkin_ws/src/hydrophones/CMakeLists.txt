@@ -9,28 +9,23 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
 )
 
-# add_message_files(
-#   FILES
-# )
+add_message_files(
+  FILES
+  Pinger.msg
+  TDOA.msg
+)
 
-# add_service_files(
-#   FILES
-# )
+catkin_python_setup()
 
-# add_action_files(
-#   FILES
-# )
+generate_messages(
+  DEPENDENCIES
+  std_msgs
+  geometry_msgs
+  hydrophones
+)
 
 catkin_package(
   CATKIN_DEPENDS
   rospy
   roscpp
 )
-
-catkin_python_setup()
-
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs
-#   geometry_msgs
-# )
