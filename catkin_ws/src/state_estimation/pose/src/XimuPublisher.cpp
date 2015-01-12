@@ -43,7 +43,7 @@ void spin() {
 		port.set_option(asio::serial_port_base::baud_rate(115200));
 	}
 	catch(exception& e) {
-		std::cerr "The IMU is not connected or doesn't have permission to read the serial port\n";
+		std::cerr << "The IMU is not connected or doesn't have permission to read the serial port\n";
 	}
 
     char c;
