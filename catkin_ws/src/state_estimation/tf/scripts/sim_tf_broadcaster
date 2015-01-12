@@ -6,7 +6,7 @@ from geometry_msgs.msg import PoseStamped
 from gazebo_msgs.msg import ModelStates
 from tf import TransformBroadcaster
 from tf.transformations import *
-from math import pi
+from math import pi, sqrt
 
 FREQUENCY = 500 # Hz
 
@@ -15,32 +15,35 @@ zero = (0, 0, 0)
 
 # Converts position message into list. And converts from z-up to z-down frame
 def positionToList(pos):
-    return [pos.x, -pos.y, -pos.z]
+    return [pos.x, pos.y, pos.z]
 
 # Converts quaternion message into list. And converts from z-up to z-down frame
 def quaternionToList(q):
-    return [q.x, -q.y, -q.z, q.w]
+    return [q.x, q.y, q.z, q.w]
 
 # Inverts a transform
 def invertTransform(pos, rot):
     # Where rot is a quaternion [x, y, z, w] and pos is a translation [x, y, z]
     _, _, angles, x, _ = decompose_matrix(inverse_matrix(concatenate_matrices(
-        quaternion_matrix(rot), translation_matrix(pos))))
+        translation_matrix(pos), quaternion_matrix(rot))))
     return (x, quaternion_from_euler(*angles))
 
 # Sends the robot's orientation
 def broadcastIMU(modelStates):
     index = modelStates.name.index('robot')
     pose = modelStates.pose[index]
-    q = quaternionToList(pose.orientation)
+    # We need to subtract out the initial rotation of pi around x
+    q_imu = quaternion_multiply([sqrt(2)/2, sqrt(2)/2, 0, 0], 
+        quaternionToList(pose.orientation))
     t = rospy.get_rostime()
-    broadcaster.sendTransform(zero, q, t,
+    broadcaster.sendTransform(zero, q_imu, t,
         '/robot', '/robot/initial_horizon')
-    q_yaw = quaternion_from_euler(0, 0, euler_from_quaternion(q)[2])
+    q_yaw = quaternion_from_euler(0, 0, euler_from_quaternion(q_imu)[2])
     broadcaster.sendTransform(zero, q_yaw, t, 
         '/robot/horizon', '/robot/initial_horizon')
 
-    q, x = invertTransform(positionToList(pose.position))
+    q, x = invertTransform(positionToList(pose.position), 
+        quaternionToList(pose.orientation))
     broadcaster.sendTransform(q, x, t, '/simulation/world', '/robot')
 
 # Sends the position of objects in the world
