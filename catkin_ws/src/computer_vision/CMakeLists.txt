@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(computer_vision)
+project(catkin_ws)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -69,6 +69,13 @@ target_link_libraries(computer_vision_COLOR
 add_executable(computer_vision_OBJECT src/computer_vision_OBJECT.cpp)
 
 target_link_libraries(computer_vision_OBJECT
+			${catkin_LIBRARIES}
+			${OpenCV_LIBRARIES}
+)
+
+add_executable(image_publish src/image_publish.cpp)
+
+target_link_libraries(image_publish
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )

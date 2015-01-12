@@ -1,49 +1,3 @@
-// #include <ros/ros.h>
-// #include <image_transport/image_transport.h>
-// #include <cv_bridge/CvBridge.h>
-
-// class MyVisionNode
-// {
-//   	ros::NodeHandle nh_;
-// 	image_transport::ImageTransport it_;
-// 	image_transport::CameraSubscriber sub_;
-// 	image_transport::Publisher pub_;
-// 	sensor_msgs::CvBridge bridge_;
-
-// 	MyVisionNode:
-//   	public()
-//     	: it_(nh_)
-//    		{
-//      		sub_ = it_.subscribeCamera("camera/image_rect_color", 1, &MyVisionNode::imageCb, this);
-//      		pub_ = it_.advertise("camera/image_out_vitaly", 1);
-//    		}
- 
-//    void imageCb(const sensor_msgs::ImageConstPtr& image_msg,
-//                 const sensor_msgs::CameraInfoConstPtr& info_msg)
-//    		{
-// 	   		IplImage *cv_image = NULL;
-// 	     	try {
-// 	       		cv_image = bridge_.imgMsgToCv(image_msg, "bgr8");
-// 	     	}
-// 	     	catch (sensor_msgs::CvBridgeException& error) {
-// 	       	ROS_ERROR("Couldn't convert image with encoding %s",
-// 	        image_msg­->encoding.c_str());
-// 	    	return;
-// 	    }
-
-// 	    image = image_msg;
-
-// 	   	pub_.publish(bridge_.cvToImgMsg(image, "bgr8"));
-//    	}
-// };
-
-// void main(int argc, char **argv){
-// 	//ros::init(argc, argv, "Vitaly_Vision"); // Initiate ROS node
-//   	MyVisionNode vitalijs(); // Create new grid mapper object
-//   	vitalijs.spin(); // Execute FSM loop
-// }
-
-
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -61,8 +15,7 @@ class ImageConverter
   image_transport::Publisher image_pub_;
   
 public:
-  ImageConverter()
-    : it_(nh_)
+  ImageConverter():it_(nh_)
   {
     // Subscrive to input video feed and publish output video feed
     image_sub_ = it_.subscribe("/camera/image_rect_color", 1, 
@@ -79,10 +32,13 @@ public:
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
-    cv_bridge::CvImagePtr cv_ptr;
+    // Take the input image and store it locally
+    cv_bridge::CvImagePtr img_ptr;
+    cv::Mat img_rgb;
     try
     {
-      cv_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+      img_ptr = cv_bridge::toCvCopy(msg, sensor_msgs::image_encodings::BGR8);
+      img_rgb = img_ptr->image;
     }
     catch (cv_bridge::Exception& e)
     {
@@ -90,21 +46,61 @@ public:
       return;
     }
 
-    //
-    cv::Mat hsvIm, threshImage;
-    cvtColor(cv_ptr->image,hsvIm,CV_BGR2HSV);
-    inRange(hsvIm,cv::Scalar(80,0,0),cv::Scalar(110,255,255),threshImage);
+    // Convert from BGR to HSV
+    cv::Mat img_hsv, img_threshold;
+    cvtColor(img_rgb, img_hsv, CV_BGR2HSV);
 
-    // Draw an example circle on the video stream
-    //if (cv_ptr->image.rows > 60 && cv_ptr->image.cols > 60)
-    //  cv::circle(cv_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
+    img_threshold = img_hsv.clone();
+
+    // Hue value we are comparing to
+    unsigned int ho = 165;
+    // How close the hues need to be to be seen as the same
+    unsigned int hTolerance = 10;
+    // Hue value we are comparing to
+    unsigned int sMin = 40;
+    // Hue value we are comparing to
+    unsigned int vMin = 24;
+
+    // Iterates over each pixel in the image
+    for (int y = 0; y < img_hsv.rows; y++)
+    {
+      for (int x = 0; x < img_hsv.cols; x++)
+      {
+        // Gets the hsv values from a pixel h[0,180] s[0, 255] v[0, 255]
+        const cv::Vec3b& hsv = img_hsv.at<cv::Vec3b>(y, x);
+        unsigned int h = (unsigned int)hsv.val[0];
+        unsigned int s = (unsigned int)hsv.val[1];
+        unsigned int v = (unsigned int)hsv.val[2];
+
+        // If the pixel is not very saturated/too dark, return black, otherwise compare hue
+        if (s > sMin && v > vMin) 
+        {
+          // The difference between the image and comparisson hue
+          int dh = ho - h;
+          // Compares the magnitudes of the difference at a period offset of -180, 0, and 180
+          unsigned int minDifference = std::min(std::abs(dh), std::min(std::abs(180 - dh), (180 + dh)));
+          
+          // If the colors do now match return black
+          if (minDifference <= hTolerance) {
+            img_threshold.at<cv::Vec3b>(y, x) = hsv;
+          } else {
+            img_threshold.at<cv::Vec3b>(y, x) = cv::Vec3b(0,0,0);
+          }
+        } 
+        else 
+        {
+            img_threshold.at<cv::Vec3b>(y, x) = cv::Vec3b(0,0,0);
+        }
+      }
+    }
 
     // Update GUI Window
-    cv::imshow(OPENCV_WINDOW, threshImage);
+    cvtColor(img_threshold, img_threshold, CV_HSV2BGR);
+    cv::imshow(OPENCV_WINDOW, img_threshold);
     cv::waitKey(3);
     
     // Output modified video stream
-    image_pub_.publish(cv_ptr->toImageMsg());
+    image_pub_.publish(img_ptr->toImageMsg());
   }
 };
 
