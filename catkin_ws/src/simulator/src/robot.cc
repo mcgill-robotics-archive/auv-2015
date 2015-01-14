@@ -127,33 +127,34 @@ public:
 	 * @param linearVelocity robot's current linear velocity
 	 */
 	geometry_msgs::Vector3 calculateDragForce(math::Vector3 linearVelocity) {
-		float magnitude, u, v, w, translationalDragMagnitude;
-		geometry_msgs::Vector3 translationalDragVector;
 		
-		u = linearVelocity.x;
-		v = linearVelocity.y;
-		w = linearVelocity.z;
+		float u = linearVelocity.x;
+		float v = linearVelocity.y;
+		float w = linearVelocity.z;
 		
-		magnitude = sqrt(u*u + v*v + w*w);
-		
-		if (magnitude > 1E-5) {
-			translationalDragVector.x = u/magnitude;
-			translationalDragVector.y = v/magnitude;
-			translationalDragVector.z = w/magnitude;
-		}
-		
-		//ROS_INFO("vx: %f     vy: %f     vz: %f     ", u,v,w);
+		float magnitude = sqrt(u*u + v*v + w*w);
 
+		float u_unit = 0, v_unit = 0, w_unit = 0;
+		if (magnitude > 1E-5) {
+			u_unit = u/magnitude;
+			v_unit = v/magnitude;
+			w_unit = w/magnitude;
+		}
 
 		//Drag force = -0.5 * Area * density * |speed|^2 * drag coefficient
-		//translationalDragMagnitude = -.5 * .118 * 1000 * (u*u + v*v + w*w) * .8; removing drag nick march 25
-		translationalDragMagnitude = 0;
+		float NEG_ONE_HALF = -0.5;
+		float AREA_OF_ROBOT = .118;
+		float FLUID_DENSITY = 50.0;
+		float DRAG_COEFFICIENT = 0.8;
+		float dragForceMagnitude = NEG_ONE_HALF * AREA_OF_ROBOT * FLUID_DENSITY
+									* magnitude * magnitude * DRAG_COEFFICIENT;
+		
+		geometry_msgs::Vector3 dragForceVector;
+		dragForceVector.x = -(u_unit * dragForceMagnitude);
+		dragForceVector.y = -(v_unit * dragForceMagnitude);
+		dragForceVector.z = -(w_unit * dragForceMagnitude);
 
-		translationalDragVector.x = -(translationalDragVector.x * translationalDragMagnitude);
-		translationalDragVector.y = -(translationalDragVector.y * translationalDragMagnitude);
-		translationalDragVector.z = -(translationalDragVector.z * translationalDragMagnitude);
-
-		return translationalDragVector;
+		return dragForceVector;
 	}
 
 	/**
@@ -180,19 +181,10 @@ public:
 
 		// apply the wrench
 		gazebo_msgs::ApplyBodyWrench applyBodyWrench;
-		
-		geometry_msgs::Wrench negativeMsg;
-		negativeMsg.force.x = -msg.force.x;
-		negativeMsg.force.y = -msg.force.y;
-		negativeMsg.force.z = -msg.force.z;
-		negativeMsg.torque.x = -msg.torque.x;
-		negativeMsg.torque.y = -msg.torque.y;
-		negativeMsg.torque.z = -msg.torque.z;
 
 		applyBodyWrench.request.body_name = (std::string) "robot::body";
-		applyBodyWrench.request.wrench = negativeMsg;
+		applyBodyWrench.request.wrench = msg;
 		applyBodyWrench.request.reference_frame = "robot::robot_reference_frame";
-
 
 		//applyBodyWrench.request.start_time not specified -> it will start ASAP.
 		applyBodyWrench.request.duration = ros::Duration(1);

@@ -33,6 +33,7 @@
     <model name="robot">
       <plugin name="robot" filename="librobot.so"></plugin>
       <static>false</static>
+      <!-- x-pos y-pos z-pos roll pitch yaw -->
       <pose> 1.58725 -3.98664 4.5 3.14159265359 0 1.57079632679 </pose>
 
       <link name='body'>
