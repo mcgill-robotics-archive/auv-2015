@@ -174,8 +174,6 @@ public:
 	 * @param msg Wrench to be applied to robot
 	 */
 	void controlsWrenchCallBack(const geometry_msgs::Wrench msg) {
-		adjustModelYaw();
-
 		// check if its worth trying to apply the wrench - e.g.: if everything is 0, just return.
 		if (!shouldApplyForce(msg.force.x, msg.force.y, msg.force.z, msg.torque.x, msg.torque.y, msg.torque.z))	return;
 
@@ -195,24 +193,6 @@ public:
 		if (!applyBodyWrench.response.success) {
 			ROS_ERROR("ApplyBodyWrench call failed.");
 		}
-	}
-
-	/**
-	 * Adjust the model's yaw
-	 */
-	void adjustModelYaw() {
-		float modelYaw = this->model->GetRelativePose().rot.GetYaw();
-		math::Vector3 robotReferenceFrameAsEuler = this->model->GetLink("robot_reference_frame")->GetRelativePose().rot.GetAsEuler();
-		float robotReferenceFrameYaw = robotReferenceFrameAsEuler.z;
-		
-		this->model->GetLink("robot_reference_frame")->SetRelativePose(
-			math::Pose(this->model->GetLink("robot_reference_frame")->GetRelativePose().pos,
-				math::Vector3(
-					robotReferenceFrameAsEuler.x /*this->model->GetRelativePose().rot.GetRoll() + 3.14159265359*/, // same 
-						robotReferenceFrameAsEuler.y /*this->model->GetRelativePose().rot.GetPitch()*/, // same
-							this->model->GetRelativePose().rot.GetYaw() - 1.57079632679)), // model's yaw - pi/2 
-								true,
-									true);
 	}
 
 	void simulatorMarkerCallBack(const std_msgs::Bool::ConstPtr& msg) {
