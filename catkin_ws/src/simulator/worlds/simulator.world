@@ -34,7 +34,7 @@
       <plugin name="robot" filename="librobot.so"></plugin>
       <static>false</static>
       <!-- x-pos y-pos z-pos roll pitch yaw -->
-      <pose> 1.58725 -3.98664 4.5 3.14159265359 0 1.57079632679 </pose>
+      <pose> 0.58725 -1.98664 4 3.14159265359 0 1.57079632679 </pose>
 
       <link name='body'>
 	    <!-- Metric Inertial Properties -->
@@ -58,6 +58,7 @@
 			  <scale> .008 .008 .008</scale>
 			</mesh>
 		  </geometry>
+		  <!-- <pose> 0 0 0 3.14159265359 0 -1.57079632679 </pose> -->
                   <pose> 0 0 0 3.14159265359 0 -1.57079632679 </pose>
 		</collision>
 		

@@ -110,6 +110,7 @@ public:
 		gazebo_msgs::ApplyBodyWrench applyBodyWrench;
 		applyBodyWrench.request.body_name = (std::string) "robot::body";
 		applyBodyWrench.request.wrench = wrench;
+	//	applyBodyWrench.request.reference_frame = "robot::robot_reference_frame";
 
 		//applyBodyWrench.request.start_time not specified -> it will start ASAP.
 		applyBodyWrench.request.duration = ros::Duration(1);
@@ -152,10 +153,15 @@ public:
 									* magnitude * magnitude * DRAG_COEFFICIENT;
 		
 		geometry_msgs::Vector3 dragForceVector;
-		dragForceVector.x = -(u_unit * dragForceMagnitude);
-		dragForceVector.y = -(v_unit * dragForceMagnitude);
-		dragForceVector.z = -(w_unit * dragForceMagnitude);
-
+		dragForceVector.x = (u_unit * dragForceMagnitude);
+		dragForceVector.y = (v_unit * dragForceMagnitude);
+		dragForceVector.z = (w_unit * dragForceMagnitude);
+		ROS_INFO("input velocity in x: %f", u);
+		ROS_INFO("output drag in x: %f", dragForceVector.x);
+		ROS_INFO("input velocity in y: %f", v);
+		ROS_INFO("output drag in y: %f", dragForceVector.y);
+		ROS_INFO("input velocity in z: %f", w);
+		ROS_INFO("output drag in z: %f", dragForceVector.z);
 		return dragForceVector;
 	}
 
@@ -164,12 +170,14 @@ public:
 	 * @param angularVelocity robot's current angular velocity
 	 */
 	geometry_msgs::Vector3 calculateDragTorque(math::Vector3 angularVelocity) {
-		geometry_msgs::Vector3 torqueVector;
-		torqueVector.x = -(KP * angularVelocity.x * ABS_FLOAT(angularVelocity.x));
-		torqueVector.y = -(KQ * angularVelocity.y * ABS_FLOAT(angularVelocity.y));
-		torqueVector.z = -(KR * angularVelocity.z * ABS_FLOAT(angularVelocity.z));
-		return torqueVector;		
-	}	
+		return calculateDragForce(angularVelocity);	
+/*		geometry_msgs::Vector3 dragForceVector;
+		dragForceVector.x = 0;
+		dragForceVector.y = 0;
+		dragForceVector.z = 0;
+
+		return dragForceVector;	
+*/	}	
 	
 	/**
 	 * Function to handle Wrench messages passed to topic 'controls/wrench/'
@@ -209,10 +217,7 @@ public:
 	
 	bool isOutOfRange(float x) {
 		const float RANGE_BOUND = .0001;
-		if (ABS_FLOAT(x) > RANGE_BOUND)
-			return true;
-		else
-			return false;
+		return (ABS_FLOAT(x) > RANGE_BOUND);
 	}
 
 private:
