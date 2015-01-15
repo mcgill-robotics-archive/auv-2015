@@ -1,3 +1,4 @@
+//#include "../include/robot.h"
 #include <boost/bind.hpp>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
@@ -69,6 +70,7 @@ public:
 	/**
 	 * Called on every simulation iteration
 	 */
+	int noOfIterations;
 	void OnUpdate(const common::UpdateInfo & /*_info*/) {
 		++noOfIterations;
 
@@ -175,9 +177,9 @@ public:
 	 */
 	void controlsWrenchCallBack(const geometry_msgs::Wrench msg) {
 		// check if its worth trying to apply the wrench - e.g.: if everything is 0, just return.
-		if (!shouldApplyForce(msg.force.x, msg.force.y, msg.force.z, msg.torque.x, msg.torque.y, msg.torque.z))	return;
+		if (!shouldApplyForce(msg.force.x, msg.force.y, msg.force.z, msg.torque.x, msg.torque.y, msg.torque.z))
+			return;
 
-		// apply the wrench
 		gazebo_msgs::ApplyBodyWrench applyBodyWrench;
 
 		applyBodyWrench.request.body_name = (std::string) "robot::body";
@@ -202,16 +204,15 @@ public:
 	}
 
 	bool shouldApplyForce(float u, float v, float w, float p, float q, float r) {
-		return (inRangeForce(u) || inRangeForce(v) || inRangeForce(w) || inRangeForce(p) || inRangeForce(q) || inRangeForce(r));
+		return (isOutOfRange(u) || isOutOfRange(v) || isOutOfRange(w) || isOutOfRange(p) || isOutOfRange(q) || isOutOfRange(r));
 	}	
 	
-	bool inRangeForce(float x) {
-		if (x==0 || x==-0) return false;
-		if (x>0) {
-			if (x>.00001) return true;
-		}
-		if (x<-.00001) return true;
-		return false;
+	bool isOutOfRange(float x) {
+		const float RANGE_BOUND = .0001;
+		if (ABS_FLOAT(x) > RANGE_BOUND)
+			return true;
+		else
+			return false;
 	}
 
 private:
@@ -223,16 +224,8 @@ private:
 
 	// CONSTANTS
 
-	// for wrench computation
-	const static float RX1 = .3; 
-	const static float RX2 = -.3;
-	const static float RY1 = .3;
-	const static float RY2 = -.3;
-	const static float RZ1 = .3;
-	const static float RZ2 = -.3;
-
-	// for drag computation
-	const static float KP = 0; //these were 1, nick March 25
+	// for angular torque (currently off, were all 1)
+	const static float KP = 0;
 	const static float KQ = 0;
 	const static float KR = 0;
 
@@ -255,10 +248,8 @@ private:
 	ros::Subscriber markerDropSub;
 
 	/** Torpedo Launch Sub topic subscriber */
-	ros::Subscriber	torpedoLaunchSub;
-
-	/** counter **/	
-	int noOfIterations;
+// suspiciously unused	
+//	ros::Subscriber	torpedoLaunchSub;
 };
 
 // Register this plugin with the simulator
