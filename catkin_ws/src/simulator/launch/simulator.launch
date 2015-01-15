@@ -1,0 +1,25 @@
+<launch>
+  <!-- LAUNCH SIMULATOR -->
+
+  <!-- We resume the logic in empty_world.launch, changing only the name of the world to be launched --> 
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="world_name" value="$(find simulator)/worlds/simulator.world"/>
+    <!-- more default parameters can be changed here -->
+  </include>
+
+  <!-- Depth Publisher -->
+  <!-- Deprecated node by Nick <node name="gazeboDepthEstimator" pkg="simulator" type="gazeboDepthEstimator"/> -->
+  <!-- don't need this as it is run in the state_estimation launch file, Nick March 25 -->
+  <!-- <node name="sim_depth" pkg = "state_estimation" type="sim_depth"/> -->
+
+  <!-- OPTIONALLY run tf broadcaster -->
+  <arg name="dontBroadcastTF" default="1" />
+  <node name="tf_broadcaster_simulator" pkg="simulator" type="tf_broadcaster_simulator" unless="$(arg dontBroadcastTF)"/>
+
+  <!-- OPTIONALLY LAUNCH RVIZ -->
+  <arg name="useRviz" default="0"/>
+  <group if="$(arg useRviz)">
+ 	<node name="rviz" pkg="rviz" type="rviz" />
+  </group>
+ 
+</launch>

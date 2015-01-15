@@ -11,6 +11,7 @@ add_message_files(FILES
                 #added by Controls
                   SetPosition.msg
                   SetVelocity.msg
+                  MotorCommands.msg
 
                 #added by Autonomy
                   CVTarget.msg

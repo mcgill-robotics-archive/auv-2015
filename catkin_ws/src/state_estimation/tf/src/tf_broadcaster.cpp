@@ -10,28 +10,26 @@
 tf::Vector3 zero(0,0,0);
 
 tf::Quaternion imuMountToRobotFrame;
-
 tf::Quaternion imuInternalHorizonToMountPoint;
+tf::Quaternion initialHorizonToRobot;
 
 void imuCallBack(const geometry_msgs::PoseStamped::ConstPtr& msg) {
   ros::Time time(ros::Time::now());
   tf::TransformBroadcaster broadcaster;
 
-  // orientation is the rotation from the initial_horizon frame of the imu to the imu
-  // and so orientation = Rx(roll)*Ry(pitch)*Rz(yaw)*R(imu,robot)
-
-  tf::Quaternion orientation = tf::Quaternion(
-    msg->pose.orientation.x, 
-    msg->pose.orientation.y, 
-    msg->pose.orientation.z, 
+  tf::Quaternion orientation(
+    msg->pose.orientation.x,
+    msg->pose.orientation.y,
+    msg->pose.orientation.z,
     msg->pose.orientation.w
   );
 
-  tf::Quaternion robot = imuMountToRobotFrame.inverse()*imuInternalHorizonToMountPoint.inverse()*orientation.inverse()*imuMountToRobotFrame;
-
+  initialHorizonToRobot = imuMountToRobotFrame.inverse() * imuInternalHorizonToMountPoint.inverse() * 
+                          orientation.inverse()*imuMountToRobotFrame;
+ 
   broadcaster.sendTransform(
     tf::StampedTransform(
-      tf::Transform(robot, zero),
+      tf::Transform(initialHorizonToRobot, zero),
       time,
       "/initial_horizon",
       "/robot"
@@ -39,8 +37,7 @@ void imuCallBack(const geometry_msgs::PoseStamped::ConstPtr& msg) {
   );
 
   double roll,pitch,yaw;
-  
-  tf::Matrix3x3(robot).getRPY(roll,pitch,yaw);
+  tf::Matrix3x3(initialHorizonToRobot).getRPY(roll,pitch,yaw);
 
   tf::Quaternion yawQuat;
   yawQuat.setRPY(0,0,yaw);
@@ -50,8 +47,6 @@ void imuCallBack(const geometry_msgs::PoseStamped::ConstPtr& msg) {
     "/initial_horizon",
     "/horizon"
   ));
-  
-
 }
 
 int main(int argc, char** argv) {
@@ -62,7 +57,6 @@ int main(int argc, char** argv) {
 
   // TODO: Figure out why nothing gets broadcast without this line
   tf::TransformBroadcaster broadcaster;
-  // TODO: Do we need this on a timer?
   ros::Subscriber imuSub = node.subscribe("state_estimation/pose", 1000, imuCallBack);
   ros::spin();
 
