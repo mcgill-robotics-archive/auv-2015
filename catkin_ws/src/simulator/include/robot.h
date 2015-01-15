@@ -7,7 +7,6 @@
 #include <stdlib.h>
 #include "ros/ros.h"
 #include "geometry_msgs/Twist.h"
-#include "simulator/ThrusterForces.h"
 #include "gazebo_msgs/ApplyBodyWrench.h" 
 #include "geometry_msgs/Vector3.h"
 #include "geometry_msgs/Wrench.h"
@@ -16,18 +15,18 @@
 
 #define ABS_FLOAT(x) ((x < 0) ? -x : x)
 
-namespace gazebo
-{
-
 /**
  * @brief class to manipulate robot behaviour
  * @author Dwijesh Bhageerutty
  */
-class Robot : public ModelPlugin
-{
+namespace gazebo {
+
+class Robot : public ModelPlugin {
+
 public:
 	
 	Robot();
+
 	~Robot();
 	
 	void Load(physics::ModelPtr _parent, sdf::ElementPtr /*_sdf*/);
@@ -35,9 +34,7 @@ public:
 	void OnUpdate(const common::UpdateInfo & /*_info*/);
 	
 	void moveCallback(const geometry_msgs::Twist::ConstPtr& msg);
-	
-	void thrusterForcesCallBack(const simulator::ThrusterForces::ConstPtr& msg);
-	
+		
 	bool applyDrag();	
 	
 	geometry_msgs::Vector3 calculateDragForce(math::Vector3 linearVelocity);
@@ -45,14 +42,12 @@ public:
 	geometry_msgs::Vector3 calculateDragTorque(math::Vector3 angularVelocity);	
 
 	void controlsWrenchCallBack(const geometry_msgs::Wrench msg);
-
-	void adjustModelYaw();	
 	
 	void simulatorMarkerCallBack(const std_msgs::Bool::ConstPtr& msg);
 
 	bool shouldApplyForce(float u, float v, float w, float p, float q, float r);	
 
-	bool inRangeForce(float x);
+	bool isOutOfRange(float x);
 
 private:
 
@@ -60,18 +55,10 @@ private:
 
 	// CONSTANTS
 
-	// for wrench computation
-	const static float RX1 = .3; 
-	const static float RX2 = -.3;
-	const static float RY1 = .3;
-	const static float RY2 = -.3;
-	const static float RZ1 = .3;
-	const static float RZ2 = -.3;
-
-	// for drag computation
-	const static float KP = 1;
-	const static float KQ = 1;
-	const static float KR = 1;
+	// for angular drag computation
+	const static float KP;
+	const static float KQ;
+	const static float KR;
 
 	/** Pointer to the model */
 	physics::ModelPtr model;
@@ -97,7 +84,9 @@ private:
 	/** Torpedo Launch Sub topic subscriber */
 	ros::Subscriber	torpedoLaunchSub;
 
-	/** counter **/	
+	/** number of times the simulator has updated itself **/
 	int noOfIterations;
+
 };
+//GZ_REGISTER_MODEL_PLUGIN(Robot)
 }
