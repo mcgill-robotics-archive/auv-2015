@@ -53,6 +53,7 @@ class Autonomy():
     velocitymsg.roll = desired[3]
     velocitymsg.pitch = desired[4]
     velocitymsg.yaw = desired[5]
+
     self.velocity_publisher.publish(velocitymsg)
 
   def set_position(self, desired):
@@ -64,6 +65,7 @@ class Autonomy():
     positionmsg.pitch = desired[4]
     positionmsg.yaw = desired[5]
   #  positionmsg.frame = desired[6]
+
     self.position_publisher.publish(positionmsg)
 
   def set_cv_target(self, new_target):
@@ -76,8 +78,12 @@ class Autonomy():
     Sonarmsg.SonarTarget = new_target
     self.sonar_target_publisher.publish(Sonarmsg)
 
+  def print_info(self, msg):
+    rospy.loginfo(msg)  
+
   def rosInit(self):
     rospy.init_node('autonomy', anonymous=False)
+
     rospy.Subscriber("state_estimation/filtered_depth", Int8, self.filtered_depth_callback)
     rospy.Subscriber("front_cv/target_info", String, self.target_info_callback)
 
@@ -90,7 +96,5 @@ if __name__ == '__main__':
   my_autonomy = Autonomy()
   my_autonomy.rosInit()
 
-  task_controller.populate_tasks()
-  task_controller.populate_routine()
-#  my_autonomy.get_transform("/horizon")
-  task_controller.temp(my_autonomy)
+  task_controller.load_task_stack(my_autonomy)
+  task_controller.run_task()
