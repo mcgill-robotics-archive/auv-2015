@@ -4,17 +4,19 @@ import task
 import forward_movement_action
 
 class GateTask(task.Task):
-    def __init__(self, phase, my_autonomy):
-        self.phase = phase
-        self.my_autonomy = my_autonomy
-        self.load_action_stack()
+  def __init__(self, phase, my_autonomy):
+    self.task_name = "Gate"
+    self.phase = phase
+    self.my_autonomy = my_autonomy
+    self.load_action_stack()
 
-    def __init__(self, my_autonomy):
-        self.phase = 1
-        self.my_autonomy = my_autonomy
-        self.load_action_stack()    
+  def __init__(self, my_autonomy):
+    self.task_name = "Gate"
+    self.phase = 1
+    self.my_autonomy = my_autonomy
+    self.load_action_stack()    
 
-    def load_action_stack(self):
-        if (self.phase > 0):
-        	my_forward_movement_action = forward_movement_action.ForwardMovementAction(self.my_autonomy, 3)
-        	self.action_stack.insert(0, my_forward_movement_action)
+  def load_action_stack(self):
+    if (self.phase > 0):
+      my_forward_movement_action = forward_movement_action.ForwardMovementAction(self.my_autonomy, 3)
+      self.action_stack.insert(0, my_forward_movement_action)
