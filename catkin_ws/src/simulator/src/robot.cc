@@ -110,7 +110,7 @@ public:
 		gazebo_msgs::ApplyBodyWrench applyBodyWrench;
 		applyBodyWrench.request.body_name = (std::string) "robot::body";
 		applyBodyWrench.request.wrench = wrench;
-	//	applyBodyWrench.request.reference_frame = "robot::robot_reference_frame";
+		applyBodyWrench.request.reference_frame = "robot::robot_reference_frame";
 
 		//applyBodyWrench.request.start_time not specified -> it will start ASAP.
 		applyBodyWrench.request.duration = ros::Duration(1);
@@ -153,9 +153,9 @@ public:
 									* magnitude * magnitude * DRAG_COEFFICIENT;
 		
 		geometry_msgs::Vector3 dragForceVector;
-		dragForceVector.x = (u_unit * dragForceMagnitude);
-		dragForceVector.y = (v_unit * dragForceMagnitude);
-		dragForceVector.z = (w_unit * dragForceMagnitude);
+		dragForceVector.x = -u + (u_unit * dragForceMagnitude);
+		dragForceVector.y = -v + (v_unit * dragForceMagnitude);
+		dragForceVector.z = -w + (w_unit * dragForceMagnitude);
 		ROS_INFO("input velocity in x: %f", u);
 		ROS_INFO("output drag in x: %f", dragForceVector.x);
 		ROS_INFO("input velocity in y: %f", v);
