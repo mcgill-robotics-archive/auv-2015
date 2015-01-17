@@ -20,12 +20,18 @@ class Autonomy():
   FIXED_FRAME = "/robot/initial_horizon"
   HORIZON_FRAME = "/robot/horizon"
 
+  depth_subscriber = None
+  cv_target_subscriber = None
+
   velocity_publisher = None
   position_publisher = None
   cv_target_publisher = None
   sonar_target_publisher = None
   filtered_depth = -1
   target_info = ""
+
+  def get_subscribers(self):
+    return [self.depth_subscriber, self.cv_target_subscriber]
 
   """callback for subscriber on /state_estimation/filtered_depth
   stores filtered_depth for access in tasks
@@ -88,8 +94,8 @@ class Autonomy():
   def ros_init(self):
     rospy.init_node('autonomy', anonymous=False)
 
-    rospy.Subscriber("state_estimation/filtered_depth", Int8, self.filtered_depth_callback)
-    rospy.Subscriber("front_cv/target_info", String, self.target_info_callback)
+    self.depth_subscriber = rospy.Subscriber("state_estimation/filtered_depth", Int8, self.filtered_depth_callback)
+    self.cv_target_subscriber = rospy.Subscriber("front_cv/target_info", String, self.target_info_callback)
 
     self.velocity_publisher = rospy.Publisher("autonomy/set_velocity", SetVelocity, queue_size = 1000)
     self.position_publisher = rospy.Publisher("autonomy/set_position", SetPosition, queue_size = 1000)

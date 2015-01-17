@@ -6,6 +6,7 @@ as well as controlling the chaning of tasks
 
 import rospy
 import gate_task
+import init_task
 
 class TaskController():
   my_autonomy = None
@@ -16,6 +17,8 @@ class TaskController():
     self.load_task_stack()
 
   def load_task_stack(self):
+    my_init_task = init_task.InitTask(self.my_autonomy)
+    self.task_stack.insert(0, my_init_task)
     my_gate_task = gate_task.GateTask(self.my_autonomy)
     self.task_stack.insert(0, my_gate_task)
 
