@@ -5,11 +5,11 @@
 #include "geometry_msgs/Quaternion.h"
 #include "sensor_msgs/Imu.h"
 
-#include "ukf.h"
+#include "ukf_pose.h"
 
 ros::Publisher pub;
 ros::Subscriber sub;
-ukf estimator(3);
+ukf_pose estimator;
 Vector3d acc, gyro;
 double quaternion[4];
 

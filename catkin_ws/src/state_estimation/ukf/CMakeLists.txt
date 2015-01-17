@@ -2,6 +2,7 @@
 add_executable(pose_ukf
   src/ros_pose.cpp 
   src/ukf.cpp
+  src/ukf_pose.cpp
 )
 
 ## Specify libraries to link a library or executable target against

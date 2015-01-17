@@ -3,6 +3,8 @@
 #include "rotation_vector_utils.h"
 #include <math.h>
 #include <stdio.h>
+//#include "ukf_pose.h"
+
 
 
 //Length of the state vector
@@ -11,6 +13,8 @@ const double PROCESS_VARIANCE = 0.00000004;
 const double MEASUREMENT_VARIANCE = 0.025;
 
 const double pi = std::acos(-1.0);
+
+//ukf_pose ukfpose;
 
 //Method to print matrix or vector
 /*void Print(MatrixXd m) 
@@ -31,7 +35,8 @@ ukf::ukf(int dim)
 
 	processVarianceMatrix << PROCESS_VARIANCE, PROCESS_VARIANCE,
 	PROCESS_VARIANCE, PROCESS_VARIANCE;
-
+	
+	
 
 }
 
@@ -47,7 +52,7 @@ void ukf::generateSigmas()
 	sigmas << (-sqrt(3))*T , sqrt(3)*T;
 }
 
-
+/*
 void propogate(Vector3d rotation, Ref<Vector3d> state)
 {
 	//double rotationEarth[3] = {-rotation[0], -rotation[1], -rotation[2]};
@@ -86,8 +91,8 @@ void propogate(Vector3d rotation, Ref<Vector3d> state)
 	/*for (int j = 0; j < 3; j++)
 	{
 		state[j] = angle * result[j];
-	}*/
-}
+	//}
+}*/
 
 void ukf::recoverPrediction()
 {
@@ -100,13 +105,14 @@ void ukf::recoverPrediction()
 
 }
 
-void ukf::predict(constVector rotation)
+void ukf::predict(constVector rotation, void (*propogate)(Eigen::VectorXd,Ref<Eigen::VectorXd>))
 {
 	generateSigmas();
 	Vector3d gravity(0,0,0);
 	for (int i = 0; i < 2*DIM; i++)
 	{
-		propogate(rotation, sigmas.col(i));
+		propogate(rotation, sigmas.col(i));	//Call to ukf_pose
+		
 	}
 	recoverPrediction();
 	
@@ -116,6 +122,7 @@ void ukf::predict(constVector rotation)
 
 
 //void h(double *sigma, double *gamma)
+/*
 void h(Vector3d sigma, Ref<Vector3d> gamma)
 {
 	Vector3d gravity(0,0,9.8);
@@ -130,15 +137,18 @@ void h(Vector3d sigma, Ref<Vector3d> gamma)
 	gamma = invertedAngleAxis * gravity; //Apply the transform to gravity
 
 }
+*/
 
-void ukf::correct(constVector acc)
+
+
+void ukf::correct(constVector acc, void (*observe)(Eigen::VectorXd,Ref<Eigen::VectorXd>))
 {
 	generateSigmas();
 	//Here we predict the outcome of the acceleration measurement
 	//for every sigma and store in the gammas
 	for (int i = 0; i < 2* DIM; i++)
-	{
-		h(sigmas.col(i), gammas.col(i));
+	{	
+		observe(sigmas.col(i), gammas.col(i));	//Call to ukf_pose
 	}
 
 	//prettyPrint(gamma(0), 2*DIM, DIM);
@@ -167,28 +177,8 @@ void ukf::recoverCorrection(constVector acc)
 	covariance -= crossCovar * gain.transpose();
 }
 
-void fixState(Ref<Vector3d> state)
-{
-	double angle = state.norm();
-	if (angle > pi)
-	{
-
-	
-	state = state * (-(2*pi-angle)/angle);	//Scales it
-		//This represents the same rotation, but with norm < pi
-		//scaleVector(-(2*pi-angle)/angle, state, 3);
-	}
-}
 
 
-void ukf::update(constVector acc, constVector rotation, double *quaternion) //acc as constVector ?
-{
-	fixState(state);
 
-    predict(rotation);
-    correct(acc);
-
-    //quaternionFromRotationVector(quaternion, state);
-}
 
 
