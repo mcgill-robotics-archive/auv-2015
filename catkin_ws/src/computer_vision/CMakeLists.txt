@@ -73,6 +73,13 @@ target_link_libraries(computer_vision_OBJECT
 			${OpenCV_LIBRARIES}
 )
 
+add_executable(image_publish src/image_publish.cpp)
+
+target_link_libraries(image_publish
+			${catkin_LIBRARIES}
+			${OpenCV_LIBRARIES}
+)
+
 
 # This makes sure message headers are generated before being used
 ##add_dependencies(distanceCalculator ${catkin_EXPORTED_TARGETS})

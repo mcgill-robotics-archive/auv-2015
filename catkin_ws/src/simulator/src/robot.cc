@@ -1,3 +1,4 @@
+//#include "../include/robot.h"
 #include <boost/bind.hpp>
 #include <gazebo/gazebo.hh>
 #include <gazebo/physics/physics.hh>
@@ -69,6 +70,7 @@ public:
 	/**
 	 * Called on every simulation iteration
 	 */
+	int noOfIterations;
 	void OnUpdate(const common::UpdateInfo & /*_info*/) {
 		++noOfIterations;
 
@@ -108,6 +110,7 @@ public:
 		gazebo_msgs::ApplyBodyWrench applyBodyWrench;
 		applyBodyWrench.request.body_name = (std::string) "robot::body";
 		applyBodyWrench.request.wrench = wrench;
+		applyBodyWrench.request.reference_frame = "robot::robot_reference_frame";
 
 		//applyBodyWrench.request.start_time not specified -> it will start ASAP.
 		applyBodyWrench.request.duration = ros::Duration(1);
@@ -127,33 +130,39 @@ public:
 	 * @param linearVelocity robot's current linear velocity
 	 */
 	geometry_msgs::Vector3 calculateDragForce(math::Vector3 linearVelocity) {
-		float magnitude, u, v, w, translationalDragMagnitude;
-		geometry_msgs::Vector3 translationalDragVector;
 		
-		u = linearVelocity.x;
-		v = linearVelocity.y;
-		w = linearVelocity.z;
+		float u = linearVelocity.x;
+		float v = linearVelocity.y;
+		float w = linearVelocity.z;
 		
-		magnitude = sqrt(u*u + v*v + w*w);
-		
-		if (magnitude > 1E-5) {
-			translationalDragVector.x = u/magnitude;
-			translationalDragVector.y = v/magnitude;
-			translationalDragVector.z = w/magnitude;
-		}
-		
-		//ROS_INFO("vx: %f     vy: %f     vz: %f     ", u,v,w);
+		float magnitude = sqrt(u*u + v*v + w*w);
 
+		float u_unit = 0, v_unit = 0, w_unit = 0;
+		if (magnitude > 1E-5) {
+			u_unit = u/magnitude;
+			v_unit = v/magnitude;
+			w_unit = w/magnitude;
+		}
 
 		//Drag force = -0.5 * Area * density * |speed|^2 * drag coefficient
-		//translationalDragMagnitude = -.5 * .118 * 1000 * (u*u + v*v + w*w) * .8; removing drag nick march 25
-		translationalDragMagnitude = 0;
-
-		translationalDragVector.x = -(translationalDragVector.x * translationalDragMagnitude);
-		translationalDragVector.y = -(translationalDragVector.y * translationalDragMagnitude);
-		translationalDragVector.z = -(translationalDragVector.z * translationalDragMagnitude);
-
-		return translationalDragVector;
+		float NEG_ONE_HALF = -0.5;
+		float AREA_OF_ROBOT = .118;
+		float FLUID_DENSITY = 50.0;
+		float DRAG_COEFFICIENT = 0.8;
+		float dragForceMagnitude = NEG_ONE_HALF * AREA_OF_ROBOT * FLUID_DENSITY
+									* magnitude * magnitude * DRAG_COEFFICIENT;
+		
+		geometry_msgs::Vector3 dragForceVector;
+		dragForceVector.x = -u + (u_unit * dragForceMagnitude);
+		dragForceVector.y = -v + (v_unit * dragForceMagnitude);
+		dragForceVector.z = -w + (w_unit * dragForceMagnitude);
+		ROS_INFO("input velocity in x: %f", u);
+		ROS_INFO("output drag in x: %f", dragForceVector.x);
+		ROS_INFO("input velocity in y: %f", v);
+		ROS_INFO("output drag in y: %f", dragForceVector.y);
+		ROS_INFO("input velocity in z: %f", w);
+		ROS_INFO("output drag in z: %f", dragForceVector.z);
+		return dragForceVector;
 	}
 
 	/**
@@ -161,38 +170,29 @@ public:
 	 * @param angularVelocity robot's current angular velocity
 	 */
 	geometry_msgs::Vector3 calculateDragTorque(math::Vector3 angularVelocity) {
-		geometry_msgs::Vector3 torqueVector;
-		torqueVector.x = -(KP * angularVelocity.x * ABS_FLOAT(angularVelocity.x));
-		torqueVector.y = -(KQ * angularVelocity.y * ABS_FLOAT(angularVelocity.y));
-		torqueVector.z = -(KR * angularVelocity.z * ABS_FLOAT(angularVelocity.z));
-		return torqueVector;		
-	}	
+		return calculateDragForce(angularVelocity);	
+/*		geometry_msgs::Vector3 dragForceVector;
+		dragForceVector.x = 0;
+		dragForceVector.y = 0;
+		dragForceVector.z = 0;
+
+		return dragForceVector;	
+*/	}	
 	
 	/**
 	 * Function to handle Wrench messages passed to topic 'controls/wrench/'
 	 * @param msg Wrench to be applied to robot
 	 */
 	void controlsWrenchCallBack(const geometry_msgs::Wrench msg) {
-		adjustModelYaw();
-
 		// check if its worth trying to apply the wrench - e.g.: if everything is 0, just return.
-		if (!shouldApplyForce(msg.force.x, msg.force.y, msg.force.z, msg.torque.x, msg.torque.y, msg.torque.z))	return;
+		if (!shouldApplyForce(msg.force.x, msg.force.y, msg.force.z, msg.torque.x, msg.torque.y, msg.torque.z))
+			return;
 
-		// apply the wrench
 		gazebo_msgs::ApplyBodyWrench applyBodyWrench;
-		
-		geometry_msgs::Wrench negativeMsg;
-		negativeMsg.force.x = -msg.force.x;
-		negativeMsg.force.y = -msg.force.y;
-		negativeMsg.force.z = -msg.force.z;
-		negativeMsg.torque.x = -msg.torque.x;
-		negativeMsg.torque.y = -msg.torque.y;
-		negativeMsg.torque.z = -msg.torque.z;
 
 		applyBodyWrench.request.body_name = (std::string) "robot::body";
-		applyBodyWrench.request.wrench = negativeMsg;
+		applyBodyWrench.request.wrench = msg;
 		applyBodyWrench.request.reference_frame = "robot::robot_reference_frame";
-
 
 		//applyBodyWrench.request.start_time not specified -> it will start ASAP.
 		applyBodyWrench.request.duration = ros::Duration(1);
@@ -205,24 +205,6 @@ public:
 		}
 	}
 
-	/**
-	 * Adjust the model's yaw
-	 */
-	void adjustModelYaw() {
-		float modelYaw = this->model->GetRelativePose().rot.GetYaw();
-		math::Vector3 robotReferenceFrameAsEuler = this->model->GetLink("robot_reference_frame")->GetRelativePose().rot.GetAsEuler();
-		float robotReferenceFrameYaw = robotReferenceFrameAsEuler.z;
-		
-		this->model->GetLink("robot_reference_frame")->SetRelativePose(
-			math::Pose(this->model->GetLink("robot_reference_frame")->GetRelativePose().pos,
-				math::Vector3(
-					robotReferenceFrameAsEuler.x /*this->model->GetRelativePose().rot.GetRoll() + 3.14159265359*/, // same 
-						robotReferenceFrameAsEuler.y /*this->model->GetRelativePose().rot.GetPitch()*/, // same
-							this->model->GetRelativePose().rot.GetYaw() - 1.57079632679)), // model's yaw - pi/2 
-								true,
-									true);
-	}
-
 	void simulatorMarkerCallBack(const std_msgs::Bool::ConstPtr& msg) {
 		if (msg->data) {
 			ROS_INFO("Dropped Marker");
@@ -230,16 +212,12 @@ public:
 	}
 
 	bool shouldApplyForce(float u, float v, float w, float p, float q, float r) {
-		return (inRangeForce(u) || inRangeForce(v) || inRangeForce(w) || inRangeForce(p) || inRangeForce(q) || inRangeForce(r));
+		return (isOutOfRange(u) || isOutOfRange(v) || isOutOfRange(w) || isOutOfRange(p) || isOutOfRange(q) || isOutOfRange(r));
 	}	
 	
-	bool inRangeForce(float x) {
-		if (x==0 || x==-0) return false;
-		if (x>0) {
-			if (x>.00001) return true;
-		}
-		if (x<-.00001) return true;
-		return false;
+	bool isOutOfRange(float x) {
+		const float RANGE_BOUND = .0001;
+		return (ABS_FLOAT(x) > RANGE_BOUND);
 	}
 
 private:
@@ -251,16 +229,8 @@ private:
 
 	// CONSTANTS
 
-	// for wrench computation
-	const static float RX1 = .3; 
-	const static float RX2 = -.3;
-	const static float RY1 = .3;
-	const static float RY2 = -.3;
-	const static float RZ1 = .3;
-	const static float RZ2 = -.3;
-
-	// for drag computation
-	const static float KP = 0; //these were 1, nick March 25
+	// for angular torque (currently off, were all 1)
+	const static float KP = 0;
 	const static float KQ = 0;
 	const static float KR = 0;
 
@@ -283,10 +253,8 @@ private:
 	ros::Subscriber markerDropSub;
 
 	/** Torpedo Launch Sub topic subscriber */
-	ros::Subscriber	torpedoLaunchSub;
-
-	/** counter **/	
-	int noOfIterations;
+// suspiciously unused	
+//	ros::Subscriber	torpedoLaunchSub;
 };
 
 // Register this plugin with the simulator

@@ -16,7 +16,12 @@ find_package(Boost REQUIRED COMPONENTS system)
 
 link_directories(${GAZEBO_LIBRARY_DIRS} ${roscpp_LIBRARY_DIRS})
 
-include_directories(${roscpp_INCLUDE_DIRS} ${Boost_INCLUDE_DIR} ${catkin_INCLUDE_DIRS} ${GAZEBO_INCLUDE_DIRS})
+include_directories(
+	include/
+	${roscpp_INCLUDE_DIRS}
+	${Boost_INCLUDE_DIR}
+	${catkin_INCLUDE_DIRS} 
+	${GAZEBO_INCLUDE_DIRS})
 
 include(cmake/rospack.cmake)
 
