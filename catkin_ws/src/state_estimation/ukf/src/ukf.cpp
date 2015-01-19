@@ -1,6 +1,6 @@
 #include "ukf.h"
-#include "matrix_utils.h"
-#include "rotation_vector_utils.h"
+//#include "matrix_utils.h"
+//#include "rotation_vector_utils.h"
 #include <math.h>
 #include <stdio.h>
 //#include "ukf_pose.h"
@@ -52,47 +52,7 @@ void ukf::generateSigmas()
 	sigmas << (-sqrt(3))*T , sqrt(3)*T;
 }
 
-/*
-void propogate(Vector3d rotation, Ref<Vector3d> state)
-{
-	//double rotationEarth[3] = {-rotation[0], -rotation[1], -rotation[2]};
-	
-	//double result[3] = {};
-	Vector3d result(0,0,0);
-	double tau = 2*pi;
 
-	
-	
-	//Construct transforms as AngleAxis' and compose the transforms
-	Vector3d normalizedRotation = rotation.normalized();	//Normalize vector to construct AngleAxis
-	AngleAxisd rotationTransform(rotation.norm(), normalizedRotation); //Rotation as AngleAxis
-	Vector3d normalizedState = state.normalized();	//Normalize vector to construct AngleAxis
-	AngleAxisd stateTransform(state.norm(), normalizedState);
-	AngleAxisd resultTransform(rotationTransform * stateTransform);
-	
-	
-	result = resultTransform.angle()*resultTransform.axis(); //Get a vector back
-	
-	//composeRotations(rotation, state, result);
-	
-
-	double angle = result.norm();
-	if (angle != 0)
-	{
-		result = (1/angle)*result;
-		//scaleVector(1/angle, result, 3);
-	}
-
-	//We want to choose the rotation vector closest to sigma
-	angle += tau*floor(0.5 + (state.dot(result)-angle)/tau);
-
-	state = angle * result;
-	
-	/*for (int j = 0; j < 3; j++)
-	{
-		state[j] = angle * result[j];
-	//}
-}*/
 
 void ukf::recoverPrediction()
 {
@@ -117,28 +77,6 @@ void ukf::predict(constVector rotation, void (*propogate)(Eigen::VectorXd,Ref<Ei
 	recoverPrediction();
 	
 }
-
-
-
-
-//void h(double *sigma, double *gamma)
-/*
-void h(Vector3d sigma, Ref<Vector3d> gamma)
-{
-	Vector3d gravity(0,0,9.8);
-
-	Vector3d inverted = -sigma;
-	//double inverted[3] = {};
-	//inverse(sigma, inverted);
-	//rotateThisByThat(gravity, inverted, gamma);
-	Vector3d normalizedInverted = inverted.normalized();
-	AngleAxisd invertedAngleAxis(inverted.norm(), normalizedInverted);
-	//Transform invertedTransform(invertedAngleAxis);
-	gamma = invertedAngleAxis * gravity; //Apply the transform to gravity
-
-}
-*/
-
 
 
 void ukf::correct(constVector acc, void (*observe)(Eigen::VectorXd,Ref<Eigen::VectorXd>))
@@ -176,9 +114,3 @@ void ukf::recoverCorrection(constVector acc)
 
 	covariance -= crossCovar * gain.transpose();
 }
-
-
-
-
-
-

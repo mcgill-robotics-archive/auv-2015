@@ -1,7 +1,7 @@
 #include "ukf_pose.h"
 #include "ukf.h"
-//#include "matrix_utils.h"
-//#include "rotation_vector_utils.h"
+#include "matrix_utils.h"
+#include "rotation_vector_utils.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -27,8 +27,6 @@ ukf_pose::ukf_pose():estimator(3)
 }
 
 
-
-//void ukf_pose::propogate(Vector3d rotation, Ref<Vector3d> state)
 void ukf_pose::propogate(Eigen::VectorXd rotation, Ref<Eigen::VectorXd> state)
 {
 	
@@ -72,7 +70,6 @@ void ukf_pose::propogate(Eigen::VectorXd rotation, Ref<Eigen::VectorXd> state)
 	
 }
 
-//void ukf_pose::h(Vector3d sigma, Ref<Vector3d> gamma)
 void ukf_pose::observe(VectorXd sigma, Ref<VectorXd> gamma)
 {
 	Vector3d gravity(0,0,9.8);
