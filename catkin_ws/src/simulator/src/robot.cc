@@ -26,6 +26,9 @@ namespace gazebo
 class Robot : public ModelPlugin
 {
 public:
+	bool shouldApplyControls;
+	math::Vector3 controlsForce;
+	math::Vector3 controlsTorque;
 
 	/**
 	 * Constructor
@@ -35,6 +38,9 @@ public:
 		ros::init(argc, NULL, "Robot Plugin");
 		std::cout << "Robot plugin node created." << std::endl;
 		noOfIterations = 0;
+		shouldApplyControls = false;
+		controlsForce = math::Vector3(0., 0., 0.);
+		controlsForce = math::Vector3(0., 0., 0.);
 	};
 
 	/**
@@ -74,11 +80,11 @@ public:
 	void OnUpdate(const common::UpdateInfo & /*_info*/) {
 		++noOfIterations;
 
-		if (noOfIterations % 500 == 0) {
+		//if (noOfIterations % 500 == 0) {
 			if (!applyDrag()) {
 				ROS_ERROR("Drag application failed.");
 			}
-		}
+		//}
 
 		ros::spinOnce();
 	};
@@ -103,6 +109,16 @@ public:
 		wrench.force = calculateDragForce(model->GetRelativeLinearVel());
 		wrench.torque = calculateDragTorque(model->GetRelativeAngularVel());;
 
+		if (shouldApplyControls) {
+			//shouldApplyControls = false;
+			wrench.force.x += controlsForce.x;
+			wrench.force.y += controlsForce.y;
+			wrench.force.z += controlsForce.z;
+			wrench.torque.x += controlsTorque.x;
+			wrench.torque.y += controlsTorque.y;
+			wrench.torque.z += controlsTorque.z;
+		}
+
 		if (!shouldApplyForce(wrench.force.x, wrench.force.y, wrench.force.z, wrench.torque.x, wrench.torque.y, wrench.torque.z)) 
 			return true;
 
@@ -110,7 +126,7 @@ public:
 		gazebo_msgs::ApplyBodyWrench applyBodyWrench;
 		applyBodyWrench.request.body_name = (std::string) "robot::body";
 		applyBodyWrench.request.wrench = wrench;
-	//	applyBodyWrench.request.reference_frame = "robot::robot_reference_frame";
+		applyBodyWrench.request.reference_frame = "robot::robot_reference_frame";
 
 		//applyBodyWrench.request.start_time not specified -> it will start ASAP.
 		applyBodyWrench.request.duration = ros::Duration(1);
@@ -153,9 +169,9 @@ public:
 									* magnitude * magnitude * DRAG_COEFFICIENT;
 		
 		geometry_msgs::Vector3 dragForceVector;
-		dragForceVector.x = (u_unit * dragForceMagnitude);
-		dragForceVector.y = (v_unit * dragForceMagnitude);
-		dragForceVector.z = (w_unit * dragForceMagnitude);
+		dragForceVector.x = 0;//-u + (u_unit * dragForceMagnitude);
+		dragForceVector.y = 0;//-v + (v_unit * dragForceMagnitude);
+		dragForceVector.z = 0;//-w + (w_unit * dragForceMagnitude);
 		ROS_INFO("input velocity in x: %f", u);
 		ROS_INFO("output drag in x: %f", dragForceVector.x);
 		ROS_INFO("input velocity in y: %f", v);
@@ -187,8 +203,12 @@ public:
 		// check if its worth trying to apply the wrench - e.g.: if everything is 0, just return.
 		if (!shouldApplyForce(msg.force.x, msg.force.y, msg.force.z, msg.torque.x, msg.torque.y, msg.torque.z))
 			return;
+	
+		controlsForce = math::Vector3(msg.force.x, msg.force.y, msg.force.z);
+		controlsTorque = math::Vector3(msg.torque.x, msg.torque.y, msg.torque.z);
+		shouldApplyControls = true;
 
-		gazebo_msgs::ApplyBodyWrench applyBodyWrench;
+		/*gazebo_msgs::ApplyBodyWrench applyBodyWrench;
 
 		applyBodyWrench.request.body_name = (std::string) "robot::body";
 		applyBodyWrench.request.wrench = msg;
@@ -202,7 +222,7 @@ public:
 		
 		if (!applyBodyWrench.response.success) {
 			ROS_ERROR("ApplyBodyWrench call failed.");
-		}
+		}*/
 	}
 
 	void simulatorMarkerCallBack(const std_msgs::Bool::ConstPtr& msg) {
