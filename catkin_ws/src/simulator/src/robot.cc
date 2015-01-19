@@ -122,11 +122,23 @@ public:
 		if (!shouldApplyForce(wrench.force.x, wrench.force.y, wrench.force.z, wrench.torque.x, wrench.torque.y, wrench.torque.z)) 
 			return true;
 
+
+		// Apply body wrench only applies wrenches in the world reference frame so we must convert the
+		// wrench into the world frame
+		math::Vector3 force2 = model->GetWorldPose().rot.RotateVector(math::Vector3(wrench.force.x, wrench.force.y, wrench.force.z));
+		math::Vector3 torque2 = model->GetWorldPose().rot.RotateVector(math::Vector3(wrench.torque.x, wrench.torque.y, wrench.torque.z));
+		
+		wrench.force.x= force2.x;
+		wrench.force.y = force2.y;
+		wrench.force.z = force2.z;
+		wrench.torque.x = torque2.x;
+		wrench.torque.y = torque2.y;
+		wrench.torque.z = torque2.z;
+				
 		// ApplyBodyWrench message
 		gazebo_msgs::ApplyBodyWrench applyBodyWrench;
 		applyBodyWrench.request.body_name = (std::string) "robot::body";
 		applyBodyWrench.request.wrench = wrench;
-		applyBodyWrench.request.reference_frame = "robot::robot_reference_frame";
 
 		//applyBodyWrench.request.start_time not specified -> it will start ASAP.
 		applyBodyWrench.request.duration = ros::Duration(1);
@@ -172,12 +184,12 @@ public:
 		dragForceVector.x = 0;//-u + (u_unit * dragForceMagnitude);
 		dragForceVector.y = 0;//-v + (v_unit * dragForceMagnitude);
 		dragForceVector.z = 0;//-w + (w_unit * dragForceMagnitude);
-		ROS_INFO("input velocity in x: %f", u);
-		ROS_INFO("output drag in x: %f", dragForceVector.x);
-		ROS_INFO("input velocity in y: %f", v);
-		ROS_INFO("output drag in y: %f", dragForceVector.y);
-		ROS_INFO("input velocity in z: %f", w);
-		ROS_INFO("output drag in z: %f", dragForceVector.z);
+		//ROS_INFO("input velocity in x: %f", u);
+		//ROS_INFO("output drag in x: %f", dragForceVector.x);
+		//ROS_INFO("input velocity in y: %f", v);
+		//ROS_INFO("output drag in y: %f", dragForceVector.y);
+		//ROS_INFO("input velocity in z: %f", w);
+		//ROS_INFO("output drag in z: %f", dragForceVector.z);
 		return dragForceVector;
 	}
 
