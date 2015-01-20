@@ -56,7 +56,7 @@
 			</mesh>
 		  </geometry>
 		  <!-- <pose> 0 0 0 3.14159265359 0 -1.57079632679 </pose> -->
-                  <pose> 0 0 0 3.14159265359 0 -1.57079632679 </pose>
+                  <pose> 0.3 0 0 3.14159265359 0 -1.57079632679 </pose>
 		</collision>
 		
 		<visual name='visual'>
@@ -66,7 +66,7 @@
 			  <scale> .008 .008 .008</scale>			
 			</mesh>
 		  </geometry>
-		  <pose> 0 0 0 3.14159265359 0 -1.57079632679 </pose>
+		  <pose> 0.3 0 0 3.14159265359 0 -1.57079632679 </pose>
 		</visual>
       </link>
 
@@ -79,7 +79,7 @@
       </joint>
 
       <link name='camera1_link'>
-	<pose>0 0.1 0 0 0 0</pose>
+	<pose>0.3 0.1 0 0 0 0</pose>
 
 	<collision name='collision'>
 	  <geometry>
@@ -147,7 +147,7 @@
       </joint>
 
       <link name='camera2_link'>
-	<pose>0 -.1 0 0 0 0</pose>
+	<pose>0.3 -.1 0 0 0 0</pose>
 
 	<collision name='collision'>
 	  <geometry>
@@ -214,7 +214,7 @@
       </joint>
 
       <link name='camera3_link'>
-	<pose>-.2 0 .2 0 1.57079632679 3.14159</pose>
+	<pose>0.1 0 .2 0 1.57079632679 3.14159</pose>
 
 	<collision name='collision'>
 	  <geometry>
