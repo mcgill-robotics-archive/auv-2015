@@ -42,9 +42,9 @@
       	<inertial>
       		<mass>22.2006</mass>
       		<inertia>
-      			<ixx>20</ixx>
-			<iyy>20</iyy>
-			<izz>20</izz>      			
+      			<ixx>0.649156</ixx>
+			<iyy>1.160882</iyy>
+			<izz>1.142592</izz>      			
       		</inertia>
       	</inertial>
       		
