@@ -7,11 +7,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   cv_bridge
   image_transport
-  message_generation
   tf
 )
-
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 
 #######################################
 ## Declare ROS messages and services ##
@@ -24,9 +21,9 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 ##)
 
 # Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-)
+# generate_messages(
+#   DEPENDENCIES
+# )
 
 ###################################
 ## catkin specific configuration ##
