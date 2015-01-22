@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(computer_vision)
+project(catkin_ws)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -61,7 +61,9 @@ target_link_libraries(computer_vision_a
 
 add_executable(computer_vision_COLOR src/computer_vision_COLOR.cpp)
 
-target_link_libraries(computer_vision_COLOR
+add_library(computer_vision src/threshold.cpp src/histogram.cpp src/object_finder.cpp)
+
+target_link_libraries(computer_vision_COLOR computer_vision 
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )
@@ -79,7 +81,6 @@ target_link_libraries(image_publish
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )
-
 
 # This makes sure message headers are generated before being used
 ##add_dependencies(distanceCalculator ${catkin_EXPORTED_TARGETS})
