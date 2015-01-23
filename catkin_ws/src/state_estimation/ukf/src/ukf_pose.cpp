@@ -1,7 +1,5 @@
 #include "ukf_pose.h"
 #include "ukf.h"
-#include "matrix_utils.h"
-#include "rotation_vector_utils.h"
 #include <math.h>
 #include <stdio.h>
 
@@ -21,10 +19,7 @@ const double pi = std::acos(-1.0);
 cout << "Printing: \n" << m << endl;
 }*/
 
-ukf_pose::ukf_pose():estimator(3)
-{
-	
-}
+ukf_pose::ukf_pose():estimator(3) {}
 
 
 void ukf_pose::propogate(Eigen::VectorXd rotation, Ref<Eigen::VectorXd> state)
@@ -39,35 +34,20 @@ void ukf_pose::propogate(Eigen::VectorXd rotation, Ref<Eigen::VectorXd> state)
 	
 	
 	//Construct transforms as AngleAxis' and compose the transforms
-	Vector3d normalizedRotation = rotation.normalized();	//Normalize vector to construct AngleAxis
-	AngleAxisd rotationTransform(rotation.norm(), normalizedRotation); //Rotation as AngleAxis
-	Vector3d normalizedState = state.normalized();	//Normalize vector to construct AngleAxis
-	AngleAxisd stateTransform(state.norm(), normalizedState);
+	AngleAxisd rotationTransform(rotation.norm(), rotation.normalized()); //Rotation as AngleAxis
+	AngleAxisd stateTransform(state.norm(), state.normalized());
 	AngleAxisd resultTransform(rotationTransform * stateTransform);
 	
 	
-	result = resultTransform.angle()*resultTransform.axis(); //Get a vector back
-	
-	//composeRotations(rotation, state, result);
-	
+	result = resultTransform.angle()*resultTransform.axis(); //Get a vector back	
 
 	double angle = result.norm();
-	if (angle != 0)
-	{
-		result = (1/angle)*result;
-		//scaleVector(1/angle, result, 3);
-	}
+	result = result.normalized();
 
 	//We want to choose the rotation vector closest to sigma
-	angle += tau*floor(0.5 + (state.dot(result)-angle)/tau);
+	angle += tau *floor(0.5 + (state.dot(result)-angle)/tau);
 
-	state = angle * result;
-	
-	/*for (int j = 0; j < 3; j++)
-	{
-		state[j] = angle * result[j];
-	}*/
-	
+	state = angle * result;	
 }
 
 void ukf_pose::observe(VectorXd sigma, Ref<VectorXd> gamma)
@@ -78,21 +58,20 @@ void ukf_pose::observe(VectorXd sigma, Ref<VectorXd> gamma)
 	//double inverted[3] = {};
 	//inverse(sigma, inverted);
 	//rotateThisByThat(gravity, inverted, gamma);
-	Vector3d normalizedInverted = inverted.normalized();
-	AngleAxisd invertedAngleAxis(inverted.norm(), normalizedInverted);
+	AngleAxisd invertedAngleAxis(inverted.norm(), inverted.normalized());
 	//Transform invertedTransform(invertedAngleAxis);
-	gamma = invertedAngleAxis * gravity; //Apply the transform to gravity
+	gamma = invertedAngleAxis.toRotationMatrix() * gravity; //Apply the transform to gravity
 
 }
 
-void ukf_pose::update(constVector acc, constVector rotation, double *quaternion) //acc as constVector ?
+void ukf_pose::update(constVector acc, constVector rotation, Ref<Vector3d> pose) //acc as constVector ?
 {
-	fixState(estimator.state);
+    fixState(estimator.state);
 
     estimator.predict(rotation, &propogate);
-    estimator.correct(acc, &observe);
+    //estimator.correct(acc, &observe);
 
-    //quaternionFromRotationVector(quaternion, state);
+    pose = estimator.state;
 }
 
 void ukf_pose::fixState(Ref<Vector3d> state)
@@ -100,11 +79,7 @@ void ukf_pose::fixState(Ref<Vector3d> state)
 	double angle = state.norm();
 	if (angle > pi)
 	{
-
-	
-	state = state * (-(2*pi-angle)/angle);	//Scales it
-		//This represents the same rotation, but with norm < pi
-		//scaleVector(-(2*pi-angle)/angle, state, 3);
+        state = (angle - 2*pi)*state.normalized(); //TODO(max) better reference for pi
 	}
 }
 	

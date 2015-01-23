@@ -10,36 +10,31 @@
 ros::Publisher pub;
 ros::Subscriber sub;
 ukf_pose estimator;
-Vector3d acc, gyro;
-double quaternion[4];
+Vector3d acc, gyro, pose;
+Vector3d quaternion;
 
 void msgVectorToEigenVector(Ref<Vector3d> vector3d, geometry_msgs::Vector3 vector) {
 	vector3d << vector.x, vector.y, vector.z;
 }
 
-void arrayToQuaternion(geometry_msgs::Quaternion* quaternion, double array[4]) {
-	quaternion->w = array[0];
-	quaternion->x = array[1];
-	quaternion->y = array[2];
-	quaternion->z = array[3];
+void eigenToMsgQuaternion(geometry_msgs::Quaternion& msgQ, Quaterniond eigenQ) {
+	msgQ.w = eigenQ.w();
+	msgQ.x = eigenQ.x();
+	msgQ.y = eigenQ.y();
+	msgQ.z = eigenQ.z();
 }
 
 void dataCallback(const sensor_msgs::Imu::ConstPtr& imu) {
 	msgVectorToEigenVector(acc, imu->linear_acceleration);
 	msgVectorToEigenVector(gyro, imu->angular_velocity);
 
-	double accNorm = sqrt(acc[0]*acc[0]+acc[1]*acc[1]+acc[2]*acc[2]);
-	if (accNorm == 0) accNorm = 1;
-	for (int i = 0; i < 3; i++)
-	{
-		gyro[i] *= 0.026;
-		acc[i] *= -9.8/accNorm;
-	}
+	acc = -9.8 * acc.normalized(); //TODO(max) possible aliasing
+	gyro *= 0.026;
 
 
-	estimator.update(acc, gyro, quaternion);
+	estimator.update(acc, gyro, pose);
 	geometry_msgs::Quaternion quat = geometry_msgs::Quaternion();
-	arrayToQuaternion(&quat, quaternion);
+	eigenToMsgQuaternion(quat, Quaterniond(AngleAxisd(pose.norm(), pose.normalized())));
 
 	geometry_msgs::PoseStamped posStamped = geometry_msgs::PoseStamped();
 	posStamped.header = imu->header;

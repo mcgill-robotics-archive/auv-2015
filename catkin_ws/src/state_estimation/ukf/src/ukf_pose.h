@@ -13,17 +13,17 @@ typedef const Ref<const Vector3d> constVector;
 
 class ukf_pose
 {
-	public:
+    public:
     	ukf_pose(); 
-    	void update(constVector acc, constVector rotation, double *quaternion);
-		//void propogate(Vector3d, Ref<Vector3d>);
-		void static propogate(Eigen::VectorXd, Ref<Eigen::VectorXd>);
-		//void h(Vector3d, Ref<Vector3d>);
-		void static observe(Eigen::VectorXd, Ref<Eigen::VectorXd>);
-		void fixState(Ref<Vector3d>);
+        void update(constVector acc, constVector rotation, Ref<Vector3d>);
+        //void propogate(Vector3d, Ref<Vector3d>);
+        void static propogate(Eigen::VectorXd, Ref<Eigen::VectorXd>); //TODO(max) We don't need "Eigen::" since we opened that namespace
+        //void h(Vector3d, Ref<Vector3d>);
+        void static observe(Eigen::VectorXd, Ref<Eigen::VectorXd>);
+        void fixState(Ref<Vector3d>);
 
-	private:
-		ukf estimator;
+    private:
+        ukf estimator;
 };
 
 

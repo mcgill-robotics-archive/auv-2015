@@ -17,22 +17,22 @@ class ukf
 	public:
     	ukf(int dim);
     	void update(constVector acc, constVector rotation, double *quaternion);
-		Vector3d state;
+        Vector3d state;
 		void predict(constVector, void (*)(Eigen::VectorXd,Ref<Eigen::VectorXd>));
     	void correct(constVector, void (*)(Eigen::VectorXd,Ref<Eigen::VectorXd>));
 	private:
     	int DIM;
     	
-	Matrix3d covariance;
-	Matrix3X6d sigmas;
-	Matrix3X6d gammas;
-	Vector3d predMsmt;
-	Matrix3d measCovar;
-	Matrix3d crossCovar;
-	Matrix3d processCovariance;//TODO: Initialize this matrix
-	Matrix3d measurementCovariance;//And this one too
+        Matrix3d covariance;
+        Matrix3X6d sigmas;
+        Matrix3X6d gammas;
+        Vector3d predMsmt;//TODO(max) Do we want this?
+        Matrix3d measCovar;
+        Matrix3d crossCovar;
+        Matrix3d processCovariance;//TODO: Initialize this matrix
+        Matrix3d measurementCovariance;//And this one too
 
-    	void generateSigmas();
+        void generateSigmas();
     	void recoverPrediction();
     	void recoverCorrection(constVector);
 
