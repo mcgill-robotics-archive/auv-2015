@@ -15,16 +15,18 @@ class ukf
         ukf(int dim);
         void predict(constVector, void (*)(Eigen::VectorXd,Ref<Eigen::VectorXd>));
         void correct(constVector, void (*)(Eigen::VectorXd,Ref<Eigen::VectorXd>));
-        void generateSigmas();
-        void recoverPrediction();
-        void recoverCorrection(constVector);
         const int DIM;
         Vector3d state;
         Matrix3d covariance;
-        Matrix3X6d sigmas;
-        Matrix3X6d gammas;
         Matrix3d processCovariance;
         Matrix3d measurementCovariance;
+    
+    private:
+        void generateSigmas();
+        void recoverPrediction();
+        void recoverCorrection(constVector);
+        Matrix3X6d sigmas;
+        Matrix3X6d gammas;
 };
 
 
