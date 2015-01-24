@@ -1,377 +1,416 @@
-#include "matrix_utils.h"
-#include "rotation_vector_utils.h"
+#include "ukf_pose.h"
 #include "ukf.h"
 #include "gtest/gtest.h"
+#include <eigen3/Eigen/Dense>
+#include <iostream>
 
+using namespace Eigen;
 
 // Tests that gtest is working.
 TEST(sanity, one_equals_one) {
   EXPECT_EQ(1,1);
 }
 
-TEST(matrix_utils_scaleVector, times_zero_is_zero) {
-	double vector[] = {1,2,3,4,5};
-	scaleVector(0.0, vector, 5);
-	for (int i = 0; i<5; i++)
-	{
-		EXPECT_DOUBLE_EQ(vector[i], 0.0);
-	}
+TEST(eigen_normalized, no_aliasing) {
+    Vector3d v, v_expected;
+    v_expected << 0, 0.6, 0.8;
+    v << 0, 3, 4;
+    v = v_expected;
+    EXPECT_EQ(v, v_expected);
 }
 
-TEST(matrix_utils_scaleVector, inverse) {
-	double vector[] = {1.0,2,3,4,5};
-	scaleVector(-1.0, vector, 5);
-	for (int i = 0; i<5; i++)
-	{
-		EXPECT_DOUBLE_EQ(vector[i],(double) -(i+1));
-	}
+TEST(eigen_angle_axis, basic) {
+    Vector3d v, v_expected;
+    v << 0, 3, 4;
+    AngleAxisd a(v.norm(), v.normalized());
+    EXPECT_DOUBLE_EQ(a.angle(), 5);
 }
 
-TEST(matrix_utils_cholesky, diagonal_matrix)
+TEST(eigen_scaleVector, times_zero_is_zero) {
+    Vector3d v;
+    v << 1,2,3;
+    v *= 0;
+    for (int i = 0; i<3; i++)
+    {
+        EXPECT_DOUBLE_EQ(v(i), 0.0);
+    }
+}
+
+TEST(eigen_scaleVector, inverse) {
+    Vector3d v;
+    v << 1.0,2,3;
+    v = -1.0 * v;
+    for (int i = 0; i<3; i++)
+    {
+        EXPECT_DOUBLE_EQ(v(i),(double) -(i+1));
+    }
+}
+
+TEST(eigen_cholesky, diagonal_matrix)
 {
-	double matrix[] = {4,0,0,0,4,0,0,0,4};
-	double result[9];
+    Matrix3d matrix;
+    matrix << 4,0,0,0,4,0,0,0,4;
+    Matrix3d result;
 
-	cholesky(matrix, result, 3);
+    result = matrix.llt().matrixU();
 
-	for (int i = 0; i < 9; i++)
-	{
-		if (i%4)
-		{
-			EXPECT_DOUBLE_EQ(result[i], 0.0);
-		}else
-		{
-			EXPECT_DOUBLE_EQ(result[i], 2.0);
-		}
-	}
+    for (int i = 0; i < 9; i++)
+    {
+        if (i%4)
+        {
+            EXPECT_DOUBLE_EQ(result(i), 0.0);
+        }else
+        {
+            EXPECT_DOUBLE_EQ(result(i), 2.0);
+        }
+    }
 }
 
-TEST(matrix_utils_cholesky, wiki_matrix)
+TEST(eigen_cholesky, wiki_matrix)
 {
-	double matrix[] = {4,12,-16,12,37,-43,-16,-43,98};
-	double result[9];
-	double expected[] = {2,0,0,6,1,0,-8,5,3};
+    Matrix3d matrix, result, expected;
+    matrix << 4,12,-16,12,37,-43,-16,-43,98;
+    expected << 2,0,0,6,1,0,-8,5,3;
 
-	cholesky(matrix, result, 3);
+    result = matrix.llt().matrixL();
 
-	for (int i = 0; i < 9; i++)
-	{
-		EXPECT_DOUBLE_EQ(result[i], expected[i]);
-	}
-}
 
-TEST(matrix_utils_copy, simple_copy)
-{
-	double vector1[] = {1,2,3,4,5};
-	double vector2[10];
-
-	vectorCopy(vector1, vector2, 5);
-	vectorCopy(vector1, &(vector2[5]), 5);
-
-	for(int i = 0; i < 5; i++)
-	{
-		EXPECT_DOUBLE_EQ(vector1[i%5], vector2[i]);
-	}
+    EXPECT_EQ(result, expected);
+    /*for (int i = 0; i < 9; i++)
+    {
+        EXPECT_DOUBLE_EQ(result[i], expected[i]);
+    }*/
 }
 
 TEST(matrix_utils_add, simple_add)
 {
-	double v1[] = {1,2,3,4,5};
-	double v2[] = {5,4,3,2,1};
+    Vector3d v1, v2;
+    v1 << 1,2,3;
+    v2 << 5,4,3;
 
-	addVectors(v1,v2,5);
-
-	for(int i = 0; i < 5; i++)
-	{
-		EXPECT_DOUBLE_EQ(v1[i], 6.0);
-		EXPECT_DOUBLE_EQ(v2[i], 5 - i);
-	}
-}
-
-TEST(matrix_utils_sub, simple_sub)
-{
-	double v1[] = {1,2,3,4,5};
-	double v2[] = {1,2,3,4,5};
-
-	subtractVectors(v1,v2,5);
-
-	for(int i = 0; i < 5; i++)
-	{
-		EXPECT_DOUBLE_EQ(v1[i], 0.0);
-		EXPECT_DOUBLE_EQ(v2[i], i + 1);
-	}
-}
-
-TEST(matrix_utils_vectorIndex, simple_index)
-{
-	double test[3];
-	EXPECT_EQ(&(test[2]), vectorIndex(test,2,1));
-}
-
-
-TEST(matrix_utils_averageVectors, simple_average)
-{
-	double v1[] = {1,2,3,4,5,1,2,3,4,5};
-	double expectedResult[] = {1,2,3,4,5};
-	double result[5];
-
-	averageVectors(v1,result,2,5);
-
-	for(int i = 0; i < 10; i++)
-	{
-		EXPECT_DOUBLE_EQ(i%5 + 1, v1[i]);
-	}
-
-	for(int i = 0; i < 5; i++)
-	{
-		EXPECT_DOUBLE_EQ(expectedResult[i], result[i]);
-	}
-}
-
-TEST(matrix_utils_averageOuterProduct, simple_outerProduct)
-{
-	double v1[] = {1,2,3,4,5,1,2,3,4,5};
-	double v2[] = {1,2,3,1,2,3};
-	double result[15] = {};
-	double expectedResult[] = {1,2,3,2,4,6,3,6,9,4,8,12,5,10,15};
-
-	averageOuterProduct(v1,v2,result,2,5,3);
-
-	for(int i = 0; i < 5; i++)
-	{
-		EXPECT_DOUBLE_EQ(v1[i], i + 1);
-	}
-
-	for(int i = 0; i < 3; i++)
-	{
-		EXPECT_DOUBLE_EQ(v2[i], i + 1);
-	}
-
-	for(int i = 0; i < 15; i++)
-	{
-		EXPECT_DOUBLE_EQ(expectedResult[i], result[i]);
-	}
-}
-
-TEST(matrix_utils_subtractMultiple, simple_subtract)
-{
-	double v1[] = {1,2,3,4,5,1,2,3,4,5};
-	double v2[] = {1,2,3,4,5};
-	double result[5];
-
-	subtractMultipleVectors(v1,v2,2,5);
-
-	for(int i = 0; i < 10; i++)
-	{
-		EXPECT_DOUBLE_EQ(0.0, v1[i]);
-	}
-
-	for(int i = 0; i < 5; i++)
-	{
-		EXPECT_DOUBLE_EQ(i%5+1, v2[i]);
-	}
-}
-
-TEST(matrix_utils_solve, simple_solve)
-{
-
-	double A[] =
-	 {6.894238064697299,   7.101870550729457,   8.669369896175127,
-	  19.686538668181953,  19.516795180339010,  18.794131786875756,
-	  32.478839271666608 , 31.931719809948561,  28.918893677576385,
-	  45.271139875151263,  44.346644439558119,  39.043655568277018,
-	  58.063440478635911,  56.761569069167663,  49.168417458977643};
-
-	double B[] =
-	   {2.039447372786358,   1.819167793214639,   0.405485035160554,
-	   1.819167793214639 ,  1.674718492450819,   0.644421924204393,
-	   0.405485035160554,   0.644421924204393,   2.325013670868595};
-
-	double C[15] = {};
-
-	solve(A,B,C,5,3);
-
-	for (int i = 0; i<15; i++)
-	{
-		 EXPECT_NEAR(i+1, C[i], 1e-10);
-	}
-}
-
-TEST(matrix_utils_multiply, simple_multiply)
-{
-	double A[] = {1,2,3,4,5,6};
-	double B[] = {4,0,12,12,8,20,32,3,11,2,0,9};
-	double C[] = {1,2,3,4,5,6,7,8};
-
-	double expectedC[] = {54,  48,  79,  49, 127, 118, 215, 125};
-
-	leftMultiplyAdd(A,B,C, 2,3,4);
-
-	for(int i = 0; i < 8; i++)
-	{
-		EXPECT_DOUBLE_EQ(expectedC[i], C[i]);
-	}
-}
-
-TEST(matrix_utils_transposeMultiply, simple_multiply)
-{
-	double A[] = {1,2,3,4,5,6};
-	double B[] = {4,8,11,0,20,2,12,32,0,12,3,9};
-	double C[] = {1,2,3,4,5,6,7,8};
-
-	double expectedC[] = {54,  48,  79,  49, 127, 118, 215, 125};
-
-	transposedMultiplyAdd(A,B,C, 2,3,4);
-
-	for(int i = 0; i < 8; i++)
-	{
-		EXPECT_DOUBLE_EQ(expectedC[i], C[i]);
-	}
-}
-
-TEST(rotation_utils_rotateThisByThat,aRotation)
-{
-	double vector[] = {10,0,0};
-	double rotation[] = {1,1,1};
-	double result[3];
-	double expected[] = {2.262956,9.567123,-1.830079};
-
-	rotateThisByThat(vector, rotation, result);
-
-	for(int i = 0; i < 3; i++)
-	{
-		EXPECT_NEAR(expected[i], result[i], 1e-6);
-	}
-}
-
-TEST(rotation_utils_rotateThisByThat,multipleRotations)
-{
-    double pi2 = 3.14159265359/2.0;
-	double x[] = {1,0,0};
-    double x90[] = {pi2,0,0};
-    double y90[] = {0,pi2,0};
-    double z90[] = {0,0,pi2};
-    double v1[] = {1,0,0};
-    double v2[3];
-    rotateThisByThat(v1, z90, v2);
-    rotateThisByThat(v2, x90,v1);
-    rotateThisByThat(v1, y90, v2);
+    v1 += v2;
 
     for(int i = 0; i < 3; i++)
     {
-    	EXPECT_NEAR(x[i], v2[i], 1e-10);
+        EXPECT_DOUBLE_EQ(v1[i], 6.0);
+        EXPECT_DOUBLE_EQ(v2[i], 5 - i);
+    }
+}
+
+TEST(eigen_rowwise_mean, basic) {
+    Matrix3d m;
+    VectorXd result;
+    m << 1, 2, 2, 2, 1, 2, 1, 2, 2;
+    result = m.rowwise().mean();
+    for (int i = 0; i < 3; i++) {
+        EXPECT_DOUBLE_EQ(result(i), 5./3.);
+    }
+}
+
+TEST(eigen_stream, concat_vectors) {
+    Matrix<double, 2, 4> m;
+    Vector2d v1(0,1),v2(2,3),v3(4,5),v4(6,7);
+    m << v1, v2, v3, v4;
+
+    for (int i = 0; i < 4; i++) {
+        EXPECT_DOUBLE_EQ(m(0, i), 2.0*i);
+        EXPECT_DOUBLE_EQ(m(1, i), 2.0*i + 1);
+    }
+}
+
+TEST(eigen_averageOuterProduct, simple_outerProduct)
+{
+    VectorXd v1(5), v2(3);
+    MatrixXd result(5, 3), expectedResult(5, 3);
+    v1 << 1,2,3,4,5;
+    v2 << 1,2,3;
+    expectedResult << 1,2,3,2,4,6,3,6,9,4,8,12,5,10,15;
+
+    result = v1*v2.transpose();
+
+    for(int i = 0; i < 5; i++)
+    {
+        EXPECT_DOUBLE_EQ(v1(i), i + 1);
+    }
+
+    for(int i = 0; i < 3; i++)
+    {
+        EXPECT_DOUBLE_EQ(v2(i), i + 1);
+    }
+
+    EXPECT_EQ(expectedResult, result);
+}
+
+TEST(eigen_subtractMultiple, simple_subtract)
+{
+    MatrixXd m(5, 2);
+    VectorXd v(5), result(5);
+    m << 1,1,2,2,3,3,4,4,5,5;
+    v << 1,2,3,4,5;
+
+    m.colwise() -= v;
+
+    for(int i = 0; i < 10; i++)
+    {
+        EXPECT_DOUBLE_EQ(0.0, m(i));
+    }
+
+    for(int i = 0; i < 5; i++)
+    {
+        EXPECT_DOUBLE_EQ(i%5+1, v(i));
+    }
+}
+
+TEST(eigen_solve, simple_solve)
+{
+    MatrixXd A(5,3), B(3,3), C(5,3);
+    A << 
+      6.894238064697299,   7.101870550729457,   8.669369896175127,
+      19.686538668181953,  19.516795180339010,  18.794131786875756,
+      32.478839271666608 , 31.931719809948561,  28.918893677576385,
+      45.271139875151263,  44.346644439558119,  39.043655568277018,
+      58.063440478635911,  56.761569069167663,  49.168417458977643;
+
+    B <<
+       2.039447372786358,   1.819167793214639,   0.405485035160554,
+       1.819167793214639 ,  1.674718492450819,   0.644421924204393,
+       0.405485035160554,   0.644421924204393,   2.325013670868595;
+
+    C = B.transpose().ldlt().solve(A.transpose()).transpose();
+    //C = A*B.inverse();
+
+    for (int i = 0; i<15; i++)
+    {
+         EXPECT_NEAR(i+1, C(i/3, i%3), 1e-10);
+    }
+}
+
+TEST(eigen_multiply, simple_multiply)
+{
+    MatrixXd A(2,3), B(3,4), C(2,4), expectedC(2,4);
+    A << 1,2,3,4,5,6;
+    B << 4,0,12,12,8,20,32,3,11,2,0,9;
+    C << 1,2,3,4,5,6,7,8;
+
+    expectedC << 54,  48,  79,  49, 127, 118, 215, 125;
+
+    C += A*B;
+
+    for(int i = 0; i < 8; i++)
+    {
+        EXPECT_DOUBLE_EQ(expectedC(i), C(i));
+    }
+}
+
+TEST(eigen_rotateThisByThat,aRotation)
+{
+    Vector3d v, rotation, result, expected;
+    v << 10,0,0;
+    rotation << 1,1,1;
+    expected << 2.262956,9.567123,-1.830079;
+
+    result = AngleAxisd(rotation.norm(), rotation.normalized()).toRotationMatrix() * v;
+
+    for(int i = 0; i < 3; i++)
+    {
+        EXPECT_NEAR(expected(i), result(i), 1e-6);
+    }
+}
+
+TEST(eigen_rotateThisByThat,multipleRotations)
+{
+    double pi2 = 3.14159265359/2.0;
+    Vector3d x, x90, y90, z90, v1, v2;
+    x << 1,0,0;
+    x90 << pi2,0,0;
+    y90 << 0,pi2,0;
+    z90 << 0,0,pi2;
+    v1 << 1,0,0;
+    v2 = AngleAxisd(z90.norm(), z90.normalized()).toRotationMatrix() * v1;
+    v1 = AngleAxisd(x90.norm(), x90.normalized()).toRotationMatrix() * v2;
+    v2 = AngleAxisd(y90.norm(), y90.normalized()).toRotationMatrix() * v1;
+
+    for(int i = 0; i < 3; i++)
+    {
+        EXPECT_NEAR(x(i), v2(i), 1e-10);
     }
 }
 
 TEST(matrix_utils_composeRotations, simple_composition)
 {
-	double A[] = {0.98327,0.928374,0.12635};
-	double B[] = {0.423876,0.324682,0.938745};
-	double C[3] = {};
-	double expectedC[] = {0.88729352, 1.65648765, 1.00913355};
-	composeRotations(A,B,C);
+    Vector3d A, B, C, expectedC;
+    A << 0.98327,0.928374,0.12635;
+    B << 0.423876,0.324682,0.938745;
+    expectedC << 0.88729352, 1.65648765, 1.00913355;
 
-	for (int i = 0; i< 3; i++)
-	{
-		EXPECT_NEAR(expectedC[i], C[i], 1e-8);
-	}
+    AngleAxisd composition(AngleAxisd(B.norm(), B.normalized())*AngleAxisd(A.norm(), A.normalized()));
+    
+    C = composition.angle()*composition.axis();
+
+    for (int i = 0; i< 3; i++)
+    {
+        EXPECT_NEAR(expectedC(i), C(i), 1e-8);
+    }
 }
 
 TEST(pose_ukf_h, zero_state)
 {
-	double state[] = {0,0,0,0,0,0,0,0,0};
-	double result[3];
-	double expected[] = {0,0,9.8};
+    Vector3d state, result, expected;
+    state << 0,0,0;
+    expected << 0,0,9.8;
 
-	h(state,result);
+    ukf_pose::observe(state,result);
 
-	for (int i = 0; i < 3; i++)
-	{
-		EXPECT_NEAR(expected[i], result[i], 1e-10);
-	}
+    for (int i = 0; i < 3; i++)
+    {
+        EXPECT_NEAR(expected(i), result(i), 1e-10);
+    }
 }
 
 TEST(pose_ukf_h, z_rotation)
 {
-	double state[] = {0,0,1.139847,0,0,0,0,0,0};
-	double result[3];
-	double expected[] = {0,0,9.8};
+    Vector3d state, result, expected;
+    state << 0,0,1.139847;
+    expected << 0,0,9.8;
 
-	h(state,result);
+    ukf_pose::observe(state,result);
 
-	for (int i = 0; i < 3; i++)
-	{
-		EXPECT_NEAR(expected[i], result[i], 1e-10);
-	}
+    for (int i = 0; i < 3; i++)
+    {
+        EXPECT_NEAR(expected(i), result(i), 1e-10);
+    }
 }
 
 TEST(pose_ukf_h, x_rotation)
 {
-	double pi2 = 3.14159265359/2.0;
-	double state[] = {pi2,0,0,0,0,0,0,0,0};
-	double result[3];
-	double expected[] = {0,9.8,0};
+    double pi2 = 3.14159265359/2.0;
+    Vector3d state, result, expected;
+    state << pi2,0,0;
+    expected << 0,9.8,0;
 
-	h(state,result);
+    ukf_pose::observe(state,result);
 
-	for (int i = 0; i < 3; i++)
-	{
-		EXPECT_NEAR(expected[i], result[i], 1e-10);
-	}
+    for (int i = 0; i < 3; i++)
+    {
+        EXPECT_NEAR(expected(i), result(i), 1e-10);
+    }
 }
 
 TEST(pose_ukf_h, y_rotation)
 {
-	double pi4 = 3.14159265359/4.0;
-	double sqrt2 = 1.41421356237;
-	double state[] = {0,pi4,0,0,0,0,0,0,0};
-	double result[3];
-	double expected[] = {-9.8/sqrt2, 0, 9.8/sqrt2};
+    double pi4 = 3.14159265359/4.0;
+    double sqrt2 = 1.41421356237;
+    Vector3d state, result, expected;
+    state << 0,pi4,0;
+    expected << -9.8/sqrt2, 0, 9.8/sqrt2;
 
-	h(state,result);
+    ukf_pose::observe(state,result);
 
-	for (int i = 0; i < 3; i++)
-	{
-		EXPECT_NEAR(expected[i], result[i], 1e-10);
-	}
+    for (int i = 0; i < 3; i++)
+    {
+        EXPECT_NEAR(expected(i), result(i), 1e-10);
+    }
 }
 
-void expect_array_near(double* expected, double* actual, int length, double tolerance)
+void expect_vector_near(Vector3d expected, Vector3d actual, double tolerance)
 {
-	for (int i = 0; i < length; i++)
-	{
-		EXPECT_NEAR(expected[i], actual[i], tolerance);
-	}
+    for (int i = 0; i < expected.rows(); i++)
+    {
+        EXPECT_NEAR(expected(i), actual(i), tolerance);
+    }
 }
 
 TEST(pose_ukf_propogate, x_rotation)
 {
-	double state[] = {0.1,0,0};
-	double rotation[] = {0.1,0,0};
-	double expected[] = {0.2,0,0};
+    Vector3d state, rotation, expected;
+    state << 0.1,0,0;
+    rotation << 0.1,0,0;
+    expected << 0.2,0,0;
 
-	propogate(rotation, state);
-	expect_array_near(expected, state, 3, 1e-10);
+    ukf_pose::propogate(rotation, state);
+    expect_vector_near(expected, state, 1e-10);
 }
 
 TEST(pose_ukf_propogate, y_rotation)
 {
-	double state[] = {0, 0.1,0};
-	double rotation[] = {0, 0.1, 0};
-	double expected[] = {0, 0.2, 0};
+    Vector3d state, rotation, expected;
+    state << 0, 0.1,0;
+    rotation << 0, 0.1, 0;
+    expected << 0, 0.2, 0;
 
-	propogate(rotation, state);
-	expect_array_near(expected, state, 3, 1e-10);
+    ukf_pose::propogate(rotation, state);
+    expect_vector_near(expected, state, 1e-10);
 }
 
 TEST(pose_ukf_propogate, z_rotation)
 {
-	double state[] = {0,0,0.1};
-	double rotation[] = {0,0,0.1};
-	double expected[] = {0,0,0.2};
+    Vector3d state, rotation, expected;
+    state << 0,0,0.1;
+    rotation << 0,0,0.1;
+    expected << 0,0,0.2;
 
-	propogate(rotation, state);
-	expect_array_near(expected, state, 3, 1e-10);
+    ukf_pose::propogate(rotation, state);
+    expect_vector_near(expected, state, 1e-10);
+}
+
+TEST(ukf_constructor, initialization)
+{
+    ukf estimator(3);
+
+    EXPECT_EQ(1, estimator.state.cols());
+    EXPECT_EQ(3, estimator.state.rows());
+    EXPECT_EQ(0., estimator.state.norm());
+    
+    EXPECT_EQ(3, estimator.covariance.rows());
+    EXPECT_EQ(3, estimator.covariance.cols());
+    // Eventually, the covariance should be passed in the constructor, but for now..
+    EXPECT_EQ(estimator.covariance.trace(), estimator.covariance.trace());
+
+    
+    EXPECT_EQ(3, estimator.processCovariance.rows());
+    EXPECT_EQ(3, estimator.processCovariance.cols());
+    // Eventually, the covariance should be passed in the constructor, but for now..
+    EXPECT_EQ(estimator.processCovariance.trace(), estimator.processCovariance.trace());
+
+    EXPECT_EQ(3, estimator.measurementCovariance.rows());
+    EXPECT_EQ(3, estimator.measurementCovariance.cols());
+    // Eventually, the covariance should be passed in the constructor, but for now..
+    EXPECT_EQ(estimator.measurementCovariance.trace(), estimator.measurementCovariance.trace());
+}
+
+void propogate(Eigen::VectorXd unused, Ref<Eigen::VectorXd> state)
+{
+    state *= 2.;
+}
+
+void expect_matrix_near(Matrix3d expected, Matrix3d actual, double tol) {
+    for (int i = 0; i < 3; i ++) {
+        for (int j = 0; j < 3; j++) {
+            EXPECT_NEAR(expected(i, j), actual(i, j), tol);
+        }
+    }
+}
+
+TEST(ukf_predict, 2x) {
+    Vector3d initialState, expectedState;
+    Matrix3d initialCovar, expectedCovar;
+    ukf estimator(3);
+    initialState << 2, 3, 1;
+    expectedState << 4, 6, 2;
+    initialCovar << 1,  2,  1,
+                    2, 13, 14,
+                    1, 14, 42;
+    expectedCovar << 4,  8,  4,
+                     8, 52, 56,
+                     4, 56, 168;
+    estimator.state = initialState;
+    estimator.covariance = initialCovar;
+    estimator.processCovariance = Matrix3d::Zero();
+    
+    estimator.predict(Vector3d::Zero(), &propogate);
+
+    expect_vector_near(expectedState, estimator.state, 1e-10);
+    expect_matrix_near(expectedCovar, estimator.covariance, 1e-10);
 }
 
 int main(int argc, char **argv) {

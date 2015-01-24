@@ -17,13 +17,14 @@ class ukf_pose
     	ukf_pose(); 
         void update(constVector acc, constVector rotation, Ref<Vector3d>);
         //void propogate(Vector3d, Ref<Vector3d>);
-        void static propogate(Eigen::VectorXd, Ref<Eigen::VectorXd>); //TODO(max) We don't need "Eigen::" since we opened that namespace
+        static void propogate(Eigen::VectorXd, Ref<Eigen::VectorXd>); //TODO(max) We don't need "Eigen::" since we opened that namespace
         //void h(Vector3d, Ref<Vector3d>);
-        void static observe(Eigen::VectorXd, Ref<Eigen::VectorXd>);
+        static void observe(Eigen::VectorXd, Ref<Eigen::VectorXd>);
         void fixState(Ref<Vector3d>);
 
     private:
         ukf estimator;
+	static AngleAxisd angleAxis(Vector3d);
 };
 
 

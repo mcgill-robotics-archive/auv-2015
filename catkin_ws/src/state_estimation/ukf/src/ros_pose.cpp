@@ -11,48 +11,61 @@ ros::Publisher pub;
 ros::Subscriber sub;
 ukf_pose estimator;
 Vector3d acc, gyro, pose;
-Vector3d quaternion;
 
 void msgVectorToEigenVector(Ref<Vector3d> vector3d, geometry_msgs::Vector3 vector) {
-	vector3d << vector.x, vector.y, vector.z;
+    vector3d << vector.x, vector.y, vector.z;
 }
 
-void eigenToMsgQuaternion(geometry_msgs::Quaternion& msgQ, Quaterniond eigenQ) {
-	msgQ.w = eigenQ.w();
-	msgQ.x = eigenQ.x();
-	msgQ.y = eigenQ.y();
-	msgQ.z = eigenQ.z();
+// angle*axis to quaternion
+Quaterniond quaternion(Vector3d pose) {
+    if (pose.norm() > 0) {
+        return Quaterniond(AngleAxisd(pose.norm(), pose.normalized()));
+    } else {
+        return Quaterniond(1, 0, 0, 0);
+    }
+}
+
+void poseToQuaternion(geometry_msgs::Quaternion& msgQ, Vector3d angleAxis) {
+    Quaterniond q(quaternion(angleAxis));
+    msgQ.w = q.w();
+    msgQ.x = q.x();
+    msgQ.y = q.y();
+    msgQ.z = q.z();
 }
 
 void dataCallback(const sensor_msgs::Imu::ConstPtr& imu) {
-	msgVectorToEigenVector(acc, imu->linear_acceleration);
-	msgVectorToEigenVector(gyro, imu->angular_velocity);
+    msgVectorToEigenVector(acc, imu->linear_acceleration);
+    msgVectorToEigenVector(gyro, imu->angular_velocity);
 
-	acc = -9.8 * acc.normalized(); //TODO(max) possible aliasing
-	gyro *= 0.026;
+    acc = -9.8 * acc.normalized(); //TODO(max) possible aliasing
+    gyro *= 0.026;
 
+    //Max: testing only
+    //acc *= 0.;
+    //gyro *= 0.;
 
-	estimator.update(acc, gyro, pose);
-	geometry_msgs::Quaternion quat = geometry_msgs::Quaternion();
-	eigenToMsgQuaternion(quat, Quaterniond(AngleAxisd(pose.norm(), pose.normalized())));
+    estimator.update(acc, gyro, pose);
+    geometry_msgs::Quaternion quat = geometry_msgs::Quaternion();
+    //printf("%10f\n", pose(0));
+    poseToQuaternion(quat, pose);
 
-	geometry_msgs::PoseStamped posStamped = geometry_msgs::PoseStamped();
-	posStamped.header = imu->header;
-	posStamped.header.frame_id = "base_footprint";
-	posStamped.pose.orientation = quat;
+    geometry_msgs::PoseStamped posStamped = geometry_msgs::PoseStamped();
+    posStamped.header = imu->header;
+    posStamped.header.frame_id = "base_footprint";
+    posStamped.pose.orientation = quat;
 
-	pub.publish(posStamped);
+    pub.publish(posStamped);
 }
 
 
 int main (int argc, char **argv) {
-	ros::init(argc, argv, "pose_ukf");
-	ros::NodeHandle node;
+    ros::init(argc, argv, "pose_ukf");
+    ros::NodeHandle node;
 
-	pub = node.advertise<geometry_msgs::PoseStamped>("ukf", 100);
-	sub = node.subscribe("imu_data", 100, dataCallback);
+    pub = node.advertise<geometry_msgs::PoseStamped>("ukf", 100);
+    sub = node.subscribe("imu_data", 100, dataCallback);
 
-	ros::spin();
+    ros::spin();
 
-	return 0;
+    return 0;
 }

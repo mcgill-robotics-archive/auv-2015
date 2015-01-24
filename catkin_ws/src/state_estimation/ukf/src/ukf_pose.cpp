@@ -2,6 +2,7 @@
 #include "ukf.h"
 #include <math.h>
 #include <stdio.h>
+#include <iostream>
 
 
 
@@ -21,6 +22,13 @@ cout << "Printing: \n" << m << endl;
 
 ukf_pose::ukf_pose():estimator(3) {}
 
+AngleAxisd ukf_pose::angleAxis(Vector3d v) {
+	if (v.norm() > 0) {
+		return AngleAxisd(v.norm(), v.normalized());
+	} else {
+		return AngleAxisd(0., Vector3d::UnitZ());
+	}
+}
 
 void ukf_pose::propogate(Eigen::VectorXd rotation, Ref<Eigen::VectorXd> state)
 {
@@ -28,37 +36,28 @@ void ukf_pose::propogate(Eigen::VectorXd rotation, Ref<Eigen::VectorXd> state)
 	//double rotationEarth[3] = {-rotation[0], -rotation[1], -rotation[2]};
 	
 	//double result[3] = {};
-	Vector3d result(0,0,0);
 	double tau = 2*pi;
 
-	
-	
-	//Construct transforms as AngleAxis' and compose the transforms
-	AngleAxisd rotationTransform(rotation.norm(), rotation.normalized()); //Rotation as AngleAxis
-	AngleAxisd stateTransform(state.norm(), state.normalized());
-	AngleAxisd resultTransform(rotationTransform * stateTransform);
-	
-	
-	result = resultTransform.angle()*resultTransform.axis(); //Get a vector back	
-
-	double angle = result.norm();
-	result = result.normalized();
+	AngleAxisd rotationTransform(angleAxis(rotation));
+	AngleAxisd stateTransform(angleAxis(state));	
+	AngleAxisd resultTransform(stateTransform * rotationTransform);	
 
 	//We want to choose the rotation vector closest to sigma
-	angle += tau *floor(0.5 + (state.dot(result)-angle)/tau);
+	double angle = resultTransform.angle() + tau * floor(0.5 + (state.dot(resultTransform.axis())-resultTransform.angle())/tau);
 
-	state = angle * result;	
+	state = angle * resultTransform.axis();
+	if (state.hasNaN()) printf("Sigma has nan");
 }
 
 void ukf_pose::observe(VectorXd sigma, Ref<VectorXd> gamma)
 {
 	Vector3d gravity(0,0,9.8);
 
-	Vector3d inverted = -sigma;
 	//double inverted[3] = {};
 	//inverse(sigma, inverted);
 	//rotateThisByThat(gravity, inverted, gamma);
-	AngleAxisd invertedAngleAxis(inverted.norm(), inverted.normalized());
+	AngleAxisd invertedAngleAxis(angleAxis(-sigma));
+
 	//Transform invertedTransform(invertedAngleAxis);
 	gamma = invertedAngleAxis.toRotationMatrix() * gravity; //Apply the transform to gravity
 
@@ -69,7 +68,7 @@ void ukf_pose::update(constVector acc, constVector rotation, Ref<Vector3d> pose)
     fixState(estimator.state);
 
     estimator.predict(rotation, &propogate);
-    //estimator.correct(acc, &observe);
+    estimator.correct(acc, &observe);
 
     pose = estimator.state;
 }
