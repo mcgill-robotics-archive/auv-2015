@@ -153,7 +153,7 @@
     }
 
     // Show Histogram
-    cv::namedWindow(HISTOGRAM_WINDOW);
+    //cv::namedWindow(HISTOGRAM_WINDOW);
     cv::imshow(HISTOGRAM_WINDOW, img_hist);
     cv::waitKey(3);
   }

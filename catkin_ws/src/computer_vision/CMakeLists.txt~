@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(catkin_ws)
+project(computer_vision)
 
 find_package(catkin REQUIRED COMPONENTS
   roscpp
@@ -7,11 +7,8 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   cv_bridge
   image_transport
-  message_generation
   tf
 )
-
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 
 #######################################
 ## Declare ROS messages and services ##
@@ -24,9 +21,9 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 ##)
 
 # Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-)
+# generate_messages(
+#   DEPENDENCIES
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -52,18 +49,20 @@ include_directories(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
+add_library(computer_vision_lib src/threshold.cpp src/histogram.cpp src/object_finder.cpp)
+
 add_executable(computer_vision_a src/computer_vision_a.cpp)
 
 target_link_libraries(computer_vision_a
+			computer_vision_lib
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )
 
 add_executable(computer_vision_COLOR src/computer_vision_COLOR.cpp)
 
-add_library(computer_vision src/threshold.cpp src/histogram.cpp src/object_finder.cpp)
-
-target_link_libraries(computer_vision_COLOR computer_vision 
+target_link_libraries(computer_vision_COLOR
+			computer_vision_lib
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )
@@ -71,6 +70,7 @@ target_link_libraries(computer_vision_COLOR computer_vision
 add_executable(computer_vision_OBJECT src/computer_vision_OBJECT.cpp)
 
 target_link_libraries(computer_vision_OBJECT
+			computer_vision_lib
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )
