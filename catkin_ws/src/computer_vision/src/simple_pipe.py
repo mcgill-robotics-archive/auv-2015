@@ -2,7 +2,6 @@
 import argparse
 import roslib
 import sys
-import pipe_manager
 import numpy
 import rospy
 import cv2
@@ -115,7 +114,7 @@ class simple_pipe :
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Create an image processing pipeline in ROS system")
-    parser.add_argument("plan", help="Filter names (ex. gray > resize )" )
+    parser.add_argument("plan", help='Filter names (ex. "gray > resize" )' )
     parser.add_argument("-c", "--camera", help="Camera feed message name (default: /camera/image_rect_color)")
     parser.add_argument("-t", "--threads", help="Number of threads to be used in this pipeline (default: 1)", type=int)
     parser.add_argument("-s", "--show", help="Show result in a window", action="store_true")
