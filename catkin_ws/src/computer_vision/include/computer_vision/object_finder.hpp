@@ -6,10 +6,9 @@ class VisibleObject
 {
 public:
 	unsigned int _hue;
-	cv::Rect _rect;
-	cv::Point _center;
+	cv::RotatedRect _rect;
 
-	VisibleObject(unsigned int hue, cv::Rect rect);
+	VisibleObject(unsigned int hue, cv::RotatedRect rect);
 };
 
 class ObjectFinder
@@ -18,7 +17,7 @@ private:
 	std::list<VisibleObject> visibleObjects;
 	std::vector<std::vector<cv::Point> > contours;
     std::vector<std::vector<cv::Point> > contours_poly;
-	bool isRectContained(std::vector<cv::Rect> rects, cv::Rect rect);
+	bool isRectContained(std::vector<cv::RotatedRect> rects, cv::RotatedRect rect);
 
 public:
 	std::list<VisibleObject> getVisibleObjects();

@@ -11,7 +11,7 @@
   {
     return visibleObjects;
   }
-
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              
   // hues contains the colors that were thresholded
   // minArea is the smallest size of rectange we'll count as an object
   void ObjectFinder::createContours(std::list<cv::Mat> images, std::list<HuePeak> hues, float minArea)
@@ -38,18 +38,18 @@
       cv::findContours(img_contours, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE, cv::Point(0, 0));
 
       contours_poly = std::vector<std::vector<cv::Point> > ( contours.size() );
-      std::vector<cv::Rect> boundRect ( contours.size() );
+      std::vector<cv::RotatedRect> boundRect ( contours.size() );
 
       // Finds a bounding box for each of those shapes
       for( int i = 0; i < contours.size(); i++ )
       { 
         cv::approxPolyDP( cv::Mat(contours[i]), contours_poly[i], 3, true );
-        boundRect[i] = cv::boundingRect( cv::Mat(contours_poly[i]) );
+        boundRect[i] = cv::minAreaRect( cv::Mat(contours_poly[i]) );
       }
 
       for( int i = 0; i < contours.size(); i++ )
       { 
-        if (boundRect[i].area() > minArea && !isRectContained(boundRect, boundRect[i]))
+        if (boundRect[i].size.area() > minArea && !isRectContained(boundRect, boundRect[i]))
         {
           VisibleObject visibleObject(hue, boundRect[i]);
           foundObjects.push_back(visibleObject);
@@ -75,9 +75,15 @@
                              (unsigned int)rgb.val[2] );
 
       // Draws the bounding box
-      cv::rectangle( drawing, visibleObject._rect.tl(), visibleObject._rect.br(), drawColor, 2, 8, 0 );
+      cv::Point2f vertices[4];
+      visibleObject._rect.points(vertices);
+      for (int i = 0; i < 4; i++) 
+      {
+        cv::line(drawing, vertices[i], vertices[(i+1)%4], drawColor, 2, 8, 0 );
+      }
+      //cv::rectangle( drawing, visibleObject._rect.tl(), visibleObject._rect.br(), drawColor, 2, 8, 0 );
       // Draws the center of the object
-      cv::circle( drawing, visibleObject._center, 5, drawColor, 2, 8, 0 );
+      cv::circle( drawing, visibleObject._rect.center, 5, drawColor, 2, 8, 0 );
     }
     
     cv::namedWindow(CONTOURS_WINDOW);
@@ -86,24 +92,20 @@
   }
 
   // Returns whether one rectangle is inside another one
-  bool ObjectFinder::isRectContained(std::vector<cv::Rect> rects, cv::Rect rect) 
+  bool ObjectFinder::isRectContained(std::vector<cv::RotatedRect> rects, cv::RotatedRect rect) 
   {
+    /*
     for( int i = 0; i < rects.size(); i++ ) 
     {
       if( rects[i].contains(rect.tl()) && rects[i].contains(rect.br()) ) {
         return true;
       }
-    }
+    }*/
     return false;
   }
 
-  VisibleObject::VisibleObject(unsigned int hue, cv::Rect rect)
+  VisibleObject::VisibleObject(unsigned int hue, cv::RotatedRect rect)
   {
     _hue = hue;
     _rect = rect;
-
-    int center_x, center_y;
-    center_x = (rect.tl().x + rect.br().x)/2;
-    center_y = (rect.tl().y + rect.br().y)/2;
-    _center = cv::Point(center_x, center_y);
   }
