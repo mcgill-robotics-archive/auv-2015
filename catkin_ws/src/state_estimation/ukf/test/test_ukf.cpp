@@ -6,6 +6,12 @@
 
 using namespace Eigen;
 
+// Convenience assertion for Eigen types
+void expect_matrix_near(MatrixXd expected, MatrixXd actual, double tol) {
+    bool isCorrect = (expected - actual).isMuchSmallerThan(1.0, tol);
+    EXPECT_TRUE(isCorrect) << "Expected:\n" << expected << "\nActual:\n" << actual << "\n";
+}
+
 // Tests that gtest is working.
 TEST(sanity, one_equals_one) {
   EXPECT_EQ(1,1);
@@ -211,10 +217,7 @@ TEST(eigen_rotateThisByThat,aRotation)
 
     result = AngleAxisd(rotation.norm(), rotation.normalized()).toRotationMatrix() * v;
 
-    for(int i = 0; i < 3; i++)
-    {
-        EXPECT_NEAR(expected(i), result(i), 1e-6);
-    }
+    expect_matrix_near(expected, result, 1e-6);
 }
 
 TEST(eigen_rotateThisByThat,multipleRotations)
@@ -230,10 +233,7 @@ TEST(eigen_rotateThisByThat,multipleRotations)
     v1 = AngleAxisd(x90.norm(), x90.normalized()).toRotationMatrix() * v2;
     v2 = AngleAxisd(y90.norm(), y90.normalized()).toRotationMatrix() * v1;
 
-    for(int i = 0; i < 3; i++)
-    {
-        EXPECT_NEAR(x(i), v2(i), 1e-10);
-    }
+    expect_matrix_near(x, v2, 1e-10);
 }
 
 TEST(matrix_utils_composeRotations, simple_composition)
@@ -247,10 +247,7 @@ TEST(matrix_utils_composeRotations, simple_composition)
     
     C = composition.angle()*composition.axis();
 
-    for (int i = 0; i< 3; i++)
-    {
-        EXPECT_NEAR(expectedC(i), C(i), 1e-8);
-    }
+    expect_matrix_near(expectedC, C, 1e-8);
 }
 
 TEST(pose_ukf_h, zero_state)
@@ -261,10 +258,7 @@ TEST(pose_ukf_h, zero_state)
 
     ukf_pose::observe(state,result);
 
-    for (int i = 0; i < 3; i++)
-    {
-        EXPECT_NEAR(expected(i), result(i), 1e-10);
-    }
+    expect_matrix_near(expected, result, 1e-10);
 }
 
 TEST(pose_ukf_h, z_rotation)
@@ -275,10 +269,7 @@ TEST(pose_ukf_h, z_rotation)
 
     ukf_pose::observe(state,result);
 
-    for (int i = 0; i < 3; i++)
-    {
-        EXPECT_NEAR(expected(i), result(i), 1e-10);
-    }
+    expect_matrix_near(expected, result, 1e-10);
 }
 
 TEST(pose_ukf_h, x_rotation)
@@ -290,10 +281,8 @@ TEST(pose_ukf_h, x_rotation)
 
     ukf_pose::observe(state,result);
 
-    for (int i = 0; i < 3; i++)
-    {
-        EXPECT_NEAR(expected(i), result(i), 1e-10);
-    }
+    expect_matrix_near(expected, result, 1e-10);
+    
 }
 
 TEST(pose_ukf_h, y_rotation)
@@ -306,18 +295,7 @@ TEST(pose_ukf_h, y_rotation)
 
     ukf_pose::observe(state,result);
 
-    for (int i = 0; i < 3; i++)
-    {
-        EXPECT_NEAR(expected(i), result(i), 1e-10);
-    }
-}
-
-void expect_vector_near(Vector3d expected, Vector3d actual, double tolerance)
-{
-    for (int i = 0; i < expected.rows(); i++)
-    {
-        EXPECT_NEAR(expected(i), actual(i), tolerance);
-    }
+    expect_matrix_near(expected, result, 1e-10);
 }
 
 TEST(pose_ukf_propogate, x_rotation)
@@ -328,7 +306,7 @@ TEST(pose_ukf_propogate, x_rotation)
     expected << 0.2,0,0;
 
     ukf_pose::propogate(rotation, state);
-    expect_vector_near(expected, state, 1e-10);
+    expect_matrix_near(expected, state, 1e-10);
 }
 
 TEST(pose_ukf_propogate, y_rotation)
@@ -339,7 +317,7 @@ TEST(pose_ukf_propogate, y_rotation)
     expected << 0, 0.2, 0;
 
     ukf_pose::propogate(rotation, state);
-    expect_vector_near(expected, state, 1e-10);
+    expect_matrix_near(expected, state, 1e-10);
 }
 
 TEST(pose_ukf_propogate, z_rotation)
@@ -350,7 +328,7 @@ TEST(pose_ukf_propogate, z_rotation)
     expected << 0,0,0.2;
 
     ukf_pose::propogate(rotation, state);
-    expect_vector_near(expected, state, 1e-10);
+    expect_matrix_near(expected, state, 1e-10);
 }
 
 TEST(ukf_constructor, initialization)
@@ -383,13 +361,7 @@ void propogate(Eigen::VectorXd unused, Ref<Eigen::VectorXd> state)
     state *= 2.;
 }
 
-void expect_matrix_near(Matrix3d expected, Matrix3d actual, double tol) {
-    for (int i = 0; i < 3; i ++) {
-        for (int j = 0; j < 3; j++) {
-            EXPECT_NEAR(expected(i, j), actual(i, j), tol);
-        }
-    }
-}
+
 
 TEST(ukf_predict, 2x) {
     Vector3d initialState, expectedState;
@@ -409,9 +381,38 @@ TEST(ukf_predict, 2x) {
     
     estimator.predict(Vector3d::Zero(), &propogate);
 
-    expect_vector_near(expectedState, estimator.state, 1e-10);
+    expect_matrix_near(expectedState, estimator.state, 1e-10);
     expect_matrix_near(expectedCovar, estimator.covariance, 1e-10);
 }
+
+
+void observe(VectorXd sigma, Ref<VectorXd> gamma)
+{
+    gamma = -sigma;
+}
+
+TEST(ukf_correct, minusx) {
+    Vector3d initialState, msmt, expectedState;
+    Matrix3d initialCovar, expectedCovar;
+    ukf estimator(3);
+    initialState << 2, 3, 1;
+    msmt << -3, -3, -1;
+    expectedState << 2.5, 3, 1;
+    initialCovar << 1,  2,  1,
+                    2, 13, 14,
+                    1, 14, 42;
+    
+    estimator.state = initialState;
+    estimator.covariance = initialCovar;
+    estimator.measurementCovariance = initialCovar;//Do I need to do .clone() or something here?
+    
+    estimator.correct(msmt, &observe);
+
+    expect_matrix_near(expectedState, estimator.state, 1e-10);
+    expect_matrix_near(0.5*initialCovar, estimator.covariance, 1e-10);
+}
+
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

@@ -2,7 +2,6 @@
 #include <math.h>
 
 
-
 //Length of the state vector
 const double INITIAL_COVARIANCE = 0.0000001;
 const double PROCESS_VARIANCE = 0.00000004;
