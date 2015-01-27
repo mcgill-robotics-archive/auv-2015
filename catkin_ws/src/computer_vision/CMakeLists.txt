@@ -10,6 +10,15 @@ find_package(catkin REQUIRED COMPONENTS
   tf
 )
 
+## Python/c++ integration starts here
+find_package(Boost REQUIRED COMPONENTS python)
+find_package(PythonLibs 2.7 REQUIRED)
+## | 
+## V this requires setup.py exists
+catkin_python_setup()
+## "This macro ensures modules and global scripts declared therein get installed" -ROS Tutorials
+## Python/c++ integration ends
+
 #######################################
 ## Declare ROS messages and services ##
 #######################################
@@ -39,8 +48,12 @@ catkin_package(
 ## Build ##
 ###########
 
+
+## second and thired are python/c++ libs
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${PYTHON_INCLUDE_DIRS}
 )
 
 #############
@@ -50,6 +63,18 @@ include_directories(
 include_directories(include ${catkin_INCLUDE_DIRS})
 
 add_library(computer_vision_lib src/threshold.cpp src/histogram.cpp src/object_finder.cpp)
+
+### Python/c++ interface starts here
+add_library(pyterface src/pyterface.cpp)
+target_link_libraries(pyterface
+			${catkin_LIBRARIES}
+			${Boost_LIBRARIES} )
+# Don't prepend wrapper library name with lib and add to Python libs.
+set_target_properties(pyterface PROPERTIES
+        PREFIX ""
+        LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
+### Python/c++ ends
+
 
 add_executable(computer_vision_a src/computer_vision_a.cpp)
 
