@@ -11,14 +11,17 @@ from cv_bridge import CvBridge, CvBridgeError
 
 if __name__ == '__main__':
     rospy.init_node("phone_cam", anonymous=True)
-    image_publisher = rospy.Publisher("phone_cam",Image)
     bridge = CvBridge()
     parser = argparse.ArgumentParser(description="Create an image processing pipeline in ROS system")
     parser.add_argument("ip", help="ip address" )
+    parser.add_argument("-t","--topic", help="set the topic name of the published messages (default : phone_cam)")
     arguments = vars(parser.parse_args())
     ip = arguments["ip"]
+    topic_name = arguments["topic"] if arguments["topic"] else "phone_cam"
+    image_publisher = rospy.Publisher(topic_name,Image)
     location = "http://" + ip + "//video?dummy=param.mjpg"
     stream=urllib.urlopen(location)
+    print "Press q to quit"
     bytes=''
     while True:
         bytes+=stream.read(16384)
