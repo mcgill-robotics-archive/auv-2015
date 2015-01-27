@@ -12,6 +12,7 @@ class plumber :
     @staticmethod
     def gray(image):
         return cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
     @staticmethod
     def line_detection(image) :
         print "received image ", image
@@ -20,6 +21,15 @@ class plumber :
     @staticmethod
     def resize(image, scale_x=0.333, scale_y=0.333):
         return cv2.resize(image, (0,0), fx=scale_x, fy=scale_y)
+    
+    @staticmethod
+    def NORMALIZE(image):
+        return cv2.normalize(image); #maximizes the contrast
+    
+    @staticmethod
+    def GAUSSIAN(image):
+        return cv2.GaussianBlur(image, 15, 0); #Reduces noise
+
 
     @staticmethod
     def canny(image, threshold1=100, threshold2=200):
