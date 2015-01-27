@@ -22,6 +22,10 @@ class plumber :
         return cv2.resize(image, (0,0), fx=scale_x, fy=scale_y)
 
     @staticmethod
+    def canny(image, threshold1=100, threshold2=200):
+        return cv2.Canny(image, threshold1, threshold2)
+
+    @staticmethod
     def bad_filter(image):
         return "garbage"
 
