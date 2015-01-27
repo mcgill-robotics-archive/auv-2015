@@ -86,7 +86,7 @@
       cv::circle( drawing, visibleObject._rect.center, 5, drawColor, 2, 8, 0 );
     }
     
-    cv::namedWindow(CONTOURS_WINDOW);
+    //cv::namedWindow(CONTOURS_WINDOW);
     cv::imshow(CONTOURS_WINDOW, drawing);
     cv::waitKey(3);
   }

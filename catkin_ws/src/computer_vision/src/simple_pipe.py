@@ -2,13 +2,13 @@
 import argparse
 import roslib
 import sys
-import pipe_manager
 import numpy
 import rospy
 import cv2
 import functools
 import logging
 import Queue
+import thread as t
 from threading import Thread
 from plumber import *
 from image_node import image_in
@@ -64,16 +64,22 @@ class simple_pipe :
         
         def display():
             while True:
-                print self.queue_out.qsize()
+                #print self.queue_out.qsize()
                 image_out = self.queue_out.get(block=True)
-                if image_out:
-                    cv2.imshow("Image", image_out.content)
-                    cv2.waitKey(5)
+                cv2.imshow("Image", image_out.content)
+                if cv2.waitKey(5) == ord('q') :
+                    # send keyboard interrupt to main thread and then end thread
+                    t.interrupt_main()
+                    self.queue_out.task_done()
+                    exit(0)
                 self.queue_out.task_done()
         if show:
-            gui_thread = Thread(target=display)
-            gui_thread.daemon = True
-            gui_thread.start()
+            try:
+                gui_thread = Thread(target=display)
+                gui_thread.daemon = True
+                gui_thread.start()
+            except KeyboardInterrupt:
+                rospy.exit()
     
     def retrieve_function(self, function_name):
         """
@@ -115,7 +121,7 @@ class simple_pipe :
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Create an image processing pipeline in ROS system")
-    parser.add_argument("plan", help="Filter names (ex. gray > resize )" )
+    parser.add_argument("plan", help='Filter names (ex. "gray > resize" )' )
     parser.add_argument("-c", "--camera", help="Camera feed message name (default: /camera/image_rect_color)")
     parser.add_argument("-t", "--threads", help="Number of threads to be used in this pipeline (default: 1)", type=int)
     parser.add_argument("-s", "--show", help="Show result in a window", action="store_true")

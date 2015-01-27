@@ -81,9 +81,9 @@
       std::ostringstream s;
       s << "Threshold hue = " << ho;
       std::string windowName = s.str();
-      cv::namedWindow(windowName);
-      cv::imshow(windowName, img);
-      cv::waitKey(3);
+      //cv::namedWindow(windowName);
+      //cv::imshow(windowName, img);
+      //cv::waitKey(3);
     }
   }
 
