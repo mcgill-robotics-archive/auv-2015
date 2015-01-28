@@ -24,12 +24,12 @@ class histogram :
         blur = cv2.GaussianBlur(image, (15,15), 0)
         hist_item = histogram.hsv_hist_item(blur)
         # look for largest area under the curve for k values
-        flattened_hist= list(itertools.chain.from_iterable(hist_item))
+        flattened_hist = list(itertools.chain.from_iterable(hist_item))
+        flattened_hist = flattened_hist[:-76]
         # find area under "curves" of size of k in hue space
         k = 9
         # convolve over the hsv space with selector like kernel
-        areas = np.convolve(flattened_hist, [1.]*k, "valid")
-        print areas
+        areas = np.convolve(flattened_hist, [1.]*k, "same")
         convolved_values = [(index + int(k/2), region) for index ,region in enumerate(areas) if region > min_threshold]
         # collect contiguous regions
         prev_index = 0
