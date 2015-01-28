@@ -49,29 +49,29 @@ void ukf::recoverPrediction()
 
 }
 
-void ukf::predict(constVector rotation, void (*propogate)(Eigen::VectorXd,Ref<Eigen::VectorXd>))
+void ukf::predict(void (*propogate)(Eigen::VectorXd,Ref<Eigen::VectorXd>))
 {
 	generateSigmas();
 	for (int i = 0; i < 2*DIM; i++)
 	{
-		propogate(rotation, sigmas.col(i));//TODO(max) Better way to do this with colwise?
+		propogate(sigmas.col(i));//TODO(max) Better way to do this with colwise? rotation was removed as an arg
 		
 	}
 	recoverPrediction();
 }
 
 
-void ukf::correct(constVector acc, void (*observe)(Eigen::VectorXd,Ref<Eigen::VectorXd>))
+void ukf::correct(constVector measurement, void (*observe)(Eigen::VectorXd,Ref<Eigen::VectorXd>))
 {
 	generateSigmas();
 	for (int i = 0; i < 2* DIM; i++)
 	{	
 		observe(sigmas.col(i), gammas.col(i));
 	}
-	recoverCorrection(acc);
+	recoverCorrection(measurement);
 }
 
-void ukf::recoverCorrection(constVector acc)
+void ukf::recoverCorrection(constVector measurement)
 {
 	Vector3d predMsmt = gammas.rowwise().mean();
 
@@ -87,6 +87,6 @@ void ukf::recoverCorrection(constVector acc)
 	// gain = croscovar*meascovar^-1
 	Matrix3d gain = measCovar.transpose().ldlt().solve(crossCovar.transpose()).transpose();
 
-	state += gain * (acc - predMsmt);
+	state += gain * (measurement - predMsmt);
 	covariance -= crossCovar * gain.transpose();
 }

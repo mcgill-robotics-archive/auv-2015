@@ -17,9 +17,9 @@ class ukf_slam
     	ukf_slam(); 
     	void update();
 		//void propogate(Vector3d, Ref<Vector3d>);
-		void static propogate(Eigen::VectorXd, Ref<Eigen::VectorXd>);
+		void static propogate(Ref<Eigen::VectorXd>);
 		//void h(Vector3d, Ref<Vector3d>);
-		void static observe(Eigen::VectorXd, Ref<Eigen::VectorXd>);
+		void static observe();
 		
 	private:
 		ukf estimator;
