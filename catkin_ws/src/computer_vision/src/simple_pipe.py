@@ -8,6 +8,7 @@ import cv2
 import functools
 import logging
 import Queue
+import collections
 import thread as t
 from threading import Thread
 from plumber import *
@@ -18,7 +19,7 @@ from sensor_msgs.msg import Image
 
 
 class simple_pipe :
-    def __init__(self, plan, camera="/camera/image_rect_color", threads=1, show=True, name="pipe"):
+    def __init__(self, plan, camera="/camera/image_rect_color", threads=1, show=False, name="pipe"):
         """
         A simple pipeline is a composite of functions that will filter an image from a stream of ROS images.
 
@@ -37,6 +38,7 @@ class simple_pipe :
         self.pipeline = [self.retrieve_function(function_name.strip()) for function_name in plan.split(">")]
         self.queue_in = Queue.Queue()
         self.queue_out = Queue.PriorityQueue()
+        self.out = collections.deque(maxlen=20)
         self.thread_quantity = threads if threads >= 1 else 1
         self.node_name = name
         def callback(data):
@@ -61,7 +63,13 @@ class simple_pipe :
             thread = Thread(target=work)
             thread.daemon = True
             thread.start()
-        
+        # if images are not consumed they will be disposed
+        def outflow():
+            while True:
+                self.out.append(self.queue_out.get(block="true"))
+        overflow_manager = Thread(target=outflow)
+        overflow_manager.daemon = True
+        overflow_manager.start()
         def display():
             while True:
                 #print self.queue_out.qsize()
