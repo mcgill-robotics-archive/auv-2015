@@ -16,7 +16,7 @@
 static const std::string IMAGE_WINDOW = "Image";
 static const bool SHOW_IMAGE = true;
 static const bool SHOW_HISTOGRAM = true;
-static const bool SHOW_THRESHOLDS = true;
+static const bool SHOW_THRESHOLDS = false;
 static const bool SHOW_BOUNDING_BOXS = true;
 static const float HISTOGRAM_EXPONENT_SCALE = 0.25f; // changes the exponent that changes the histogram scale [0,1]
 
@@ -27,7 +27,8 @@ static const float MAX_PEAK_THRESHOLD = 0.20f; // the maximum fraction of the im
 static const float MIN_PEAKINESS = 0.25f; // the minimum prominence of a hue peak required to be thresholded [0,1]
 static const int S_MIN = 135; // minimum percieved saturation for colors [0,255]
 static const int V_MIN = 64; // minimum percieved value for colors (brightness) [0.255]
-static const float MIN_BOUNDING_BOX = 250.0f; // if an object's bounding box has less area than this, we ignore the object
+static const float MIN_AREA = 250.0f; // if an object's area is less than this, we ignore the object
+static const float MIN_LINE_LENGTH_RATIO = 5.0f; // if an object has a side lenght at least this many times the width, we assume it is a line
 
 class ImageConverter
 {
@@ -79,7 +80,7 @@ public:
     std::list<cv::Mat> imgs_threshold = threshold.threshold(img_hsv, hues, S_MIN, V_MIN); // Threshold images
 
     // Finds the different objects of each color
-    objectFinder.createContours(imgs_threshold, hues, MIN_BOUNDING_BOX);
+    objectFinder.findObjects(imgs_threshold, hues, MIN_AREA, MIN_LINE_LENGTH_RATIO);
     std::list<VisibleObject> visibleObjects = objectFinder.getVisibleObjects();
 
     // Output raw video stream
@@ -102,7 +103,7 @@ public:
     }
     
     if (SHOW_BOUNDING_BOXS) {
-      objectFinder.drawContours(img_rgb);
+      objectFinder.drawObjects(img_rgb);
     }
   }
 };
