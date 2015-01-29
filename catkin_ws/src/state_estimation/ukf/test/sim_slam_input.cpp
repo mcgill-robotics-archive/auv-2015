@@ -21,7 +21,7 @@ geometry_msgs::Vector3 relative_position(geometry_msgs::Point robot_position, ge
 
 geometry_msgs::Vector3 add_noise(geometry_msgs::Vector3 vector, float noise) {
 	geometry_msgs::Vector3 noisy_vector;
-	srand(clock() + time(NULL) ^ getpid());
+	srand(time(NULL) ^ getpid());
 	noisy_vector.x = vector.x + noise/2 - noise*(rand()%1000 / 1000.0);
 	noisy_vector.y = vector.y + noise/2 - noise*(rand()%1000 / 1000.0);
 	noisy_vector.z = vector.z + noise/2 - noise*(rand()%1000 / 1000.0);
@@ -76,7 +76,6 @@ int main(int argc, char **argv)
 		noisy_velocity_pub.publish(noisy_robot_velocity);
 		noisy_relative_position_obj1_pub.publish(noisy_relative_obj1_position);
 
-		//Update the position of the robot for the next run through
 		robot_position = update_position(robot_velocity, robot_position);
 		
 		//ROS_INFO("Robot Position: \n x: %f \n y: %f \n z: %f", robot_position.x, robot_position.y, robot_position.z);
