@@ -2,12 +2,12 @@
 
 import action
 
-class SetSonarTarget(action.Action):
+class SetSonarTargetAction(action.Action):
 	desired_target = ""
 
 
 	def __init__(self, my_autonomy, target):
-		self.action_name = "Sonar Target"
+		self.action_name = "Set Sonar Target"
 		self.desired_target = target
 		self.my_autonomy = my_autonomy
 
