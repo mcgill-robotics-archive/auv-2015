@@ -1,11 +1,11 @@
 #!/usr/bin/env python 
 
 import task
-import forward_movement_action
-import set_cv_target
-import get_transforms
+import x_axis_movement_action
+import set_cv_target_action
+import get_transform_action
  
-class PathTask(tast.Task:
+class PathTask(task.Task):
 	def __init__(self, phase, my_autonomy):
 		self.task_name = "Path"
 		self.phase = phase
@@ -20,9 +20,9 @@ class PathTask(tast.Task:
 		
 	def load_action_stack(self):
 		if (self.phase > 0):
-			my_path_colour = set_cv_target.SetBallAction(self.my_autonomy, pathColor)
-			my_position = get_transforms.GetTransforms(self.my_autonomy, Object)
-			my_forward_movement_action = forward_movement_action.ForwardMovementAction(self.my_autonomy, 3)
+			my_path_colour = set_cv_target_action.SetCVTargetAction(self.my_autonomy, new_cv_target)
+			my_position = get_transform_action.GetTransformAction(self.my_autonomy, new_target_frame)
+			my_x_axis_movement_action = x_axis_movement_action.XAxisMovementAction(self.my_autonomy, 3)
 			self.action_stack.insert(0, my_path_colour)
-			self.action_stack.insert(1, my_position)
-			self.action_stack.insert(2, my_forward_movement_action)
+			self.action_stack.insert(0, my_position)
+			self.action_stack.insert(0, my_x_axis_movement_action)
