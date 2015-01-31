@@ -114,7 +114,7 @@ class Autonomy():
   def set_cv_target(self, new_target):
     cv_msg = CVTarget()
     cv_msg.CVTarget = new_target
-    self.CV_target_publisher.publish(cv_msg)
+    self.cv_target_publisher.publish(cv_msg)
 
   """send Sonar a target object to seek for
   (sonar does not need to have seen this object before)

@@ -5,22 +5,29 @@ as well as controlling the chaning of tasks
 """
 
 import rospy
-import gate_task
+import test_rig
+
 import init_task
+import gate_task
 
 class TaskController():
   my_autonomy = None
   task_stack = []
+  test_val = True
 
   def __init__(self, my_autonomy):
     self.my_autonomy = my_autonomy
     self.load_task_stack()
 
   def load_task_stack(self):
-    my_init_task = init_task.InitTask(self.my_autonomy)
-    self.task_stack.insert(0, my_init_task)
-    my_gate_task = gate_task.GateTask(self.my_autonomy)
-    self.task_stack.insert(0, my_gate_task)
+    if(self.test_val):
+      my_test_rig = test_rig.TestRig(self.my_autonomy)
+      self.task_stack.insert(0, my_test_rig)
+    else:
+      my_init_task = init_task.InitTask(self.my_autonomy)
+      self.task_stack.insert(0, my_init_task)
+      my_gate_task = gate_task.GateTask(self.my_autonomy)
+      self.task_stack.insert(0, my_gate_task)
 
   def run_routine(self):
     self.my_autonomy.print_info("-Routine: startinng")
