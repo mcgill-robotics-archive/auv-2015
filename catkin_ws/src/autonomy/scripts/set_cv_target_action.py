@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """@package docstring
-This module is a class that send the robot forward at a given velocity
+This module is a class that sends mesage for cv to look for  
 """
 
 import action
