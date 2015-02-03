@@ -67,7 +67,7 @@ void ukf_pose::update(constVector acc, constVector rotation, Ref<Vector3d> pose)
 {
     fixState(estimator.state);
 
-    estimator.predict(rotation, &propogate);
+    estimator.predict(rotation, &propogate);	//Todo : rotation should be accessed from estimator, not passed
     estimator.correct(acc, &observe);
 
     pose = estimator.state;

@@ -12,10 +12,10 @@ const double pi = std::acos(-1.0);
 
 ukf::ukf(int dim) : 
 	DIM(dim), 
-	state(Vector3d::Zero()),
-	covariance(INITIAL_COVARIANCE * Matrix3d::Identity()),
-	processCovariance(PROCESS_VARIANCE * Matrix3d::Identity()),
-	measurementCovariance(MEASUREMENT_VARIANCE * Matrix3d::Identity()),
+	state(VectorXd::Zero()),
+	covariance(INITIAL_COVARIANCE * MatrixXd::Identity()),
+	processCovariance(PROCESS_VARIANCE * MatrixXd::Identity()),
+	measurementCovariance(MEASUREMENT_VARIANCE * MatrixXd::Identity()),
 	sigmas(Matrix3X6d::Zero()),
 	gammas(Matrix3X6d::Zero())
 
@@ -27,10 +27,11 @@ void ukf::generateSigmas()
 //This method generates 2*DIM states distributed on a hypersphere around augPose
 
 	//Cholesky Decomposition
-	Matrix3d T = covariance.llt().matrixL();//TODO(max) do we need this temp matrix?
-
+	//Matrix3d T = covariance.llt().matrixL();//TODO(max) do we need this temp matrix?
+	MatrixXd T = covariance.llt().matrixL();
 	//Concatenate both scaled Ts and add state
-	sigmas << -sqrt(3.)*T , sqrt(3.)*T;
+	//sigmas << -sqrt(3.)*T , sqrt(3.)*T;
+	sigmas << -sqrt(dim)*T, sqrt(dim)*T;
 	sigmas.colwise() += state;
 }
 
@@ -73,7 +74,8 @@ void ukf::correct(constVector measurement, void (*observe)(Eigen::VectorXd,Ref<E
 
 void ukf::recoverCorrection(constVector measurement)
 {
-	Vector3d predMsmt = gammas.rowwise().mean();
+	//Vector3d predMsmt = gammas.rowwise().mean();
+	VectorXd predMsmt = gammas.rowwise().mean();
 
 	//TODO(max) we can replace these with colwise
 	Matrix3X6d Temp1;
@@ -85,7 +87,9 @@ void ukf::recoverCorrection(constVector measurement)
 	Matrix3d crossCovar = ( (sigmas - Temp1) * (gammas - Temp2).transpose() )/6.;
 
 	// gain = croscovar*meascovar^-1
-	Matrix3d gain = measCovar.transpose().ldlt().solve(crossCovar.transpose()).transpose();
+	//Matrix3d gain = measCovar.transpose().ldlt().solve(crossCovar.transpose()).transpose();
+	MatrixXd gain = measCovar.transpose().ldlt().solve(crossCovar.transpose()).transpose();
+
 
 	state += gain * (measurement - predMsmt);
 	covariance -= crossCovar * gain.transpose();
