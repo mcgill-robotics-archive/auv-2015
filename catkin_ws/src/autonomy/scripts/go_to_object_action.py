@@ -18,8 +18,6 @@ class GoToObject(action.Action):
     self.print_start()
     while self.my_autonomy.get_transform(self,self.my_autonomy.set_position(0,0,0,0,0,0,self.cv_target)) != distance_away: 
       self.my_autonomy.set_position(0,0,0,0,0,0,self.cv_target)
-      if self.my_autonomy.get_transform(self,self.my_autonomy.set_position(0,0,0,0,0,0,self.cv_target)) == distance_away:
-        self.my_autonomy.set_velocity(0,0,0,0,0,0)
-        break
+    self.my_autonomy.set_velocity(0,0,0,0,0,0)
     self.print_success()
     return True
