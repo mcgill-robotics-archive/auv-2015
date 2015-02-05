@@ -2,6 +2,7 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/Point.h"
 #include "geometry_msgs/Vector3.h"
+#include <math.h>
 
 geometry_msgs::Point update_position(geometry_msgs::Vector3 velocity, geometry_msgs::Point previous_position) {
 	geometry_msgs::Point new_position;
@@ -19,17 +20,29 @@ geometry_msgs::Vector3 relative_position(geometry_msgs::Point robot_position, ge
 	return relative_position;
 }
 
-geometry_msgs::Vector3 add_noise(geometry_msgs::Vector3 vector, float noise) {
-	geometry_msgs::Vector3 noisy_vector;
-	srand(time(NULL) ^ getpid());
-	noisy_vector.x = vector.x + noise/2 - noise*(rand()%1000 / 1000.0);
-	noisy_vector.y = vector.y + noise/2 - noise*(rand()%1000 / 1000.0);
-	noisy_vector.z = vector.z + noise/2 - noise*(rand()%1000 / 1000.0);
-	return noisy_vector;
+float box_muller(float mean, float sigma) {
+	float x1, x2, y;
+	
+	x1 = rand() % 1000 / 1000.0;
+	x2 = rand() % 1000 / 1000.0;
+	
+	y = sqrt(-2*log(x1))*cos(2*M_PI*x2);
+	
+	return( mean + y * sigma);
+}
+
+geometry_msgs::Vector3 add_noise(geometry_msgs::Vector3 vector, float sigma) {
+        geometry_msgs::Vector3 noisy_vector;
+        noisy_vector.x = box_muller(vector.x, sigma);
+        noisy_vector.y = box_muller(vector.y, sigma);
+        noisy_vector.z = box_muller(vector.z, sigma);
+        return noisy_vector;
 }
 
 int main(int argc, char **argv)
 {
+	srand(time(NULL));	
+
 	ros::init(argc, argv, "sim_slam_input");
 
 	ros::NodeHandle n;
@@ -55,8 +68,8 @@ int main(int argc, char **argv)
 	obj1.x = 20000; obj1.y = 50000; obj1.z = 0;
 	
 	//Define noise
-	float obj_noise = 10;
-	float v_noise = 100;
+	float obj_noise = 1;
+	float v_noise = 1;
 
 	geometry_msgs::Vector3 relative_obj1_position;
 	geometry_msgs::Vector3 noisy_relative_obj1_position;
@@ -78,10 +91,6 @@ int main(int argc, char **argv)
 
 		robot_position = update_position(robot_velocity, robot_position);
 		
-		//ROS_INFO("Robot Position: \n x: %f \n y: %f \n z: %f", robot_position.x, robot_position.y, robot_position.z);
-		//ROS_INFO("Robot Velocity: \n x: %f \n y: %f \n z: %f", robot_velocity.x, robot_velocity.y, robot_velocity.z);
-		//ROS_INFO("Noisy Robot Velocity: \n x: %f \n y: %f \n z: %f", noisy_robot_velocity.x, noisy_robot_velocity.y, noisy_robot_velocity.z);		
-
 		ros::spinOnce();
 		
 		loop_rate.sleep();
