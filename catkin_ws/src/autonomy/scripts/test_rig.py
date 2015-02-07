@@ -13,6 +13,8 @@ import set_sonar_track_target_action
 import set_cv_target_action
 import fire_torpedo_action
 import open_loop_search_action
+import get_transform_action
+import go_to_object_action
 
 class TestRig(task.Task):
   def __init__(self, my_autonomy):
@@ -40,9 +42,6 @@ class TestRig(task.Task):
     my_yaw_movement_action = yaw_movement_action.YawMovementAction(self.my_autonomy, 3)
     self.action_stack.insert(0, my_yaw_movement_action)
 
-    my_get_transform_action = get_transform_action.GetTransformAction(self.my_autonomy, "string")
-    self.action_stack.insert(0, my_get_transform_action)
-
     my_set_sonar_seek_target_action = set_sonar_seek_target_action.SetSonarSeekTargetAction(self.my_autonomy, "string")
     self.action_stack.insert(0, my_set_sonar_seek_target_action)
 
@@ -55,5 +54,11 @@ class TestRig(task.Task):
     my_fire_torpedo_action = fire_torpedo_action.FireTorpedoAction(self.my_autonomy, "left")
     self.action_stack.insert(0, my_fire_torpedo_action)
 
+    my_get_transform_action = get_transform_action.GetTransformAction(self.my_autonomy, "string")
+#    self.action_stack.insert(0, my_get_transform_action)
+
+    my_go_to_object_action = go_to_object_action.GoToObjectAction(self.my_autonomy, "string", 1, 1, 1, 1, 1, 1)
+#    self.action_stack.insert(0, my_go_to_object_action)
+
     my_open_loop_search_action = open_loop_search_action.OpenLoopSearchAction(self.my_autonomy, "board", my_y_axis_movement_action)
-    self.action_stack.insert(0, my_open_loop_search_action)
+#    self.action_stack.insert(0, my_open_loop_search_action)

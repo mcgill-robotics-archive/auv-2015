@@ -5,6 +5,7 @@ as well as placing data from other modules onto publishers and services
 """
 import rospy
 import tf
+#from tf.transformations import euler_from_quaternion
 from std_msgs.msg import Int8
 from std_msgs.msg import String
 from geometry_msgs.msg import Pose
@@ -72,11 +73,11 @@ class Autonomy():
     t = rospy.Time(0)
     if (listener.frameExists(target_frame) and 
         listener.frameExists(self.horizon_frame)):
-      t = listener.getLatestCommonTime(target_frame, self.horizon_frame)
-#      print t
-    position, quaternion = listener.lookupTransform(target_frame, self.horizon_frame, t)
-#    print position, quaternion
-    return (position, quaternion)
+      t = listener.getLatestCommonTime(target_frame, self.HORIZON_FRAME)
+    position, quaternion = listener.lookupTransform(target_frame, self.HORIZON_FRAME, t)
+    angles = tf.transformations.euler_from_quaternion(qauternion)
+    print angles
+    return (position, angles)
   
   """checks if the robot has seen the target frame so far this run
   """
