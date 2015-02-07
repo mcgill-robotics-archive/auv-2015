@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import action
+import math
 
 class GetTransformAction(action.Action):
   target_frame = ""
