@@ -6,7 +6,9 @@ import action
 class SurfaceAction(action.Action):
 	desired_velocity = 0
 
-	def __init__(self, velocity):
+	def __init__(self, my_autonomy, velocity):
+		self.action_name = "Surface Action"
+		self.my_autonomy = my_autonomy
 		self.desired_velocity = velocity
 
 

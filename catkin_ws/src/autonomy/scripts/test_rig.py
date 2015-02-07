@@ -57,3 +57,15 @@ class TestRig(task.Task):
 
     my_open_loop_search_action = open_loop_search_action.OpenLoopSearchAction(self.my_autonomy, "board", my_y_axis_movement_action)
 #    self.action_stack.insert(0, my_open_loop_search_action)
+
+    my_placement_of_object_action = placement_of_object_action(self.my_autonomy, "pole")
+    self.action_stack_insert(0, my_placement_of_object_action)
+
+    my_surface_action = surface_action.SurfaceAction(self.my_autonomy, [0,0,0,0,0,0])
+    self.action_stack_insert(0, my_surface_action)
+
+    my_hydrophone_target_action = hydrophone_target_action.HydrophoneTargetAction(self.my_autonomy, "pinger")
+    self.action_stack_insert(0, hydrophone_target_action)
+
+    my_grab_object_action = grab_object_action.GrabObjectAction(self.my_autonomy, "object")
+    self.action_stack_insert(0, my_grab_object_action)

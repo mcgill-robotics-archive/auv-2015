@@ -2,11 +2,11 @@ import action
 
 
 class HydrophoneTargetAction(action.Action):
-
-
-	def __init__(self, target, my_autonomy):
-		self.action_name = "Hydrophone Target Action"
 		target = None
+
+	def __init__(self, my_autonomy, target):
+		self.action_name = "Hydrophone Target Action"
+		self.target = target
 		self.my_autonomy = my_autonomy
 
 	def execute(self):
