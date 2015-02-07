@@ -5,10 +5,16 @@ add_executable(pose_ukf
   src/ukf_pose.cpp
 )
 
+add_executable(slam_ukf
+  src/ros_slam.cpp 
+  src/ukf.cpp
+  src/ukf_slam.cpp
+)
+
 ## Specify libraries to link a library or executable target against
 target_link_libraries(pose_ukf ${catkin_LIBRARIES})
 
-
+target_link_libraries(slam_ukf ${catkin_LIBRARIES})
 
 
 #############
