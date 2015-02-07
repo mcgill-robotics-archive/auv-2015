@@ -40,6 +40,9 @@ class TestRig(task.Task):
     my_yaw_movement_action = yaw_movement_action.YawMovementAction(self.my_autonomy, 3)
     self.action_stack.insert(0, my_yaw_movement_action)
 
+    my_get_transform_action = get_transform_action.GetTransformAction(self.my_autonomy, "string")
+    self.action_stack.insert(0, my_get_transform_action)
+
     my_set_sonar_seek_target_action = set_sonar_seek_target_action.SetSonarSeekTargetAction(self.my_autonomy, "string")
     self.action_stack.insert(0, my_set_sonar_seek_target_action)
 

@@ -13,7 +13,10 @@ class GetTransformAction(action.Action):
   def execute(self):
     self.print_start()
 #what is this doing? this method return something    
-    transforms = self.my_autonomy.get_transform(self.target_frame)
+    transform = self.my_autonomy.get_transform(self.target_frame)
+    position = transform[0]
+    quaternion = transform[1]
+    self.my_autonomy.set_position(position)
 		
     self.print_success()
-    return transforms
+    return True
