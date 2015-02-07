@@ -30,7 +30,7 @@ AngleAxisd ukf_pose::angleAxis(Vector3d v) {
 	}
 }
 
-void ukf_pose::propogate(Eigen::VectorXd rotation, Ref<Eigen::VectorXd> state)
+void ukf_pose::propogate(Eigen::VectorXd rotation, Ref<Eigen::VectorXd> state)	//Use boost bind
 {
 	
 	//double rotationEarth[3] = {-rotation[0], -rotation[1], -rotation[2]};
@@ -49,18 +49,20 @@ void ukf_pose::propogate(Eigen::VectorXd rotation, Ref<Eigen::VectorXd> state)
 	if (state.hasNaN()) printf("Sigma has nan");
 }
 
-void ukf_pose::observe(VectorXd sigma, Ref<VectorXd> gamma)
+//Return gammas, take in full sigmas, cycle through cols in here
+MatrixXd ukf_pose::observe(MatrixXd sigmas)	//Returns gammas
 {
 	Vector3d gravity(0,0,9.8);
-
+	for(int i = 0; i < 2*DIM; i++)
+	{
 	//double inverted[3] = {};
 	//inverse(sigma, inverted);
 	//rotateThisByThat(gravity, inverted, gamma);
-	AngleAxisd invertedAngleAxis(angleAxis(-sigma));
+		AngleAxisd invertedAngleAxis(angleAxis(-sigmas.col(i)));
 
 	//Transform invertedTransform(invertedAngleAxis);
-	gamma = invertedAngleAxis.toRotationMatrix() * gravity; //Apply the transform to gravity
-
+		gammas.col(i) = invertedAngleAxis.toRotationMatrix() * gravity; //Apply the transform to gravity
+	}
 }
 
 void ukf_pose::update(constVector acc, constVector rotation, Ref<Vector3d> pose) //acc as constVector ?

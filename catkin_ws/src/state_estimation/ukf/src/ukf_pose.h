@@ -7,7 +7,7 @@
 using namespace Eigen;
 
 typedef Matrix<double, 3, 6> Matrix3X6d;
-typedef const Ref<const Vector3d> constVector;
+typedef const Ref<const VectorXd> constVector;
 
 
 
@@ -19,7 +19,7 @@ class ukf_pose
         //void propogate(Vector3d, Ref<Vector3d>);
         static void propogate(Eigen::VectorXd, Ref<Eigen::VectorXd>); //TODO(max) We don't need "Eigen::" since we opened that namespace
         //void h(Vector3d, Ref<Vector3d>);
-        static void observe(Eigen::VectorXd, Ref<Eigen::VectorXd>);
+        static MatrixXd observe(Eigen::MatrixXd);
         void fixState(Ref<Vector3d>);
 
     private:

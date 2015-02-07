@@ -13,8 +13,8 @@ class ukf
 {
     public:
         ukf(int dim);
-        void predict(constVector, void (*)(Eigen::VectorXd,Ref<Eigen::VectorXd>));
-        void correct(constVector, void (*)(Eigen::VectorXd,Ref<Eigen::VectorXd>));
+        void predict( void (*)(Eigen::VectorXd,Ref<Eigen::VectorXd>));
+        void correct(constVector, MatrixXd(*)(Eigen::MatrixXd));
         const int DIM;
         VectorXd state;
         MatrixXd covariance;
@@ -24,9 +24,9 @@ class ukf
     private:
         void generateSigmas();
         void recoverPrediction();
-        void recoverCorrection(constVector);
-        Matrix3X6d sigmas;
-        Matrix3X6d gammas;
+        void recoverCorrection(constVector, MatrixXd);
+        MatrixXd sigmas;
+        //Matrix3X6d gammas;
 };
 
 

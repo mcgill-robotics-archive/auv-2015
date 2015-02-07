@@ -12,18 +12,16 @@ const double pi = std::acos(-1.0);
 
 ukf::ukf(int dim) : 
 	DIM(dim), 
-	state(VectorXd::Zero()),
-	covariance(INITIAL_COVARIANCE * MatrixXd::Identity()),
-	processCovariance(PROCESS_VARIANCE * MatrixXd::Identity()),
-	measurementCovariance(MEASUREMENT_VARIANCE * MatrixXd::Identity()),
-	sigmas(Matrix3X6d::Zero()),
-	gammas(Matrix3X6d::Zero())
-
+	state(VectorXd::Zero(dim)),
+	covariance(INITIAL_COVARIANCE * MatrixXd::Identity(dim, dim)),
+	processCovariance(PROCESS_VARIANCE * MatrixXd::Identity(dim, dim)),
+	measurementCovariance(MEASUREMENT_VARIANCE * MatrixXd::Identity(dim, dim)),
+	sigmas(MatrixXd::Zero(dim, 2*dim))	//Define dim*2dim
+	//Gammas is gone
 {}
 
 void ukf::generateSigmas()
 {
-
 //This method generates 2*DIM states distributed on a hypersphere around augPose
 
 	//Cholesky Decomposition
@@ -31,7 +29,7 @@ void ukf::generateSigmas()
 	MatrixXd T = covariance.llt().matrixL();
 	//Concatenate both scaled Ts and add state
 	//sigmas << -sqrt(3.)*T , sqrt(3.)*T;
-	sigmas << -sqrt(dim)*T, sqrt(dim)*T;
+	sigmas << -sqrt(DIM)*T, sqrt(DIM)*T;	//
 	sigmas.colwise() += state;
 }
 
@@ -55,25 +53,31 @@ void ukf::predict(void (*propogate)(Eigen::VectorXd,Ref<Eigen::VectorXd>))
 	generateSigmas();
 	for (int i = 0; i < 2*DIM; i++)
 	{
-		propogate(sigmas.col(i));//TODO(max) Better way to do this with colwise? rotation was removed as an arg
-		
+		bind(propogate, rotation, _1)(sigmas.col(i));	//Do this in ukf_pose, ukf does not know rotation
+		//propogate(sigmas.col(i));//TODO(max) Better way to do this with colwise? rotation was removed as an arg
 	}
+	//propogate(sigmas);
 	recoverPrediction();
 }
 
-
-void ukf::correct(constVector measurement, void (*observe)(Eigen::VectorXd,Ref<Eigen::VectorXd>))
+//Change correct to get full sigma and return full gamma
+//void ukf::correct(constVector measurement, void (*observe)(Eigen::VectorXd,Ref<Eigen::VectorXd>))
+void ukf::correct(constVector measurement, MatrixXd(*observe)(Eigen::MatrixXd))
 {
 	generateSigmas();
-	for (int i = 0; i < 2* DIM; i++)
-	{	
-		observe(sigmas.col(i), gammas.col(i));
-	}
-	recoverCorrection(measurement);
+	//for (int i = 0; i < 2* DIM; i++)	//put this in observe->done
+	//{	
+		//observe(sigmas.col(i), gammas.col(i));
+	//}
+	//observe(sigmas);	//Gammas will be returned
+	//^ This part in recoverCorrection now
+	recoverCorrection(measurement, observe(sigmas));
 }
 
-void ukf::recoverCorrection(constVector measurement)
+void ukf::recoverCorrection(constVector measurement, MatrixXd gammas)
 {
+	//Make a matrix equal to gammas as local var by calling observe in here
+	//gammas = observe(sigmas);
 	//Vector3d predMsmt = gammas.rowwise().mean();
 	VectorXd predMsmt = gammas.rowwise().mean();
 
