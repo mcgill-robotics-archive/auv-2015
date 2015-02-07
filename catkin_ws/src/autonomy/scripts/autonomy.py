@@ -75,7 +75,8 @@ class Autonomy():
         listener.frameExists(self.horizon_frame)):
       t = listener.getLatestCommonTime(target_frame, self.HORIZON_FRAME)
     position, quaternion = listener.lookupTransform(target_frame, self.HORIZON_FRAME, t)
-    angles = tf.transformations.euler_from_quaternion(qauternion)
+#    angles = tf.transformations.euler_from_quaternion(qauternion)
+    angles = [0, 0, math.atan2(position.x, position.y)]
     print angles
     return (position, angles)
   
