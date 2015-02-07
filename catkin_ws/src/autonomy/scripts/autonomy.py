@@ -132,6 +132,43 @@ class Autonomy():
     sonar_msg.SonarTarget = new_target
     self.sonar_track_target_publisher.publish(sonar_msg)
 
+#temporary method stubs representing control over the pneumatic systems
+
+  def fire_torpedo(self, side):
+    if(side == "left"):
+      rospy.loginfo("firing left torpedo")  
+    elif(side == "right"):
+      rospy.loginfo("firing right torpedo")
+    else:
+      return False
+
+  def drop_marker(self, side):
+    if(side == "left"):
+      rospy.loginfo("dropping left marker")  
+    elif(side == "right"):
+      rospy.loginfo("dropping right marker")
+    else:
+      return False
+
+  def toggle_grabber(self, grabber, state):
+    if(grabber == "front"):  
+      if(side == "open"):
+        rospy.loginfo("opening the grabber")  
+      elif(side == "close"):
+        rospy.loginfo("closing the grabber")
+      else:
+        return False
+    
+    elif(grabber == "down"):
+      if(side == "open"):
+        rospy.loginfo("opening the grabber")  
+      elif(side == "close"):
+        rospy.loginfo("closing the grabber")
+      else:
+        return False
+    else:
+        return False
+
   """print information to the ROS terminal
   """
   def print_info(self, msg):
