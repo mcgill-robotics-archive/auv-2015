@@ -7,7 +7,7 @@
 using namespace Eigen;
 
 typedef Matrix<double, 3, 6> Matrix3X6d;
-typedef const Ref<const Vector3d> constVector;
+//typedef const Ref<const Vector3d> constVector;
 
 
 
