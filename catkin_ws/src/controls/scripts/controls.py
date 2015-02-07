@@ -63,9 +63,7 @@ def get_transform(origin_frame, target_frame):
         listener = tf.TransformListener()
     t = rospy.Time(0)
     found = False
-    while not found:
-        try:
-            (trans, rot) = listener.lookupTransform(
+    (trans, rot) = listener.lookupTransform(
                 # FROM
                 origin_frame,
                 # TO
@@ -73,10 +71,8 @@ def get_transform(origin_frame, target_frame):
                 # NOW
                 rospy.Time(0)
             )
-            return (trans, rot)
-        except (tf.LookupException, tf.ConnectivityException,
-                tf.ExtrapolationException):
-            continue
+    return (trans, rot)
+
 
 
 def rosInit():
