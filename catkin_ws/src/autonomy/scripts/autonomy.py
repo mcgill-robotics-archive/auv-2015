@@ -77,6 +77,15 @@ class Autonomy():
     position, quaternion = listener.lookupTransform(target_frame, self.horizon_frame, t)
 #    print position, quaternion
     return (position, quaternion)
+  
+  """checks if the robot has seen the target frame so far this run
+  """
+  def check_transform(self, target_frame):
+    listener = tf.TransformListener()
+    if (listener.frameExists(target_frame)):
+      return True
+    else:
+      return False   
 
 
   """switches controls to open loop control and gives them velocities
@@ -136,34 +145,42 @@ class Autonomy():
 
   def fire_torpedo(self, side):
     if(side == "left"):
-      rospy.loginfo("firing left torpedo")  
+      rospy.loginfo("firing left torpedo")
+      return True
     elif(side == "right"):
       rospy.loginfo("firing right torpedo")
+      return True
     else:
       return False
 
   def drop_marker(self, side):
     if(side == "left"):
       rospy.loginfo("dropping left marker")  
+      return True
     elif(side == "right"):
       rospy.loginfo("dropping right marker")
+      return True
     else:
       return False
 
   def toggle_grabber(self, grabber, state):
     if(grabber == "front"):  
-      if(side == "open"):
+      if(state == "open"):
         rospy.loginfo("opening the grabber")  
-      elif(side == "close"):
+        return True
+      elif(state == "close"):
         rospy.loginfo("closing the grabber")
+        return True
       else:
         return False
     
     elif(grabber == "down"):
-      if(side == "open"):
-        rospy.loginfo("opening the grabber")  
-      elif(side == "close"):
+      if(state == "open"):
+        rospy.loginfo("opening the grabber")
+        return True  
+      elif(state == "close"):
         rospy.loginfo("closing the grabber")
+        return True
       else:
         return False
     else:

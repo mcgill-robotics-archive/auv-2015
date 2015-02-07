@@ -21,6 +21,10 @@ class Action():
     print_string = "---Action: " + self.action_name + " success" 
     self.my_autonomy.print_info(print_string)
 
+  def print_failure(self, error_state = ""):
+    print_string = "---Action: " + self.action_name + " FAILURE" + error_state 
+    self.my_autonomy.print_info(print_string)   
+
   @abstractmethod
   def execute(self):  
     raise NotImplementedError()

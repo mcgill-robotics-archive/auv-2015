@@ -4,20 +4,71 @@ This module is a class that send the robot to a position from a cv message
 """
 
 import action
+import math
 
-class GoToObject(action.Action):
-  desired_velocity = 0
-  cv_target = None
+class GoToObjectAction(action.Action):
+  target_frame = None
+  x_distance_away = 0
+  y_distance_away = 0
+  z_distance_away = 0
+  roll_distance_away = 0
+  pitch_distance_away = 0
+  yaw_distance_away = 0
 
-  def __init__(self, my_autonomy, new_cv_target, distance_away):
-    self.action_name = "Set Position from CV"
+  def __init__(self, my_autonomy, target_frame, x_distance_away):
+    self.action_name = "Closed Loop Movement"
     self.my_autonomy = my_autonomy
-    self.cv_target = new_cv_target
+    self.target_frame = target_frame
+    self.x_distance_away = x_distance_away
+
+  def __init__(self, my_autonomy, target_frame, x_distance_away, 
+                 y_distance_away, z_distance_away):
+    self.action_name = "Closed Loop Movement"
+    self.my_autonomy = my_autonomy
+    self.target_frame = target_frame
+    self.x_distance_away = x_distance_away
+    self.y_distance_away = y_distance_away
+    self.z_distance_away = z_distance_away
+
+  def __init__(self, my_autonomy, target_frame, x_distance_away,
+                 y_distance_away, z_distance_away, roll_distance_away,
+                 pitch_distance_away, yaw_distance_away):
+    self.action_name = "Closed Loop Movement"
+    self.my_autonomy = my_autonomy
+    self.target_frame = target_frame
+    self.x_distance_away = x_distance_away
+    self.y_distance_away = y_distance_away
+    self.z_distance_away = z_distance_away
+    self.roll_distance_away = roll_distance_away
+    self.pitch_distance_away = pitch_distance_away
+    self.yaw_distance_away = yaw_distance_away
+
+  def out_of_bound(self):
+    POSITION_BOUND = 1
+    ANGLE_BOUND = 1
+    (position, quaternion) = self.my_autonomy.get_transform(self.target_frame)
+    diff_x = position.x
+    diff_y = position.y
+    diff_z = position.z
+# someone remind me to do quaternion to euler conversions later    
+    diff_roll = quaternion.x
+    diff_pitch = quaternion.y
+    diff_yaw = quaternion.z + quaternion.w
+
+    if(math.abs(diff_x) < POSITION_BOUND and math.abs(diff_y) < POSITION_BOUND and 
+       math.abs(diff_z) < POSITION_BOUND and math.abs(diff_roll) < ANGLE_BOUND and 
+       math.abs(diff_pitch) < ANGLE_BOUND and math.abs(diff_yaw) < ANGLE_BOUND):
+      return False
+    else:
+      return True
 
   def execute(self):
     self.print_start()
-    while self.my_autonomy.get_transform(self,self.my_autonomy.set_position(0,0,0,0,0,0,self.cv_target)) != distance_away: 
-      self.my_autonomy.set_position(0,0,0,0,0,0,self.cv_target)
+    while !in_bound(): 
+      self.my_autonomy.set_position(self.x_distance_away, self.y_distance_away, 
+          self.z_distance_away, self.roll_distance_away, self.pitch_distance_away,
+          self.yaw_distance_away, self.target_frame)
+    #stop command
     self.my_autonomy.set_velocity(0,0,0,0,0,0)
     self.print_success()
     return True

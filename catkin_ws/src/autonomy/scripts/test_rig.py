@@ -11,6 +11,8 @@ import get_transform_action
 import set_sonar_seek_target_action
 import set_sonar_track_target_action
 import set_cv_target_action
+import fire_torpedo_action
+import open_loop_search_action
 
 class TestRig(task.Task):
   def __init__(self, my_autonomy):
@@ -46,3 +48,9 @@ class TestRig(task.Task):
 
     my_set_cv_target_action = set_cv_target_action.SetCVTargetAction(self.my_autonomy, "string")
     self.action_stack.insert(0, my_set_cv_target_action)
+
+    my_fire_torpedo_action = fire_torpedo_action.FireTorpedoAction(self.my_autonomy, "left")
+    self.action_stack.insert(0, my_fire_torpedo_action)
+
+    my_open_loop_search_action = open_loop_search_action.OpenLoopSearchAction(self.my_autonomy, "board", my_y_axis_movement_action)
+    self.action_stack.insert(0, my_open_loop_search_action)
