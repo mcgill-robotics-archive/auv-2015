@@ -34,7 +34,7 @@ isSettingPosition = 0
 
 
 def setPosition_callback(data):
-    global xPos, yPos, depth, roll, pitch, yaw, isSettingPosition
+    global xPos, yPos, depth, roll, desired_pitch, desired_yaw, isSettingPosition
     xPos = data.xPos
     yPos = data.yPos
     depth = data.depth
@@ -46,7 +46,7 @@ def setPosition_callback(data):
 
 
 def setVelocity_callback(data):
-    global surgeSpeed, swaySpeed, depth, roll, pitch, yaw, isSettingPosition
+    global surgeSpeed, swaySpeed, depth, roll, desired_pitch, desired_yaw, isSettingPosition
     surgeSpeed = data.surgeSpeed
     swaySpeed = data.swaySpeed
     depth = data.depth
@@ -61,15 +61,13 @@ def get_transform(origin_frame, target_frame):
     global listener
     if not listener:
         listener = tf.TransformListener()
-    t = rospy.Time(0)
-    found = False
     (trans, rot) = listener.lookupTransform(
                 # FROM
                 origin_frame,
                 # TO
                 target_frame,
                 # NOW
-                rospy.Time(0)
+                rospy.Time()
             )
     return (trans, rot)
 
@@ -80,6 +78,17 @@ def rosInit():
 
     global wrenchPublisher
     wrenchPublisher = rospy.Publisher("controls/wrench", Wrench, queue_size=100)
+
+    # Maybe we can use rospy.wait_for_message instead of this?
+    t = rospy.Time.now() + rospy.Duration.from_sec(1)
+    while rospy.Time.now() < t :
+        try:
+	    get_transform("inital_horizon", "robot")
+            break
+        except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
+            pass
+    # We do not use the else clause to print a message of failure to find the transform
+    # because some later call to getTransform will throw an error and inform the user
 
 
 if __name__ == '__main__':
