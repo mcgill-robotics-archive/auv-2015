@@ -19,6 +19,8 @@ class PathTask(task.Task):
 		self.load_action_stack()
 		
 	def load_action_stack(self):
+		pathColour = "orange"
+			
 		if (self.phase > 0):
 			my_path_colour = set_cv_target_action.SetCVTargetAction(self.my_autonomy, pathColour)
 			go_to_path = go_to_object_action.GoToObject(self.my_autonomy, pathColour, 3)
