@@ -29,3 +29,7 @@ catkin_add_gtest(${PROJECT_NAME}-test
 include_directories(include ${catkin_INCLUDE_DIRS})
 add_executable(sim_slam_input test/sim_slam_input.cpp)
 target_link_libraries(sim_slam_input ${catkin_LIBRARIES})
+
+## Verifies output of slam using simulated inputs ##
+add_executable(verify_slam test/verify_slam.cpp)
+target_link_libraries(verify_slam ${catkin_LIBRARIES})
