@@ -12,7 +12,7 @@
 //const double MEASUREMENT_VARIANCE = 0.025;
 
 const double pi = std::acos(-1.0);
-
+const int DIM = 3;
 
 //Method to print matrix or vector
 /*void Print(MatrixXd m) 
@@ -30,7 +30,7 @@ AngleAxisd ukf_pose::angleAxis(Vector3d v) {
 	}
 }
 
-void ukf_pose::propogate(Eigen::VectorXd rotation, Ref<Eigen::VectorXd> state)	//Use boost bind
+void ukf_pose::propogate(Eigen::Vector3d rotation, Ref<Eigen::Vector3d> state)	//Use boost bind
 {
 	
 	//double rotationEarth[3] = {-rotation[0], -rotation[1], -rotation[2]};
@@ -50,9 +50,10 @@ void ukf_pose::propogate(Eigen::VectorXd rotation, Ref<Eigen::VectorXd> state)	/
 }
 
 //Return gammas, take in full sigmas, cycle through cols in here
-MatrixXd ukf_pose::observe(MatrixXd sigmas)	//Returns gammas
+Matrix3d ukf_pose::observe(Matrix3X6d sigmas)	//Returns gammas
 {
 	Vector3d gravity(0,0,9.8);
+	Matrix3X6d gammas;
 	for(int i = 0; i < 2*DIM; i++)
 	{
 	//double inverted[3] = {};
@@ -65,11 +66,12 @@ MatrixXd ukf_pose::observe(MatrixXd sigmas)	//Returns gammas
 	}
 }
 
-void ukf_pose::update(constVector acc, constVector rotation, Ref<Vector3d> pose) //acc as constVector ?
+void ukf_pose::update(constVector3 acc, constVector3 rotation, Ref<Vector3d> pose) //acc as constVector ?
 {
     fixState(estimator.state);
 
-    estimator.predict(rotation, &propogate);	//Todo : rotation should be accessed from estimator, not passed
+    //estimator.predict(rotation, &propogate);	//Todo : rotation should be accessed from estimator, not passed
+    estimator.predict(&propogate);
     estimator.correct(acc, &observe);
 
     pose = estimator.state;
