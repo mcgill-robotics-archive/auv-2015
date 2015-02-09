@@ -19,7 +19,7 @@ class ukf_pose
         //void propogate(Vector3d, Ref<Vector3d>);
         static void propogate(Eigen::Vector3d, Ref<Eigen::Vector3d>); //TODO(max) We don't need "Eigen::" since we opened that namespace
         //void h(Vector3d, Ref<Vector3d>);
-        static Matrix3d observe(Matrix3X6d);
+        static Matrix3X6d observe(Matrix3X6d);
         void fixState(Ref<Vector3d>);
 
     private:

@@ -50,7 +50,7 @@ void ukf_pose::propogate(Eigen::Vector3d rotation, Ref<Eigen::Vector3d> state)	/
 }
 
 //Return gammas, take in full sigmas, cycle through cols in here
-Matrix3d ukf_pose::observe(Matrix3X6d sigmas)	//Returns gammas
+Matrix3X6d ukf_pose::observe(Matrix3X6d sigmas)	//Returns gammas
 {
 	Vector3d gravity(0,0,9.8);
 	Matrix3X6d gammas;
@@ -64,6 +64,7 @@ Matrix3d ukf_pose::observe(Matrix3X6d sigmas)	//Returns gammas
 	//Transform invertedTransform(invertedAngleAxis);
 		gammas.col(i) = invertedAngleAxis.toRotationMatrix() * gravity; //Apply the transform to gravity
 	}
+	return gammas;
 }
 
 void ukf_pose::update(constVector3 acc, constVector3 rotation, Ref<Vector3d> pose) //acc as constVector ?
