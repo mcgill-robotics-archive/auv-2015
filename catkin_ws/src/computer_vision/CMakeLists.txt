@@ -7,11 +7,17 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   cv_bridge
   image_transport
-  message_generation
   tf
 )
 
-include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
+## Python/c++ integration starts here
+find_package(Boost REQUIRED COMPONENTS python)
+find_package(PythonLibs 2.7 REQUIRED)
+## | 
+## V this requires setup.py exists
+catkin_python_setup()
+## "This macro ensures modules and global scripts declared therein get installed" -ROS Tutorials
+## Python/c++ integration ends
 
 #######################################
 ## Declare ROS messages and services ##
@@ -24,9 +30,9 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
 ##)
 
 # Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-)
+# generate_messages(
+#   DEPENDENCIES
+# )
 
 ###################################
 ## catkin specific configuration ##
@@ -42,8 +48,12 @@ catkin_package(
 ## Build ##
 ###########
 
+
+## second and thired are python/c++ libs
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+  ${PYTHON_INCLUDE_DIRS}
 )
 
 #############
@@ -52,9 +62,24 @@ include_directories(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
+add_library(computer_vision_lib src/threshold.cpp src/histogram.cpp src/object_finder.cpp)
+
+### Python/c++ interface starts here
+add_library(pyterface src/pyterface.cpp)
+target_link_libraries(pyterface
+			${catkin_LIBRARIES}
+			${Boost_LIBRARIES} )
+# Don't prepend wrapper library name with lib and add to Python libs.
+set_target_properties(pyterface PROPERTIES
+        PREFIX ""
+        LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
+### Python/c++ ends
+
+
 add_executable(computer_vision_a src/computer_vision_a.cpp)
 
 target_link_libraries(computer_vision_a
+			computer_vision_lib
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )
@@ -62,6 +87,7 @@ target_link_libraries(computer_vision_a
 add_executable(computer_vision_COLOR src/computer_vision_COLOR.cpp)
 
 target_link_libraries(computer_vision_COLOR
+			computer_vision_lib
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )
@@ -69,6 +95,7 @@ target_link_libraries(computer_vision_COLOR
 add_executable(computer_vision_OBJECT src/computer_vision_OBJECT.cpp)
 
 target_link_libraries(computer_vision_OBJECT
+			computer_vision_lib
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )
@@ -79,7 +106,6 @@ target_link_libraries(image_publish
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )
-
 
 # This makes sure message headers are generated before being used
 ##add_dependencies(distanceCalculator ${catkin_EXPORTED_TARGETS})

@@ -7,7 +7,7 @@
   The computer vision package used for McGill Robotics: Robosub Team
   </description>
   
-  <maintainer email="jean-sebastien.dery@mail.mcgill.ca">Jean-Sebastien Dery</maintainer>
+  <maintainer email="vitalijs.arkulinskis@mail.mcgill.ca">Vitalijs Arkulinskis</maintainer>
 
   <!-- One license tag required, multiple allowed, one license per tag -->
   <!-- Commonly used license strings: -->
@@ -17,7 +17,7 @@
   <url type="website">http://mcgillrobotics.com/</url>
   
   <!-- Members of the Computer Vision Section for the 2013-2014 year. -->
-  <author email="jean-sebastien.dery@mail.mcgill.ca">Jean-Sebastien Dery</author>
+  <author email="vitalijs.arkulinskis@mail.mcgill.ca">Vitalijs Arkulinskis</author>
 
   <!-- This will allow ROS to generate the custom ROS Message type for different languages (C++, Python, etc.) -->
   <build_depend>message_generation</build_depend>
