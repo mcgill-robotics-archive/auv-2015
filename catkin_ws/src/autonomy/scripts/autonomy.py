@@ -57,7 +57,6 @@ class Autonomy():
     velocity_msg.roll = desired[3]
     velocity_msg.pitch = desired[4]
     velocity_msg.yaw = desired[5]
-
     self.velocity_publisher.publish(velocity_msg)
 
   def set_position(self, desired):
@@ -91,13 +90,17 @@ class Autonomy():
     rospy.Subscriber("state_estimation/filtered_depth", Int8, self.filtered_depth_callback)
     rospy.Subscriber("front_cv/target_info", String, self.target_info_callback)
 
+    # TODO: make these all into services
     self.velocity_publisher = rospy.Publisher("autonomy/set_velocity", SetVelocity, queue_size = 1000)
     self.position_publisher = rospy.Publisher("autonomy/set_position", SetPosition, queue_size = 1000)
-    self.cv_target_publisher = rospy.Publisher("autonomy/cv_target", CVTarget, queue_size = 1000)  
+    self.cv_target_publisher = rospy.Publisher("autonomy/cv_target", CVTarget, queue_size = 1000)
     self.sonar_target_publisher = rospy.Publisher("autonomy/sonar_target", SonarTarget, queue_size = 1000)
+    # Need to allow some time for topics to be created before publishing on them
+    rospy.sleep(1)
     
 if __name__ == '__main__':
   my_autonomy = Autonomy()
   my_autonomy.ros_init()
   my_task_controller = task_controller.TaskController(my_autonomy)
   my_task_controller.run_routine()
+  rospy.spin()
