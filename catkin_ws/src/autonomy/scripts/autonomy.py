@@ -127,6 +127,10 @@ class Autonomy():
     cv_msg.CVTarget = new_target
     self.cv_target_publisher.publish(cv_msg)
 
+  # We need to add a function that returns if the object was found. 
+  def target_was_found(self, new_target):
+      return True
+
   """send Sonar a target object to seek for
   (sonar does not need to have seen this object before)
   """

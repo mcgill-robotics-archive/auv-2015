@@ -4,6 +4,7 @@ This module is a class that sends mesage for cv to look for
 """
 
 import action
+import yaw_movement_action
 
 class SetCVTargetAction(action.Action):
   desired_velocity = 0
@@ -16,6 +17,8 @@ class SetCVTargetAction(action.Action):
 
   def execute(self):
     self.print_start()
-    self.my_autonomy.set_cv_target(self.cv_target)
+    while self.my_autonomy.target_was_found != True:
+      self.my_autonomy.set_cv_target(self.cv_target)
+      self.yaw_movement_action.YawMovementAction(self.my_autonomy, 3)
     self.print_success()
     return True
