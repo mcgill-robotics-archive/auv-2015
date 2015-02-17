@@ -41,8 +41,8 @@ class simple_pipe :
         self.out = collections.deque(maxlen=20)
         self.thread_quantity = threads if threads >= 1 else 1
         self.node_name = name
-        self.publisher = rospy.Publisher( name, ObjectImageLocation )
-        
+        self.publisher = rospy.Publisher( name, ObjectImageLocation, queue_size=100 )
+        self.debuglisher = rospy.Publisher( "debug_"+name, Image, queue_size=100 )
         def callback(data):
             try:
               cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -131,6 +131,9 @@ class simple_pipe :
                     rospy.logerr("A filter's output does not match the input of the subsequent filter : output of %s and input of %s", self.pipeline[i-1].__name__, self.pipeline[i].__name__)
                     del pipeline[i-1:i+1]
                     rospy.logwarn("Gracefully removed faulty filters")
+            # send to debug publisher
+            ros_image = self.bridge.cv2_to_imgmsg(image.content, "8UC1")
+            self.debuglisher.publish(ros_image)
             return image
         return process
     
