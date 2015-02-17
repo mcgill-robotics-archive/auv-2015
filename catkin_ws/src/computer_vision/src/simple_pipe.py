@@ -16,7 +16,7 @@ from image_node import image_in
 from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import String
 from sensor_msgs.msg import Image
-
+from computer_vision.msg import ObjectImageLocation
 
 class simple_pipe :
     def __init__(self, plan, camera="/camera/image_rect_color", threads=1, show=False, name="pipe"):
@@ -41,6 +41,8 @@ class simple_pipe :
         self.out = collections.deque(maxlen=20)
         self.thread_quantity = threads if threads >= 1 else 1
         self.node_name = name
+        self.publisher = rospy.Publisher( name, ObjectImageLocation )
+        
         def callback(data):
             try:
               cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
@@ -114,11 +116,17 @@ class simple_pipe :
         pipeline := list of functions (filters)
         """
         def process(image):
+            """
+            This function is the process function for the pipeline.
+
+            Arg:
+            image := a filter image, it has a opencv image and a timestamp
+            """
             if not isinstance(image, filter_image):
                 rospy.logerr("the image is not the right type it is : %s", type(image))
             for i, filtering_op in enumerate(pipeline):
                 try:
-                    image.content = filtering_op(image.content)
+                    image.content = filtering_op(**{"image":image.content, "publisher":self.publisher} )
                 except TypeError as e :
                     rospy.logerr("A filter's output does not match the input of the subsequent filter : output of %s and input of %s", self.pipeline[i-1].__name__, self.pipeline[i].__name__)
                     del pipeline[i-1:i+1]
