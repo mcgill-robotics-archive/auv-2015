@@ -14,6 +14,10 @@ from matplotlib import pyplot as plt
 class plumber :
 
     @staticmethod
+    # start by defining a function with image and **box as parameters
+    # if you want the publisher you just add publisher as a parameter
+    # here I will show you how to access publisher throught the **box
+    # ie the following is same as def example_filter(image,publisher)
     def example_filter(image, **box):
         # do some operation on the image
         ### DO SOMETHING HERE ###
