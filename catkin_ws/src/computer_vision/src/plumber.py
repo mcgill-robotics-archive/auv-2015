@@ -12,6 +12,20 @@ from matplotlib import pyplot as plt
 
 
 class plumber :
+
+    @staticmethod
+    def example_filter(image, **box):
+        # do some operation on the image
+        ### DO SOMETHING HERE ###
+        # setup message
+        location = ObjectImageLocation()
+        # here you set the location of the object
+        location.centre_x = 0
+        location.centre_y = 0
+        # publish the message
+        box["publisher"].publish(location)
+        # return the modified image
+        return image
     
     @staticmethod
     def gray(image, **box):
@@ -23,11 +37,6 @@ class plumber :
     
     @staticmethod
     def resize(image, scale_x=0.333, scale_y=0.333, **box):
-        location = ObjectImageLocation()
-        location.centre_x = 0
-        location.centre_y = 0
-        box["publisher"].publish(location)
-        rospy.loginfo(location)
         return cv2.resize(image, None, fx=scale_x, fy=scale_y)
     
     @staticmethod
