@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   tf
+  message_generation
 )
 
 ## Python/c++ integration starts here
@@ -29,10 +30,16 @@ catkin_python_setup()
   ##VisibleObjectData.msg
 ##)
 
+add_message_files(
+	FILES
+	ObjectImageLocation.msg
+)
+
 # Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-# )
+generate_messages(
+   DEPENDENCIES
+   std_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -41,7 +48,7 @@ catkin_python_setup()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES test_zone
-  CATKIN_DEPENDS roscpp std_msgs message_runtime cv_bridge image_transport
+  CATKIN_DEPENDS message_runtime roscpp std_msgs message_runtime cv_bridge image_transport
 )
 
 ###########
