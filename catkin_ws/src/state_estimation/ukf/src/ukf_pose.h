@@ -6,15 +6,16 @@
 
 using namespace Eigen;
 
-typedef Matrix<double, 3, 6> Matrix3X6d;
-typedef const Ref<const Vector3d> constVector3;  //Changed to constVector3 to differentiate with constVector (Xd) defined in Xd
-
 class ukf_pose
 {
   public:
-    ukf_pose(); 
-    void update(constVector3 acc, constVector3 rotation, Ref<Vector3d>);
-    static void propogate(constVector3, Ref<Vector3d>);
+    ukf_pose();
+    /* Call this with the current acceleration and gyro*dt and the current state
+     * will be written to outPose
+     */
+    void update(const Vector3d acc, const Vector3d rotation,
+        Ref<Vector3d> outPose);
+    static void propogate(const Vector3d, Ref<Vector3d>);
     static MatrixXd observe(MatrixXd);
     void fixState(Ref<Vector3d>);
 
