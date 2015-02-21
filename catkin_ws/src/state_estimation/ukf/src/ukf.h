@@ -7,25 +7,37 @@
 
 using namespace Eigen;
 
-typedef const Ref<const VectorXd> constVector;
-
 class ukf
 {
     public:
-        ukf(int dim);
-        void predict(boost::function<void (Ref<Eigen::VectorXd>)>);
-        void correct(constVector, MatrixXd(*)(MatrixXd));
-        const int DIM;
+        ukf(VectorXd initialState, MatrixXd initialCovariance);
+        
+        /* The propogate parameter is a function which propogates a state vector
+         * from time t to time t+1. The processNoise parameter is the covariance
+         * matrix of the noise added from propogation.
+         */
+        void predict(boost::function<void (Ref<VectorXd>)> propogate,
+            const MatrixXd processNoise);
+        
+        /* The observe parameter is a function which takes in a matrix of state
+         * vectors and returns a matrix containing the corresponding measurement
+         * vectors. The measurementNoise parameter is the covariance of the 
+         * measurement parameter.
+         */
+        void correct(const VectorXd measurement, MatrixXd(*observe)(MatrixXd),
+            const MatrixXd measurementNoise);
+            
+        // Current state estimate
         VectorXd state;
+        
+        // Current covariance estimate
         MatrixXd covariance;
-        MatrixXd processCovariance;
-        MatrixXd measurementCovariance;
     
     private:
-        void generateSigmas();
-        void recoverPrediction();
-        void recoverCorrection(constVector, MatrixXd);
-        MatrixXd sigmas;
+        MatrixXd generateSigmas();
+        void recoverPrediction(Ref<MatrixXd>, const MatrixXd);
+        void recoverCorrection(Ref<MatrixXd>, Ref<MatrixXd>,
+            const VectorXd, const MatrixXd);
 };
 
 #endif 

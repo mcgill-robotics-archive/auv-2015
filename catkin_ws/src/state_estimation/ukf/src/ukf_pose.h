@@ -13,14 +13,16 @@ class ukf_pose
 {
   public:
     ukf_pose(); 
-      void update(constVector3 acc, constVector3 rotation, Ref<Vector3d>);
-      static void propogate(constVector3, Ref<Vector3d>);
-      static MatrixXd observe(MatrixXd);
-      void fixState(Ref<Vector3d>);
+    void update(constVector3 acc, constVector3 rotation, Ref<Vector3d>);
+    static void propogate(constVector3, Ref<Vector3d>);
+    static MatrixXd observe(MatrixXd);
+    void fixState(Ref<Vector3d>);
 
   private:
     ukf estimator;
-  static AngleAxisd angleAxis(Vector3d);
+    MatrixXd processNoise;
+    MatrixXd measurementNoise;
+    static AngleAxisd angleAxis(Vector3d);
 };
 
 #endif

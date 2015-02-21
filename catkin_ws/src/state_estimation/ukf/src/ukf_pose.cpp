@@ -5,15 +5,18 @@
 #include <iostream>
 #include <boost/bind.hpp>
 
-//Length of the state vector
-//const double INITIAL_COVARIANCE = 0.0000001;
-//const double PROCESS_VARIANCE = 0.00000004;
-//const double MEASUREMENT_VARIANCE = 0.025;
+const double INITIAL_COVARIANCE = 0.0000001;
+const double PROCESS_VARIANCE = 0.00000004;
+const double MEASUREMENT_VARIANCE = 0.025;
 
 const double pi = std::acos(-1.0);
 const int DIM = 3;
 
-ukf_pose::ukf_pose():estimator(3) {}
+ukf_pose::ukf_pose() :
+  estimator(VectorXd::Zero(3), INITIAL_COVARIANCE * MatrixXd::Identity(3, 3)),
+  processNoise(PROCESS_VARIANCE * MatrixXd::Identity(3,3)),
+  measurementNoise(MEASUREMENT_VARIANCE * MatrixXd::Identity(3,3))
+{}
 
 AngleAxisd ukf_pose::angleAxis(Vector3d v) {
   if (v.norm() > 0) {
@@ -64,8 +67,9 @@ void ukf_pose::update(constVector3 acc, constVector3 rotation, Ref<Vector3d> pos
   fixState(estimator.state);
 
   //estimator.predict(rotation, &propogate);  //Todo : rotation should be accessed from estimator, not passed
-  estimator.predict(boost::bind(&ukf_pose::propogate, rotation, _1));
-  estimator.correct(acc, &observe);
+  estimator.predict(boost::bind(&ukf_pose::propogate, rotation, _1),
+      processNoise);
+  estimator.correct(acc, &observe, measurementNoise);
 
   pose = estimator.state;
 }

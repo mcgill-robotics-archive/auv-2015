@@ -1,70 +1,75 @@
 #include "ukf.h"
 #include <math.h>
 
-//Length of the state vector
-const double INITIAL_COVARIANCE = 0.0000001;
-const double PROCESS_VARIANCE = 0.00000004;
-const double MEASUREMENT_VARIANCE = 0.025;
-
-const double pi = std::acos(-1.0);
-
-
-ukf::ukf(int dim) : 
-  DIM(dim), 
-  state(VectorXd::Zero(dim)),
-  covariance(INITIAL_COVARIANCE * MatrixXd::Identity(dim, dim)),
-  processCovariance(PROCESS_VARIANCE * MatrixXd::Identity(dim, dim)),
-  measurementCovariance(MEASUREMENT_VARIANCE * MatrixXd::Identity(dim, dim)),
-  sigmas(MatrixXd::Zero(dim, 2*dim))
+ukf::ukf(VectorXd initialState, MatrixXd initialCovariance) :
+  state(initialState),
+  covariance(initialCovariance)
 {}
 
-void ukf::generateSigmas()
+/* This method generates 2*state.size() states distributed on a hypersphere
+ * around state and returns them as a size x 2*size matrix.
+ */
+MatrixXd ukf::generateSigmas()
 {
-  //This method generates 2*DIM states distributed on a hypersphere around augPose
-
-  //Cholesky Decomposition
-  //Matrix3d T = covariance.llt().matrixL();//TODO(max) do we need this temp matrix?
-  MatrixXd T = covariance.llt().matrixL();
-  //Concatenate both scaled Ts and add state
-  sigmas << -sqrt((double) DIM)*T, sqrt((double) DIM)*T;  //
+  /* The sigmas matrix is recreated at each update step because the size of
+   * the state vector may have changed.
+   */
+  MatrixXd sigmas(state.size(), 2*state.size());
+  MatrixXd sqrtC = covariance.llt().matrixL();
+  sigmas << -sqrt(state.size()) * sqrtC, sqrt(state.size()) * sqrtC;
   sigmas.colwise() += state;
+  return sigmas;
 }
 
-void ukf::recoverPrediction()
+void ukf::recoverPrediction(Ref<MatrixXd> sigmas,
+    const MatrixXd processNoise)
 {
   state = sigmas.rowwise().mean();
   sigmas.colwise() -= state;
-  covariance = sigmas*sigmas.transpose()/(2*(double) DIM);
+  covariance = sigmas*sigmas.transpose()/(2*(double) state.size())
+      + processNoise;
 }
 
-void ukf::predict(boost::function<void (Ref<Eigen::VectorXd>)> propogate)
+void ukf::predict(boost::function<void (Ref<VectorXd>)> propogate,
+    const MatrixXd processNoise)
 {
-  generateSigmas();
-  for (int i = 0; i < 2*DIM; i++)
+  MatrixXd sigmas = generateSigmas();
+  for (int i = 0; i < sigmas.cols(); i++)
   {
     propogate(sigmas.col(i));
   }
-  recoverPrediction();
+  recoverPrediction(sigmas, processNoise);
 }
 
-void ukf::correct(constVector measurement, MatrixXd(*observe)(Eigen::MatrixXd))
+void ukf::correct(const VectorXd measurement, MatrixXd(*observe)(MatrixXd),
+    const MatrixXd measurementNoise)
 {
-  generateSigmas();
-  recoverCorrection(measurement, observe(sigmas));
+  MatrixXd sigmas = generateSigmas();
+  /* It would be nice to have the observe function be called with a vector and
+   * return a vector. The problem then would be how do we know what size of
+   * matrix to allocate to hold the returned vectors. We could use a template
+   * to tell us, but one of the possible values for a matrix size is dynamic,
+   * meaning that to figure out the size of the returned vectors we would have 
+   * to call observe and then allocate a matrix. That way seems hacky, so the
+   * current solution will do for now.
+   */
+  MatrixXd gammas = observe(sigmas);
+  recoverCorrection(sigmas, gammas, measurement, measurementNoise);
 }
 
-void ukf::recoverCorrection(constVector measurement, MatrixXd gammas)
+void ukf::recoverCorrection(Ref<MatrixXd> sigmas, Ref<MatrixXd> gammas,
+    const VectorXd measurement, const MatrixXd measurementNoise)
 {
   VectorXd predMsmt = gammas.rowwise().mean();
 
   sigmas.colwise() -= state;
   gammas.colwise() -= predMsmt;
-  Matrix3d measCovar = gammas * gammas.transpose()/(2. * DIM) + measurementCovariance;
-  Matrix3d crossCovar = sigmas * gammas.transpose()/(2. * DIM);
+  MatrixXd measCovar = gammas * gammas.transpose()/(2. * state.size()) 
+      + measurementNoise;
+  MatrixXd crossCovar = sigmas * gammas.transpose()/(2. * state.size());
 
-  // gain = croscovar*meascovar^-1
-  //Matrix3d gain = measCovar.transpose().ldlt().solve(crossCovar.transpose()).transpose();
-  MatrixXd gain = measCovar.transpose().ldlt().solve(crossCovar.transpose()).transpose();
+  MatrixXd gain = measCovar.transpose().ldlt()
+                      .solve(crossCovar.transpose()).transpose();
 
   state += gain * (measurement - predMsmt);
   covariance -= crossCovar * gain.transpose();

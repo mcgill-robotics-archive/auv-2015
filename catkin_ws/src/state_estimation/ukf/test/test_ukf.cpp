@@ -335,31 +335,6 @@ TEST(pose_ukf_propogate, z_rotation)
   expect_matrix_near(expected, state, 1e-10);
 }
 
-TEST(ukf_constructor, initialization)
-{
-  ukf estimator(3);
-
-  EXPECT_EQ(1, estimator.state.cols());
-  EXPECT_EQ(3, estimator.state.rows());
-  EXPECT_EQ(0., estimator.state.norm());
-  
-  EXPECT_EQ(3, estimator.covariance.rows());
-  EXPECT_EQ(3, estimator.covariance.cols());
-  // Eventually, the covariance should be passed in the constructor, but for now..
-  EXPECT_EQ(estimator.covariance.trace(), estimator.covariance.trace());
-
-  
-  EXPECT_EQ(3, estimator.processCovariance.rows());
-  EXPECT_EQ(3, estimator.processCovariance.cols());
-  // Eventually, the covariance should be passed in the constructor, but for now..
-  EXPECT_EQ(estimator.processCovariance.trace(), estimator.processCovariance.trace());
-
-  EXPECT_EQ(3, estimator.measurementCovariance.rows());
-  EXPECT_EQ(3, estimator.measurementCovariance.cols());
-  // Eventually, the covariance should be passed in the constructor, but for now..
-  EXPECT_EQ(estimator.measurementCovariance.trace(), estimator.measurementCovariance.trace());
-}
-
 void propogate(Ref<Eigen::VectorXd> state)
 {
   state *= 2.;
@@ -370,7 +345,6 @@ void propogate(Ref<Eigen::VectorXd> state)
 TEST(ukf_predict, 2x) {
   Vector3d initialState, expectedState;
   Matrix3d initialCovar, expectedCovar;
-  ukf estimator(3);
   initialState << 2, 3, 1;
   expectedState << 4, 6, 2;
   initialCovar << 1,  2,  1,
@@ -379,11 +353,8 @@ TEST(ukf_predict, 2x) {
   expectedCovar << 4,  8,  4,
                    8, 52, 56,
                    4, 56, 168;
-  estimator.state = initialState;
-  estimator.covariance = initialCovar;
-  estimator.processCovariance = Matrix3d::Zero();
-  
-  estimator.predict(&propogate);
+  ukf estimator(initialState, initialCovar);
+  estimator.predict(&propogate, Matrix3d::Zero());
 
   expect_matrix_near(expectedState, estimator.state, 1e-10);
   expect_matrix_near(expectedCovar, estimator.covariance, 1e-10);
@@ -398,19 +369,15 @@ MatrixXd observe(MatrixXd sigma)
 TEST(ukf_correct, minusx) {
   Vector3d initialState, msmt, expectedState;
   Matrix3d initialCovar, expectedCovar;
-  ukf estimator(3);
   initialState << 2, 3, 1;
   msmt << -3, -3, -1;
   expectedState << 2.5, 3, 1;
   initialCovar << 1,  2,  1,
                   2, 13, 14,
                   1, 14, 42;
+  ukf estimator(initialState, initialCovar);
   
-  estimator.state = initialState;
-  estimator.covariance = initialCovar;
-  estimator.measurementCovariance = initialCovar;
-  
-  estimator.correct(msmt, &observe);
+  estimator.correct(msmt, &observe, initialCovar);
 
   expect_matrix_near(expectedState, estimator.state, 1e-10);
   expect_matrix_near(0.5*initialCovar, estimator.covariance, 1e-10);
