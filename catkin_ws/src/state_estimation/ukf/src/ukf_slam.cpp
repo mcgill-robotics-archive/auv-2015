@@ -3,54 +3,23 @@
 #include <math.h>
 #include <stdio.h>
 
-
-Vector2d testInput(x,y);
-
-const double pi = std::acos(-1.0);
-
-
-//initialize matrix which will hold obstacles to be tracked
-// n-1 obstacles + 1 for robot (size of Obst should be 2n for x,y positions)
-
-VectorXd state;
+ukf_slam::ukf_slam():
+  estimator(VectorXd::Zero(2), 1e10 * MatrixXd::Identity(2,2))
+{}
 
 
-//Robots position at state[0], state[1]
-//Gate is at position (0,0)
-state(2) = 0.0;
-state(3) = 0.0;
-
-
-ukf_slam::ukf_slam(Vector2D testInput):estimator(3){
-
-//call constructor on vector of 2n dimensions
-//ukf slam will look like ukf pose
-//1.cosntructor creates ukf of size 2n
-//2.update will take in sensor readings
-// observe-=-"h" 
-
-//3.s
-
-}
-
-
-void ukf_slam::observe() //Will take id of object later on
-{
-	
-
-	
+MatrixXd ukf_slam::observe(MatrixXd sigmas) {
+	return sigmas;
 }	
 
-void ukf_slam::propogate(Ref<Eigen::VectorXd> state)
-{
-
-
+void ukf_slam::propogate(Ref<Eigen::VectorXd> state) {
+  // Does nothing because we don't have odometry implemented yet
 }
 
 
-void ukf_slam::update(int Name, Vector2d Dist)
+void ukf_slam::update(Vector2d msmt, Ref<Vector2d> outPosition)
 {
-	estimator.predict(&propogate);
-	estimator.correct(Dist, &observe);
-
+	estimator.predict(&propogate, MatrixXd::Zero(2,2));
+	estimator.correct(msmt, &observe, MatrixXd::Zero(2,2));
+	outPosition = estimator.state;
 }

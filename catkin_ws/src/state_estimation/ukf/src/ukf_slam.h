@@ -6,24 +6,18 @@
 
 using namespace Eigen;
 
-//typedef Matrix<double, 3, 6> Matrix3X6d;
-//typedef const Ref<const Vector3d> constVector;
-
-
-
 class ukf_slam
 {
 	public:
-    	ukf_slam(); 
-    	void update();
+    ukf_slam(); 
+    void update(Vector2d, Ref<Vector2d>);
 		//void propogate(Vector3d, Ref<Vector3d>);
 		void static propogate(Ref<Eigen::VectorXd>);
 		//void h(Vector3d, Ref<Vector3d>);
-		void static observe();
+		MatrixXd static observe(MatrixXd);
 		
 	private:
 		ukf estimator;
 };
-
 
 #endif
