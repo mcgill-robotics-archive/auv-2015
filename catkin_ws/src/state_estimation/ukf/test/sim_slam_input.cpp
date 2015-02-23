@@ -2,8 +2,10 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/Point.h"
 #include "geometry_msgs/Vector3.h"
+#include "auv_msgs/SlamTarget.h"
 #include <tf/transform_broadcaster.h>
 #include <math.h>
+#include <cmath>
 
 geometry_msgs::Point update_position(geometry_msgs::Vector3 velocity, geometry_msgs::Point previous_position) {
 	geometry_msgs::Point new_position;
@@ -26,9 +28,8 @@ float box_muller(float mean, float sigma) {
 	
 	x1 = rand() % 1000 / 1000.0;
 	x2 = rand() % 1000 / 1000.0;
-	
+	if (x1 == 0) x1 = 0.5;
 	y = sqrt(-2*log(x1))*cos(2*M_PI*x2);
-	
 	return( mean + y * sigma);
 }
 
@@ -52,10 +53,10 @@ int main(int argc, char **argv)
 	ros::Publisher velocity_pub = n.advertise<geometry_msgs::Vector3>("velocity", 1000);
 	ros::Publisher relative_position_obj1_pub = n.advertise<geometry_msgs::Vector3>("sim_slam/position/actual/obj1", 1000);	
 	ros::Publisher noisy_velocity_pub = n.advertise<geometry_msgs::Vector3>("noisy_velocity", 1000);
-	ros::Publisher noisy_relative_position_obj1_pub = n.advertise<geometry_msgs::Vector3>("sim_slam/position/noisy/obj1", 1000);
+	ros::Publisher noisy_position_pub = n.advertise<auv_msgs::ObjectID>("sim_slam/position/noisy", 1000);
 	
 	//Update rate
-	ros::Rate loop_rate(100);
+	ros::Rate loop_rate(10);
 	
 	//Define starting position of the robot
 	geometry_msgs::Point robot_position;
@@ -66,20 +67,24 @@ int main(int argc, char **argv)
 	robot_velocity.x = 0.0; robot_velocity.y = 0; robot_velocity.z = 0;
 	
 	//Define object locations
-	geometry_msgs::Point obj1;
-	obj1.x = 0; obj1.y = 10; obj1.z = 0;
-	
+	const int numObjs = 4;
+	geometry_msgs::Point[4] objs;
+  objs[0].x = 2; objs[0].y = 0; objs[0].z = 0;
+  objs[1].x = 0; objs[1].y = 2; objs[1].z = 0;
+  objs[2].x = -2; objs[2].y = 0; objs[2].z = 0;
+  objs[3].x = 0; objs[3].y = -2; objs[3].z = 0;
+    	
 	//Define noise
 	float obj_noise = 1;
 	float v_noise = 1;
 
 	geometry_msgs::Vector3 relative_obj1_position;
-	geometry_msgs::Vector3 noisy_relative_obj1_position;
+	geometry_msgs::Vector3 noisy_relative_position;
 	geometry_msgs::Vector3 noisy_robot_velocity;
 
 	while (ros::ok())
 	{
-		relative_obj1_position = relative_position(robot_position, obj1);
+		//relative_obj1_position = relative_position(robot_position, obj1);
 		
 		//Add noise to outputs
 		noisy_relative_obj1_position = add_noise(relative_obj1_position, obj_noise);
@@ -89,7 +94,15 @@ int main(int argc, char **argv)
 		velocity_pub.publish(robot_velocity);
 		relative_position_obj1_pub.publish(relative_obj1_position);	
 		noisy_velocity_pub.publish(noisy_robot_velocity);
-		noisy_relative_position_obj1_pub.publish(noisy_relative_obj1_position);
+		
+		for (int i = 0; i < numObjs; i++) {
+		  auv_msgs::SlamTarget msg;
+		  msg.ObjectID = i
+		  noisy_relative_position = add_noise(relative_position(robot_position, objs[i]),obj_noise);
+		  msg.x = noisy_relative_position.x;
+		  msg.y = noisy_relative_position.y;
+		  noisy_position_pub.publish(msg);
+		}
 
 		robot_position = update_position(robot_velocity, robot_position);
 		

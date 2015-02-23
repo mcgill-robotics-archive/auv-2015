@@ -15,7 +15,7 @@ green.a = 1
 
 def publishSphereMarker(name, color, pos):
   marker = Marker()
-  marker.header.frame_id = "/map"
+  marker.header.frame_id = "/robot"
   marker.ns = name
   marker.type = marker.SPHERE
   marker.action = marker.ADD # (really this modifies it)

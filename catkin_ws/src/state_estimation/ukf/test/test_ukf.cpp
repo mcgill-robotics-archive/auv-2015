@@ -391,6 +391,15 @@ TEST(ukf_slam_update, basic) {
   expect_matrix_near(Vector2d::Zero(), result, 1e-10);
 }
 
+TEST(ukf_slam_update, repeat) {
+  ukf_slam slam;
+  Vector2d result;
+  for (int i = 0; i < 10000; i++) {
+    slam.update(Vector2d::Zero(), result);
+  }
+  expect_matrix_near(Vector2d::Zero(), result, 1e-10);
+}
+
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

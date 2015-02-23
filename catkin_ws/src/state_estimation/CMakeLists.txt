@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   tf
   rospy
+  auv_msgs
 )
 
 ## Boost requires its own find_package
