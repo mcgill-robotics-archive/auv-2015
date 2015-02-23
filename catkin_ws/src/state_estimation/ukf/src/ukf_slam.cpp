@@ -3,8 +3,8 @@
 #include <math.h>
 #include <stdio.h>
 
-ukf_slam::ukf_slam(int n):
-  estimator(VectorXd::Zero(2*n), 100 * MatrixXd::Identity(2*n,2*n))
+ukf_slam::ukf_slam():
+  estimator(VectorXd::Zero(2), 100 * MatrixXd::Identity(2,2))
 {}
 
 
