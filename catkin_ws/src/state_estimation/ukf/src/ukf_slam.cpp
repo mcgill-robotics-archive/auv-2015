@@ -19,7 +19,7 @@ void ukf_slam::propogate(Ref<Eigen::VectorXd> state) {
 
 void ukf_slam::update(Vector2d msmt, Ref<Vector2d> outPosition)
 {
-	estimator.predict(&propogate, MatrixXd::Zero(2,2));
-	estimator.correct(msmt, &observe, MatrixXd::Zero(2,2));
+	estimator.predict(&propogate, 0.1 * MatrixXd::Identity(2,2));
+	estimator.correct(msmt, &observe, MatrixXd::Identity(2,2));
 	outPosition = estimator.state;
 }

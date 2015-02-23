@@ -39,7 +39,8 @@ int main (int argc, char **argv) {
   ros::init(argc, argv, "slam_ukf");
   ros::NodeHandle node;
   //tf::TransformBroadcaster broadcaster;
-  sub = node.subscribe("noisy_relative_obj1_position", 100, dataCallback);
+  sub = node.subscribe("sim_slam/position/noisy/obj1", 100, dataCallback);
+  ros::spin();
   return 0;
 }
 

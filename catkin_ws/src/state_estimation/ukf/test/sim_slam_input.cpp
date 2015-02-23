@@ -2,6 +2,7 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/Point.h"
 #include "geometry_msgs/Vector3.h"
+#include <tf/transform_broadcaster.h>
 #include <math.h>
 
 geometry_msgs::Point update_position(geometry_msgs::Vector3 velocity, geometry_msgs::Point previous_position) {
@@ -46,14 +47,15 @@ int main(int argc, char **argv)
 	ros::init(argc, argv, "sim_slam_input");
 
 	ros::NodeHandle n;
+	tf::TransformBroadcaster broadcaster;
 
 	ros::Publisher velocity_pub = n.advertise<geometry_msgs::Vector3>("velocity", 1000);
-	ros::Publisher relative_position_obj1_pub = n.advertise<geometry_msgs::Vector3>("relative_position_obj1", 1000);	
+	ros::Publisher relative_position_obj1_pub = n.advertise<geometry_msgs::Vector3>("sim_slam/position/actual/obj1", 1000);	
 	ros::Publisher noisy_velocity_pub = n.advertise<geometry_msgs::Vector3>("noisy_velocity", 1000);
-	ros::Publisher noisy_relative_position_obj1_pub = n.advertise<geometry_msgs::Vector3>("noisy_relative_position_obj1", 1000);
+	ros::Publisher noisy_relative_position_obj1_pub = n.advertise<geometry_msgs::Vector3>("sim_slam/position/noisy/obj1", 1000);
 	
 	//Update rate
-	ros::Rate loop_rate(1000);
+	ros::Rate loop_rate(100);
 	
 	//Define starting position of the robot
 	geometry_msgs::Point robot_position;
@@ -61,11 +63,11 @@ int main(int argc, char **argv)
 
 	//Define velocity of the robot
 	geometry_msgs::Vector3 robot_velocity;
-	robot_velocity.x = 1000; robot_velocity.y = 0; robot_velocity.z = 0;
+	robot_velocity.x = 0.0; robot_velocity.y = 0; robot_velocity.z = 0;
 	
 	//Define object locations
 	geometry_msgs::Point obj1;
-	obj1.x = 20000; obj1.y = 50000; obj1.z = 0;
+	obj1.x = 0; obj1.y = 10; obj1.z = 0;
 	
 	//Define noise
 	float obj_noise = 1;
