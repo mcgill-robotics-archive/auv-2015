@@ -32,6 +32,7 @@ catkin_package(
   std_msgs
   tf
   boost
+  auv_msgs
 )
 
 

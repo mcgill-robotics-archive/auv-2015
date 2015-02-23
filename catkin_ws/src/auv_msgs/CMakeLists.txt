@@ -16,6 +16,9 @@ add_message_files(FILES
                 #added by Autonomy
                   CVTarget.msg
                   SonarTarget.msg
+
+		#added by State Estimation
+		  SlamTarget.msg
                  )
 
 #add_service_files(FILES
