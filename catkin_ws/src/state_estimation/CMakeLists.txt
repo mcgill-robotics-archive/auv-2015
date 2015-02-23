@@ -7,6 +7,7 @@ project(state_estimation)
 find_package(catkin REQUIRED COMPONENTS
   roscpp
   rospy
+  cmake_modules
   message_generation
   nav_msgs
   std_msgs
@@ -16,11 +17,22 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
 )
 
+## Boost requires its own find_package
+find_package(Boost REQUIRED COMPONENTS)
+
+## Have to put this in a separate find_package because we need to
+## find cmake_modules first
+find_package(Eigen REQUIRED)
+
 catkin_package(
   CATKIN_DEPENDS
   roscpp
   rospy
+  std_msgs
+  tf
+  boost
 )
+
 
 ###########
 ## Build ##
@@ -29,3 +41,4 @@ catkin_package(
 add_subdirectory(pose)
 add_subdirectory(tf)
 add_subdirectory(ukf)
+

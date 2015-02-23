@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
   image_transport
   message_generation
   tf
+  message_generation
 )
 
 include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
@@ -23,9 +24,15 @@ include($ENV{ROS_ROOT}/core/rosbuild/rosbuild.cmake)
   ##VisibleObjectData.msg
 ##)
 
+add_message_files(
+	FILES
+	ObjectImageLocation.msg
+)
+
 # Generate added messages and services with any dependencies listed here
 generate_messages(
-  DEPENDENCIES
+   DEPENDENCIES
+   std_msgs
 )
 
 ###################################
@@ -35,7 +42,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES test_zone
-  CATKIN_DEPENDS roscpp std_msgs message_runtime cv_bridge image_transport
+  CATKIN_DEPENDS message_runtime roscpp std_msgs message_runtime cv_bridge image_transport
 )
 
 ###########
