@@ -1,4 +1,5 @@
 #include "ukf_pose.h"
+#include "ukf_slam.h"
 #include "ukf.h"
 #include "gtest/gtest.h"
 #include <eigen3/Eigen/Dense>
@@ -383,7 +384,12 @@ TEST(ukf_correct, minusx) {
   expect_matrix_near(0.5*initialCovar, estimator.covariance, 1e-10);
 }
 
-
+TEST(ukf_slam_update, basic) {
+  ukf_slam slam;
+  Vector2d result;
+  slam.update(Vector2d::Zero(), result);
+  expect_matrix_near(Vector2d::Zero(), result, 1e-10);
+}
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

@@ -27,6 +27,7 @@ catkin_add_gtest(${PROJECT_NAME}-test
   test/test_ukf.cpp
   src/ukf.cpp
   src/ukf_pose.cpp
+  src/ukf_slam.cpp
 )
 
 ## Simulates visual odometry and CV/sonar inputs ##

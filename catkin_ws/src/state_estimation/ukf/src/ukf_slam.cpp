@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 ukf_slam::ukf_slam():
-  estimator(VectorXd::Zero(2), 1e10 * MatrixXd::Identity(2,2))
+  estimator(VectorXd::Zero(2), 100 * MatrixXd::Identity(2,2))
 {}
 
 

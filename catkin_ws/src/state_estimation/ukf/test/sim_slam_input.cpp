@@ -36,7 +36,7 @@ geometry_msgs::Vector3 add_noise(geometry_msgs::Vector3 vector, float sigma) {
         geometry_msgs::Vector3 noisy_vector;
         noisy_vector.x = box_muller(vector.x, sigma);
         noisy_vector.y = box_muller(vector.y, sigma);
-        noisy_vector.z = box_muller(vector.z, sigma);
+        noisy_vector.z = 0.;//box_muller(vector.z, sigma);
         return noisy_vector;
 }
 
