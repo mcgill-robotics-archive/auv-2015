@@ -35,6 +35,7 @@ private:
   ros::NodeHandle nh_;
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
+  image_transport::Subscriber image_sub_2;
   image_transport::Publisher image_pub_;
 
   Histogram hist;
@@ -45,10 +46,16 @@ public:
   ImageConverter():it_(nh_)
   {
     // Subscrive to input video feed and publish output video feed
-    image_sub_ = it_.subscribe("/camera/image_rect_color", 1, 
+    image_sub_ = it_.subscribe("phone_cam", 1, 
       &ImageConverter::imageCb, this);
+    //image_sub_ = it_.subscribe("phone_cam_2", 1, 
+      //&ImageConverter::imageCb_2, this);
     image_pub_ = it_.advertise("/image_converter/output_video", 1);
   }
+  //void imageCb_2(const sensor_msgs::ImageConstPtr& msg)
+  //{
+  //  int a = 1;
+  //}
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
