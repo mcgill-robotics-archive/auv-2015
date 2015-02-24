@@ -1,6 +1,7 @@
 #include "ros/ros.h"
 #include "geometry_msgs/Vector3.h"
 #include <tf/transform_broadcaster.h>
+#include "auv_msgs/SlamTarget.h"
 
 #include "ukf_slam.h"
 
@@ -12,16 +13,18 @@ Vector2d measurement; //Holds the sonar measurement
 Vector2d position; 
 
 //Does this need to be changed to 2d? YES done.
-void msgVectorToEigenVector(Ref<Vector2d> vector2d, 
-    const geometry_msgs::Vector3::ConstPtr& vector) {
-  vector2d << vector->x, vector->y;
-}
+//void msgVectorToEigenVector(Ref<Vector2d> vector2d, 
+//    const geometry_msgs::Vector3::ConstPtr& vector) {
+//  vector2d << vector->x, vector->y;
+//}
 
-void dataCallback(const geometry_msgs::Vector3::ConstPtr& input) {
+void dataCallback(const auv_msgs::SlamTarget::ConstPtr& input) {
   static tf::TransformBroadcaster broadcaster;
   
-  msgVectorToEigenVector(measurement, input);
-  estimator.update(measurement, position); 
+  measurement << input->xPos, input->yPos;
+  int objectID =  input->ObjectID;
+  
+  estimator.update(measurement, position, objectID); 
   broadcaster.sendTransform(
     tf::StampedTransform(
       tf::Transform(tf::Quaternion::getIdentity(),

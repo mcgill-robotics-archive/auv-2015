@@ -41,7 +41,7 @@ void ukf::predict(boost::function<void (Ref<VectorXd>)> propogate,
   recoverPrediction(sigmas, processNoise);
 }
 
-void ukf::correct(const VectorXd measurement, MatrixXd(*observe)(MatrixXd),
+void ukf::correct(const VectorXd measurement, boost::function<MatrixXd (MatrixXd)> observe,
     const MatrixXd measurementNoise)
 {
   MatrixXd sigmas = generateSigmas();

@@ -24,7 +24,7 @@ class ukf
          * vectors. The measurementNoise parameter is the covariance of the 
          * measurement parameter.
          */
-        void correct(const VectorXd measurement, MatrixXd(*observe)(MatrixXd),
+        void correct(const VectorXd measurement, boost::function<MatrixXd (MatrixXd)> observe,
             const MatrixXd measurementNoise);
             
         // Current state estimate
