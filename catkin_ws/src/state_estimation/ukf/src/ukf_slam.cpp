@@ -10,7 +10,7 @@ ukf_slam::ukf_slam():
 
 
 MatrixXd ukf_slam::observe(MatrixXd sigmas, int objectID) {
-	return sigmas.block(2*objectID,0, 2, 4*sigmas.rows());	//Return 2 by 4n block from sigmas
+	return sigmas.block(2*objectID,0, 2, 2*sigmas.rows());	//Return 2 by 4n block from sigmas
 }	
 
 void ukf_slam::propogate(Ref<Eigen::VectorXd> state) {
