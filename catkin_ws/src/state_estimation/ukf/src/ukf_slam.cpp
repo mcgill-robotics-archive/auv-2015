@@ -4,13 +4,13 @@
 #include <stdio.h>
 #include <boost/bind.hpp>
 
-ukf_slam::ukf_slam():
-  estimator(VectorXd::Zero(2), 100 * MatrixXd::Identity(2,2))
+ukf_slam::ukf_slam(int n):
+  estimator(VectorXd::Zero(2*n), 100 * MatrixXd::Identity(2*n,2*n))
 {}
 
 
 MatrixXd ukf_slam::observe(MatrixXd sigmas, int objectID) {
-	return sigmas.block(2*objectID,0, 2, 4*sigmas.rows());	//Return 2 by 4n block from sigmas
+	return sigmas.block(2*objectID,0, 2, sigmas.cols());	//Return 2 by 4n block from sigmas
 }	
 
 void ukf_slam::propogate(Ref<Eigen::VectorXd> state) {
@@ -18,9 +18,9 @@ void ukf_slam::propogate(Ref<Eigen::VectorXd> state) {
 }
 
 
-void ukf_slam::update(Vector2d msmt, Ref<Vector2d> outPosition, int objectID)
+void ukf_slam::update(Vector2d msmt, Ref<VectorXd> outPosition, int objectID)
 {
-	estimator.predict(&propogate, 0.1 * MatrixXd::Identity(2,2));
+	estimator.predict(&propogate, 0.0 * MatrixXd::Identity(2*4,2*4));
 	estimator.correct(msmt, boost::bind(&ukf_slam::observe, _1, objectID), MatrixXd::Identity(2,2));
 	outPosition = estimator.state;
 }

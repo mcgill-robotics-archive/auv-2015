@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 	tf::TransformBroadcaster broadcaster;
 
 	ros::Publisher velocity_pub = n.advertise<geometry_msgs::Vector3>("velocity", 1000);
-	ros::Publisher relative_position_obj1_pub = n.advertise<geometry_msgs::Vector3>("sim_slam/position/actual/obj1", 1000);	
+	ros::Publisher position_pub = n.advertise<auv_msgs::SlamTarget>("sim_slam/position/actual", 1000);	
 	ros::Publisher noisy_velocity_pub = n.advertise<geometry_msgs::Vector3>("noisy_velocity", 1000);
 	ros::Publisher noisy_position_pub = n.advertise<auv_msgs::SlamTarget>("sim_slam/position/noisy", 1000);
 	
@@ -69,10 +69,10 @@ int main(int argc, char **argv)
 	//Define object locations
 	const int numObjs = 4;
 	geometry_msgs::Point objs[4];
-  objs[0].x = 2; objs[0].y = 0; objs[0].z = 0;
-  objs[1].x = 0; objs[1].y = 2; objs[1].z = 0;
-  objs[2].x = -2; objs[2].y = 0; objs[2].z = 0;
-  objs[3].x = 0; objs[3].y = -2; objs[3].z = 0;
+  objs[0].x = 3; objs[0].y = 0; objs[0].z = 0;
+  objs[1].x = 0; objs[1].y = 3; objs[1].z = 0;
+  objs[2].x = -3; objs[2].y = 0; objs[2].z = 0;
+  objs[3].x = 0; objs[3].y = -3; objs[3].z = 0;
     	
 	//Define noise
 	float obj_noise = 1;
@@ -90,16 +90,19 @@ int main(int argc, char **argv)
 		
 		//Publish outputs
 		velocity_pub.publish(robot_velocity);
-		relative_position_obj1_pub.publish(relative_obj1_position);	
 		noisy_velocity_pub.publish(noisy_robot_velocity);
 		
 		for (int i = 0; i < numObjs; i++) {
-		  auv_msgs::SlamTarget msg;
-		  msg.ObjectID = i;
+		  auv_msgs::SlamTarget noisy_msg, actual_msg;
+		  noisy_msg.ObjectID = i;
+		  actual_msg.ObjectID = i;
 		  noisy_relative_position = add_noise(relative_position(robot_position, objs[i]),obj_noise);
-		  msg.xPos = noisy_relative_position.x;
-		  msg.yPos = noisy_relative_position.y;
-		  noisy_position_pub.publish(msg);
+		  noisy_msg.xPos = noisy_relative_position.x;
+		  noisy_msg.yPos = noisy_relative_position.y;
+		  actual_msg.xPos = relative_position(robot_position, objs[i]).x;
+		  actual_msg.yPos = relative_position(robot_position, objs[i]).y;
+		  noisy_position_pub.publish(noisy_msg);
+		  position_pub.publish(actual_msg);
 		}
 
 		robot_position = update_position(robot_velocity, robot_position);

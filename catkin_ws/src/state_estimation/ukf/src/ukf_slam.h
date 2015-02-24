@@ -9,8 +9,8 @@ using namespace Eigen;
 class ukf_slam
 {
 	public:
-    ukf_slam(); 
-    void update(Vector2d, Ref<Vector2d>, int);
+    ukf_slam(int); 
+    void update(Vector2d, Ref<VectorXd>, int);
 		//void propogate(Vector3d, Ref<Vector3d>);
 		void static propogate(Ref<Eigen::VectorXd>);
 		//void h(Vector3d, Ref<Vector3d>);
