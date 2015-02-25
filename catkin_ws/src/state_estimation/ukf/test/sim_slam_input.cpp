@@ -5,7 +5,14 @@
 #include "auv_msgs/SlamTarget.h"
 #include <tf/transform_broadcaster.h>
 #include <math.h>
-#include <cmath>
+#include <boost/random.hpp>
+#include <boost/random/normal_distribution.hpp>
+
+boost::mt19937 rng; // I don't seed it on purpouse (it's not relevant)
+boost::normal_distribution<> nd(0.0, 1.0);
+boost::variate_generator<boost::mt19937&, 
+    boost::normal_distribution<> > var_nor(rng, nd);
+
 
 geometry_msgs::Point update_position(geometry_msgs::Vector3 velocity, geometry_msgs::Point previous_position) {
 	geometry_msgs::Point new_position;
@@ -26,7 +33,7 @@ geometry_msgs::Vector3 relative_position(geometry_msgs::Point robot_position, ge
 float box_muller(float mean, float sigma) {
 	float x1, x2, y;
 	
-	x1 = rand() % 1000 / 1000.0;
+	x1 = rand()/ 1000.0;
 	x2 = rand() % 1000 / 1000.0;
 	if (x1 == 0) x1 = 0.5;
 	y = sqrt(-2*log(x1))*cos(2*M_PI*x2);
@@ -35,9 +42,9 @@ float box_muller(float mean, float sigma) {
 
 geometry_msgs::Vector3 add_noise(geometry_msgs::Vector3 vector, float sigma) {
         geometry_msgs::Vector3 noisy_vector;
-        noisy_vector.x = box_muller(vector.x, sigma);
-        noisy_vector.y = box_muller(vector.y, sigma);
-        noisy_vector.z = 0.;//box_muller(vector.z, sigma);
+        noisy_vector.x = vector.x + var_nor() * sigma;
+        noisy_vector.y = vector.y + var_nor() * sigma;
+        noisy_vector.z = 0.;;
         return noisy_vector;
 }
 

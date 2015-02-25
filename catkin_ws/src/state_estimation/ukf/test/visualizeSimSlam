@@ -48,8 +48,8 @@ def mapDataCallback(msg):
   marker.id = msg.ObjectID
   marker.type = marker.SPHERE
   marker.action = marker.ADD # (really this modifies it)
-  marker.scale.x = 0.2
-  marker.scale.y = 0.2
+  marker.scale.x = 5*math.sqrt(msg.var_xx)
+  marker.scale.y = 5*math.sqrt(msg.var_yy)
   marker.scale.z = 0.001
   marker.color = blue
   marker.pose.orientation.w = math.cos(twice_theta)
