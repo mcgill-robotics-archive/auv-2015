@@ -2,11 +2,13 @@
 #include "geometry_msgs/Vector3.h"
 #include <tf/transform_broadcaster.h>
 #include "auv_msgs/SlamTarget.h"
+#include "auv_msgs/SlamEstimate.h"
 #include <string.h>
 #include "ukf_slam.h"
 #include <boost/lexical_cast.hpp>
 
 ros::Subscriber sub;
+ros::Publisher pub;
 ukf_slam estimator(4);
 
 Vector2d measurement; //Holds the sonar measurement
@@ -36,6 +38,16 @@ void dataCallback(const auv_msgs::SlamTarget::ConstPtr& input) {
         boost::lexical_cast<std::string>(i)    
       )
     );
+    
+    auv_msgs::SlamEstimate estimate;
+    estimate.ObjectID = i;
+    estimate.xPos = position(2*i);
+    estimate.yPos = position(2*i+1);
+    MatrixXd covar = estimator.getCovariance(i);
+    estimate.var_xx = covar(0,0);
+    estimate.var_xy = covar(0,1);
+    estimate.var_yy = covar(1,1);
+    pub.publish(estimate);
   }
 
 }
@@ -46,6 +58,7 @@ int main (int argc, char **argv) {
   ros::NodeHandle node;
   //tf::TransformBroadcaster broadcaster;
   sub = node.subscribe("sim_slam/position/noisy", 100, dataCallback);
+  pub = node.advertise<auv_msgs::SlamEstimate>("map_data", 100);
   ros::spin();
   return 0;
 }

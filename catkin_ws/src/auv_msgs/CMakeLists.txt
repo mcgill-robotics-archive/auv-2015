@@ -19,6 +19,7 @@ add_message_files(FILES
 
 		#added by State Estimation
 		  SlamTarget.msg
+		  SlamEstimate.msg
                  )
 
 #add_service_files(FILES

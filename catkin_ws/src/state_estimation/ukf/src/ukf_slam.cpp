@@ -17,6 +17,9 @@ void ukf_slam::propogate(Ref<Eigen::VectorXd> state) {
   // Does nothing because we don't have odometry implemented yet
 }
 
+MatrixXd ukf_slam::getCovariance(int objectId) {
+  return estimator.covariance.block(2*objectId, 2*objectId, 2, 2);
+}
 
 void ukf_slam::update(Vector2d msmt, Ref<VectorXd> outPosition, int objectID)
 {

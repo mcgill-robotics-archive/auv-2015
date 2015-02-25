@@ -15,6 +15,7 @@ class ukf_slam
 		void static propogate(Ref<Eigen::VectorXd>);
 		//void h(Vector3d, Ref<Vector3d>);
 		MatrixXd static observe(MatrixXd, int);
+		MatrixXd getCovariance(int objectId);
 		
 	private:
 		ukf estimator;
