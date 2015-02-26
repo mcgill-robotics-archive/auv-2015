@@ -69,7 +69,7 @@ include_directories(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_library(computer_vision_lib src/threshold.cpp src/histogram.cpp src/object_finder.cpp)
+add_library(computer_vision_lib src/threshold.cpp src/histogram.cpp src/object_finder.cpp src/buoy.cpp)
 
 ### Python/c++ interface starts here
 add_library(pyterface src/pyterface.cpp)

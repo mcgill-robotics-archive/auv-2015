@@ -10,10 +10,10 @@
 #include <list>
 #include <computer_vision/histogram.hpp>
 #include <computer_vision/threshold.hpp>
-#include <computer_vision/object_finder.hpp>
+#include <computer_vision/buoy.hpp>
 
 // GUI Options
-static const std::string IMAGE_WINDOW = "Image";
+static const std::string IMAGE_WINDOW = "Imfage";
 static const bool SHOW_IMAGE = true;
 static const bool SHOW_HISTOGRAM = true;
 static const bool SHOW_THRESHOLDS = true;
@@ -35,27 +35,20 @@ private:
   ros::NodeHandle nh_;
   image_transport::ImageTransport it_;
   image_transport::Subscriber image_sub_;
-  image_transport::Subscriber image_sub_2;
   image_transport::Publisher image_pub_;
 
   Histogram hist;
   Threshold threshold;
-  ObjectFinder objectFinder;
+  Buoy circleFinder;
 
 public:
   ImageConverter():it_(nh_)
   {
     // Subscrive to input video feed and publish output video feed
-    image_sub_ = it_.subscribe("phone_cam", 1, 
+    image_sub_ = it_.subscribe("/camera/image_rect_color", 1, 
       &ImageConverter::imageCb, this);
-    //image_sub_ = it_.subscribe("phone_cam_2", 1, 
-      //&ImageConverter::imageCb_2, this);
     image_pub_ = it_.advertise("/image_converter/output_video", 1);
   }
-  //void imageCb_2(const sensor_msgs::ImageConstPtr& msg)
-  //{
-  //  int a = 1;
-  //}
 
   void imageCb(const sensor_msgs::ImageConstPtr& msg)
   {
@@ -86,8 +79,10 @@ public:
     std::list<cv::Mat> imgs_threshold = threshold.threshold(img_hsv, hues, S_MIN, V_MIN); // Threshold images
 
     // Finds the different objects of each color
-    objectFinder.createContours(imgs_threshold, hues, MIN_BOUNDING_BOX);
-    std::list<VisibleObject> visibleObjects = objectFinder.getVisibleObjects();
+	int low [3] = {0,0,0};
+	int high [3] = {30,30,30};
+    circleFinder.createContours(imgs_threshold, hues, MIN_BOUNDING_BOX, low, high);
+    std::list<BuoyCircle> buoyCircles = circleFinder.getBuoyCircles();
 
     // Output raw video stream
     image_pub_.publish(img_ptr->toImageMsg());
@@ -109,7 +104,7 @@ public:
     }
     
     if (SHOW_BOUNDING_BOXS) {
-      objectFinder.drawContours(img_rgb);
+      circleFinder.drawContours(img_rgb);
     }
   }
 };
