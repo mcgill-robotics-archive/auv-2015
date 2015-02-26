@@ -80,7 +80,7 @@ public:
 
     // Finds the different objects of each color
 	int low [3] = {0,0,0};
-	int high [3] = {30,30,30};
+	int high [3] = {180,180,180};
     circleFinder.createContours(imgs_threshold, hues, MIN_BOUNDING_BOX, low, high);
     std::list<BuoyCircle> buoyCircles = circleFinder.getBuoyCircles();
 

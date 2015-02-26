@@ -4,6 +4,7 @@
 #include <list>
 #include <computer_vision/histogram.hpp>
 #include <computer_vision/buoy.hpp>
+#include <iostream>
 
   static const std::string CONTOURS_WINDOW = "Contours";
 
@@ -68,6 +69,9 @@
 	  {
 	    BuoyCircle buoyCircle = BuoyCircle(hue, center[i], radii[i]);
 	    foundObjects.push_back(buoyCircle);
+
+	    // Prints out the x,y position of a circle and its hue.
+	    std::cout << "Circle found at " << center[i].x << ", " << center[i].y << " with hue " << hue << "\n";
 	  }
         }
       }
