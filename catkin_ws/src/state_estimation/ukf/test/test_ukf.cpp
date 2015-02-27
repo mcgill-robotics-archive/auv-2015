@@ -385,17 +385,17 @@ TEST(ukf_correct, minusx) {
 }
 
 TEST(ukf_slam_update, basic) {
-  ukf_slam slam;
+  ukf_slam slam(1);
   Vector2d result;
-  slam.update(Vector2d::Zero(), result);
+  slam.update(Vector2d::Zero(), result, 0);
   expect_matrix_near(Vector2d::Zero(), result, 1e-10);
 }
 
 TEST(ukf_slam_update, repeat) {
-  ukf_slam slam;
+  ukf_slam slam(1);
   Vector2d result;
   for (int i = 0; i < 10000; i++) {
-    slam.update(Vector2d::Zero(), result);
+    slam.update(Vector2d::Zero(), result, 0);
   }
   expect_matrix_near(Vector2d::Zero(), result, 1e-10);
 }

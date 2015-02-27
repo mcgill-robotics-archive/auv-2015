@@ -10,7 +10,7 @@ class ukf_slam
 {
 	public:
     ukf_slam(int); 
-    void update(Vector2d, Ref<VectorXd>, int);
+    void update(const Vector2d, Ref<VectorXd>, int);
 		//void propogate(Vector3d, Ref<Vector3d>);
 		void static propogate(Ref<Eigen::VectorXd>);
 		//void h(Vector3d, Ref<Vector3d>);
@@ -19,6 +19,7 @@ class ukf_slam
 		
 	private:
 		ukf estimator;
+		const int N;
 };
 
 #endif
