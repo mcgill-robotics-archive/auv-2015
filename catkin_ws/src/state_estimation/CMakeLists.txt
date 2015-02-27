@@ -35,6 +35,7 @@ catkin_package(
   auv_msgs
 )
 
+include_directories($CATKIN_INCLUDE_DIRS)
 
 ###########
 ## Build ##
