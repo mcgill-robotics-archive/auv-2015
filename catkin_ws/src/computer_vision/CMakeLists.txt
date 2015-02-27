@@ -82,32 +82,19 @@ set_target_properties(pyterface PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
 ### Python/c++ ends
 
-
 add_executable(computer_vision_a src/computer_vision_a.cpp)
-
-target_link_libraries(computer_vision_a
-			computer_vision_lib
-			${catkin_LIBRARIES}
-			${OpenCV_LIBRARIES}
-)
-
-add_executable(computer_vision_COLOR src/computer_vision_COLOR.cpp)
-
-target_link_libraries(computer_vision_COLOR
-			computer_vision_lib
-			${catkin_LIBRARIES}
-			${OpenCV_LIBRARIES}
-)
-
-add_executable(computer_vision_OBJECT src/computer_vision_OBJECT.cpp)
-
-target_link_libraries(computer_vision_OBJECT
-			computer_vision_lib
-			${catkin_LIBRARIES}
-			${OpenCV_LIBRARIES}
-)
-
+add_executable(computer_vision_color src/computer_vision_color.cpp)
 add_executable(image_publish src/image_publish.cpp)
+
+target_link_libraries(computer_vision_a computer_vision_lib
+			${catkin_LIBRARIES}
+			${OpenCV_LIBRARIES}
+)
+
+target_link_libraries(computer_vision_color computer_vision_lib
+			${catkin_LIBRARIES}
+			${OpenCV_LIBRARIES}
+)
 
 target_link_libraries(image_publish
 			${catkin_LIBRARIES}
