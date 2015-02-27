@@ -83,7 +83,7 @@ set_target_properties(pyterface PROPERTIES
 ### Python/c++ ends
 
 add_executable(computer_vision_a src/computer_vision_a.cpp)
-add_executable(computer_vision_color src/computer_vision_color.cpp)
+add_executable(computer_vision_color src/computer_vision_COLOR.cpp)
 add_executable(image_publish src/image_publish.cpp)
 
 target_link_libraries(computer_vision_a computer_vision_lib
