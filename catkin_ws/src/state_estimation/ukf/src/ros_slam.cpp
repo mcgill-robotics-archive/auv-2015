@@ -38,17 +38,17 @@ void dataCallback(const auv_msgs::SlamTarget::ConstPtr& input) {
         boost::lexical_cast<std::string>(i)    
       )
     );
-    
-    auv_msgs::SlamEstimate estimate;
-    estimate.ObjectID = i;
-    estimate.xPos = position(2*i);
-    estimate.yPos = position(2*i+1);
-    MatrixXd covar = estimator.getCovariance(i);
-    estimate.var_xx = covar(0,0);
-    estimate.var_xy = covar(0,1);
-    estimate.var_yy = covar(1,1);
-    pub.publish(estimate);
   }
+  
+  auv_msgs::SlamEstimate estimate;
+  estimate.ObjectID = objectID;
+  estimate.xPos = position(2*objectID);
+  estimate.yPos = position(2*objectID+1);
+  MatrixXd covar = estimator.getCovariance(objectID);
+  estimate.var_xx = covar(0,0);
+  estimate.var_xy = covar(0,1);
+  estimate.var_yy = covar(1,1);
+  pub.publish(estimate);
 
 }
 
