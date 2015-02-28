@@ -17,21 +17,25 @@ from auv_msgs.msg import SonarTarget
 import task_controller
 
 class Autonomy():
+  FIXED_FRAME = "/robot/initial_horizon"
+  HORIZON_FRAME = "/robot/horizon"
+
   velocity_publisher = None
   position_publisher = None
-  CV_target_publisher = None
+  cv_target_publisher = None
   sonar_target_publisher = None
-  fixed_frame = "/robot/initial_horizon"
-  horizon_frame = "/robot/horizon"
   filtered_depth = -1
   target_info = ""
 
-  """callback for subsriber on /state_estimation/filtered_depth
+  """callback for subscriber on /state_estimation/filtered_depth
   stores filtered_depth for access in tasks
   """
   def filtered_depth_callback(self, msg):
     self.filtered_depth = msg.data
 
+  """callback for subscriber on /front_cv/target_info
+  stores information regarding current CV object beside position
+  """
   def target_info_callback(self, msg):
     self.target_info = msg.data  
 
@@ -46,51 +50,57 @@ class Autonomy():
     return (position, quaternion)
 
   def set_velocity(self, desired):
-    velocitymsg = SetVelocity()
-    velocitymsg.surgeSpeed = desired[0]
-    velocitymsg.swaySpeed = desired[1]
-    velocitymsg.depth = desired[2]
-    velocitymsg.roll = desired[3]
-    velocitymsg.pitch = desired[4]
-    velocitymsg.yaw = desired[5]
-    self.velocity_publisher.publish(velocitymsg)
+    velocity_msg = SetVelocity()
+    velocity_msg.surgeSpeed = desired[0]
+    velocity_msg.swaySpeed = desired[1]
+    velocity_msg.depth = desired[2]
+    velocity_msg.roll = desired[3]
+    velocity_msg.pitch = desired[4]
+    velocity_msg.yaw = desired[5]
+    self.velocity_publisher.publish(velocity_msg)
 
   def set_position(self, desired):
-    positionmsg = SetPosition()
-    positionmsg.xPos = desired[0]
-    positionmsg.yPos = desired[1]
-    positionmsg.depth = desired[2]
-    positionmsg.roll = desired[3]
-    positionmsg.pitch = desired[4]
-    positionmsg.yaw = desired[5]
-  #  positionmsg.frame = desired[6]
-    self.position_publisher.publish(positionmsg)
+    position_msg = SetPosition()
+    position_msg.xPos = desired[0]
+    position_msg.yPos = desired[1]
+    position_msg.depth = desired[2]
+    position_msg.roll = desired[3]
+    position_msg.pitch = desired[4]
+    position_msg.yaw = desired[5]
+#    positionmsg.frame = desired[6]
+
+    self.position_publisher.publish(position_msg)
 
   def set_cv_target(self, new_target):
-    CVmsg = CVTarget()
-    CVmsg.CVTarget = new_target
-    self.CV_target_publissonar_target_publisher
+    cv_msg = CVTarget()
+    cv_msg.CVTarget = new_target
+    self.CV_target_publisher.publish(cv_msg)
 
   def set_sonar_target(self, new_target):
-    Sonarmsg = SonarTarget()
-    Sonarmsg.SonarTarget = new_target
-    self.sonar_target_publisher.publish(Sonarmsg)
+    sonar_msg = SonarTarget()
+    sonar_msg.SonarTarget = new_target
+    self.sonar_target_publisher.publish(sonar_msg)
 
-  def rosInit(self):
+  def print_info(self, msg):
+    rospy.loginfo(msg)  
+
+  def ros_init(self):
     rospy.init_node('autonomy', anonymous=False)
+
     rospy.Subscriber("state_estimation/filtered_depth", Int8, self.filtered_depth_callback)
     rospy.Subscriber("front_cv/target_info", String, self.target_info_callback)
 
+    # TODO: make these all into services
     self.velocity_publisher = rospy.Publisher("autonomy/set_velocity", SetVelocity, queue_size = 1000)
     self.position_publisher = rospy.Publisher("autonomy/set_position", SetPosition, queue_size = 1000)
-    self.CV_target_publisher = rospy.Publisher("autonomy/cv_target", CVTarget, queue_size = 1000)  
+    self.cv_target_publisher = rospy.Publisher("autonomy/cv_target", CVTarget, queue_size = 1000)
     self.sonar_target_publisher = rospy.Publisher("autonomy/sonar_target", SonarTarget, queue_size = 1000)
+    # Need to allow some time for topics to be created before publishing on them
+    rospy.sleep(1)
     
 if __name__ == '__main__':
   my_autonomy = Autonomy()
-  my_autonomy.rosInit()
-
-  task_controller.populate_tasks()
-  task_controller.populate_routine()
-#  my_autonomy.get_transform("/horizon")
-  task_controller.temp(my_autonomy)
+  my_autonomy.ros_init()
+  my_task_controller = task_controller.TaskController(my_autonomy)
+  my_task_controller.run_routine()
+  rospy.spin()

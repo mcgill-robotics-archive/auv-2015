@@ -22,7 +22,7 @@ double T_MAX;
 boost::numeric::ublas::matrix<double> wrench2thrust (5,5);
 
 
-float saturate(float value, float max, char* value_name) {
+float saturate(float value, float max, const char* value_name) {
 	//saturates if out of range
 	if (value > max) {
 		ROS_DEBUG("%s: value has been exceeded. Value was %f but has been set to %f", value_name, value, max);
@@ -36,7 +36,7 @@ float saturate(float value, float max, char* value_name) {
 }
 
 
-float limit_check(float value, float max, char* value_type, char* value_id){
+float limit_check(float value, float max, const char* value_type, const char* value_id){
 	//UNUSED METHOD AS OF JUNE 11 2014
 	if (value > max | value < -1*max) {
 		ROS_WARN("%s: %s value is %f. This exceeds the maximum allowable value of %f.", value_type, value_id, value, max);
@@ -133,7 +133,7 @@ void thrust_callback(geometry_msgs::Wrench wrenchMsg)
 	}
 	
 	//for each thrust, map to a voltage, considering saturation
-	char* voltage_name[] {"one", "two", "three", "four", "five", "six"}; //for limit check error catching
+	const char* voltage_name[] = {"one", "two", "three", "four", "five", "six"}; //for limit check error catching
  	for (int i=0; i<6; i++)
 	{
 		voltage[i] = thrust_voltage(thrust[i]);
@@ -152,7 +152,7 @@ void thrust_callback(geometry_msgs::Wrench wrenchMsg)
 	motor_cmd[4] = 20.583*voltage[4];
 	motor_cmd[5] = 20.63*voltage[5];
 
-	char* motor_name[] {"Motor 1: surge-starbord", "Motor 2: surge-port", "Motor 3: sway-bow", "Motor 4: sway-stern", "Motor 5: heave-bow", "Motor 6: heave-stern"};
+	const char* motor_name[] = {"Motor 1: surge-starbord", "Motor 2: surge-port", "Motor 3: sway-bow", "Motor 4: sway-stern", "Motor 5: heave-bow", "Motor 6: heave-stern"};
 	for (int i=0; i<6; i++)
 	{	
 		motor_cmd[i] = saturate(motor_cmd[i], MOTOR_CMD_MAX, motor_name[i]);

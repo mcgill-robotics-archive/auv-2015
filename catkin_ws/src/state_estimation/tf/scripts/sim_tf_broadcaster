@@ -37,10 +37,10 @@ def broadcastIMU(modelStates):
         quaternionToList(pose.orientation))
     t = rospy.get_rostime()
     broadcaster.sendTransform(zero, q_imu, t,
-        '/robot', '/robot/initial_horizon')
+        '/robot', '/initial_horizon')
     q_yaw = quaternion_from_euler(0, 0, euler_from_quaternion(q_imu)[2])
     broadcaster.sendTransform(zero, q_yaw, t, 
-        '/robot/horizon', '/robot/initial_horizon')
+        '/horizon', '/initial_horizon')
 
     q, x = invertTransform(positionToList(pose.position), 
         quaternionToList(pose.orientation))
