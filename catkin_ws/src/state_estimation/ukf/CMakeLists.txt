@@ -5,13 +5,13 @@ add_executable(pose_ukf
 )
 target_link_libraries(pose_ukf ${catkin_LIBRARIES})
 
-#add_executable(slam_ukf
-#  src/ros_slam.cpp 
-#  src/ukf.cpp
-#  src/ukf_slam.cpp
-#)
-#add_dependencies(slam_ukf auv_msgs_generate_messages_cpp)
-#target_link_libraries(slam_ukf ${catkin_LIBRARIES})
+add_executable(slam_ukf
+  src/ros_slam.cpp 
+  src/ukf.cpp
+  src/ukf_slam.cpp
+)
+add_dependencies(slam_ukf auv_msgs_generate_messages_cpp)
+target_link_libraries(slam_ukf ${catkin_LIBRARIES})
 
 
 #############
