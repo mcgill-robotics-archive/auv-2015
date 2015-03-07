@@ -18,7 +18,7 @@ add_message_files(FILES
                   SonarTarget.msg
 
 		#added by State Estimation
-		  SlamTarget.msg
+		  RangeBearingElevation.msg
 		  SlamEstimate.msg
                  )
 
