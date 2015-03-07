@@ -1,7 +1,7 @@
 #include "ros/ros.h"
 #include "geometry_msgs/Vector3.h"
 #include <tf/transform_broadcaster.h>
-#include "auv_msgs/SlamTarget.h"
+#include "auv_msgs/RangeBearingElevation.h"
 #include "auv_msgs/SlamEstimate.h"
 #include <string.h>
 #include "ukf_slam.h"
@@ -11,9 +11,10 @@ ros::Subscriber sub;
 ros::Publisher pub;
 ukf_slam estimator(4);
 
-Vector2d measurement; //Holds the sonar measurement
+Vector3d measurement; //Holds the range bearing and elevation
+Vector3d covariance; // Holds the covariance of the above
 
-VectorXd position(8); 
+VectorXd position; 
 
 //Does this need to be changed to 2d? YES done.
 //void msgVectorToEigenVector(Ref<Vector2d> vector2d, 
@@ -21,13 +22,25 @@ VectorXd position(8);
 //  vector2d << vector->x, vector->y;
 //}
 
-void dataCallback(const auv_msgs::SlamTarget::ConstPtr& input) {
+tf::TransformListener listener;
+
+void dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
   static tf::TransformBroadcaster broadcaster;
   
-  measurement << input->xPos, input->yPos;
-  int objectID =  input->ObjectID;
+  measurement << input->ln_range, input->bearing, input->elevation;
+  covariance << input->ln_range_variance, input->bearing_variance,
+      imput->elevation_variance;
   
-  estimator.update(measurement, position, objectID); 
+  // TODO remove this and replace with a HashMap of names to IDs
+  int objectID = atoi(input->name.c_str());
+  
+  // TODO make sure this works well if the transforms don't exist or are being published slowly
+  // there are various exceptions we still need to catch
+  // transform from "/north" frame to the sensor frame
+  tf::Transform transform(listener.lookupTransform(input->header.frame, "/north", input->header.time));
+  
+  output = estimator.update(objectId, transform, measurement, covariance); 
+  
   for(int i = 0; i < 4; i++) {
     broadcaster.sendTransform(
       tf::StampedTransform(
@@ -56,8 +69,7 @@ void dataCallback(const auv_msgs::SlamTarget::ConstPtr& input) {
 int main (int argc, char **argv) {
   ros::init(argc, argv, "slam_ukf");
   ros::NodeHandle node;
-  //tf::TransformBroadcaster broadcaster;
-  sub = node.subscribe("sim_slam/position/noisy", 100, dataCallback);
+  sub = node.subscribe("slam/measurement", 100, dataCallback);
   pub = node.advertise<auv_msgs::SlamEstimate>("map_data", 100);
   ros::spin();
   return 0;
