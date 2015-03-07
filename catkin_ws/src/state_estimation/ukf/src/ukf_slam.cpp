@@ -46,7 +46,7 @@ MatrixXd ukf_slam::getCovariance(int objectId) {
   return estimator.covariance.block(2*objectId, 2*objectId, 2, 2);
 }
 
-void ukf_slam::update(int objectIndex, Transformation transform, const Vector3d msmt, constVector3d covar)
+void ukf_slam::update(int objectIndex, Transformation transform, const Vector3d msmt, const Vector3d covar)
 {
 	estimator.predict(&propogate, 0.01 * MatrixXd::Identity(3*N,3*N));
 	//Note that we pass in PI for the measured bearing. This is because observe take in the measured bearing and centers
