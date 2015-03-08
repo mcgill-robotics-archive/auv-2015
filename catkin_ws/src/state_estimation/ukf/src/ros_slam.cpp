@@ -9,10 +9,13 @@
 #include "ukf_slam.h"
 #include <math.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/unordered_map.hpp>
 
 ros::Subscriber sub;
 ros::Publisher pub;
 ukf_slam estimator(4);
+boost::unordered_map<std::string,int> map;
+int currentIndex = 2;	//Assuming first 3 are robot's state ?;
 tf::StampedTransform tf_sensor_transform;
 Affine3d sensor_transform;
 
@@ -31,8 +34,16 @@ void dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
   covariance << input->ln_range_variance, input->bearing_variance,
       input->elevation_variance;
   
-  // TODO remove this and replace with a HashMap of names to IDs
-  int objectID = atoi(input->name.c_str());
+  if (map.find(input->name) == map.end())	//Does boost hashmaps work this way ? Might need an Iterator instead
+  {
+	  currentIndex = 3*currentIndex;	//Increment current index to accommodate for new object which is not already in hashmap
+	  map[input->name] = currentIndex;	//Link new name to new index
+  }
+  else{	//Object already exists in hashmap
+	  //Do nothing ?
+  }
+  
+  int objectIndex = map.at(input->name);	//Declare returnIndex up there
   
   // TODO make sure this works well if the transforms don't exist or are being published slowly
   // there are various exceptions we still need to catch
@@ -42,7 +53,7 @@ void dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
       
   tf::transformTFToEigen(tf_sensor_transform, sensor_transform);
   
-  position = estimator.update(objectID, sensor_transform, measurement, covariance); 
+  position = estimator.update(objectIndex, sensor_transform, measurement, covariance); 
   
   for(int i = 0; i < 4; i++) {
     broadcaster.sendTransform(
