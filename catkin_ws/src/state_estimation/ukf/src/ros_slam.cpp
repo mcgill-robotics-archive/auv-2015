@@ -1,35 +1,35 @@
 #include "ros/ros.h"
 #include "geometry_msgs/Vector3.h"
 #include <tf/transform_broadcaster.h>
+#include <tf/transform_listener.h>
+#include <tf_conversions/tf_eigen.h>
 #include "auv_msgs/RangeBearingElevation.h"
 #include "auv_msgs/SlamEstimate.h"
 #include <string.h>
 #include "ukf_slam.h"
+#include <math.h>
 #include <boost/lexical_cast.hpp>
 
 ros::Subscriber sub;
 ros::Publisher pub;
 ukf_slam estimator(4);
+tf::StampedTransform tf_sensor_transform;
+Affine3d sensor_transform;
 
 Vector3d measurement; //Holds the range bearing and elevation
 Vector3d covariance; // Holds the covariance of the above
 
-VectorXd position; 
+VectorXd position;
 
-//Does this need to be changed to 2d? YES done.
-//void msgVectorToEigenVector(Ref<Vector2d> vector2d, 
-//    const geometry_msgs::Vector3::ConstPtr& vector) {
-//  vector2d << vector->x, vector->y;
-//}
 
 tf::TransformListener listener;
 
 void dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
   static tf::TransformBroadcaster broadcaster;
   
-  measurement << input->ln_range, input->bearing, input->elevation;
+  measurement << log(input->range), input->bearing, input->elevation;
   covariance << input->ln_range_variance, input->bearing_variance,
-      imput->elevation_variance;
+      input->elevation_variance;
   
   // TODO remove this and replace with a HashMap of names to IDs
   int objectID = atoi(input->name.c_str());
@@ -37,9 +37,12 @@ void dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
   // TODO make sure this works well if the transforms don't exist or are being published slowly
   // there are various exceptions we still need to catch
   // transform from "/north" frame to the sensor frame
-  tf::Transform transform(listener.lookupTransform(input->header.frame, "/north", input->header.time));
+  listener.lookupTransform("/north", input->header.frame_id,
+      input->header.stamp, tf_sensor_transform);
+      
+  tf::transformTFToEigen(tf_sensor_transform, sensor_transform);
   
-  output = estimator.update(objectId, transform, measurement, covariance); 
+  position = estimator.update(objectID, sensor_transform, measurement, covariance); 
   
   for(int i = 0; i < 4; i++) {
     broadcaster.sendTransform(

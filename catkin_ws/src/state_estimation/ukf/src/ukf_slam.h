@@ -10,11 +10,11 @@ class ukf_slam
 {
 	public:
     ukf_slam(int); 
-    void update(const Vector2d, Ref<VectorXd>, int);
-		//void propogate(Vector3d, Ref<Vector3d>);
+    VectorXd update(int objectID, const Affine3d transform, const Vector3d msmt,
+        const Vector3d covar);
 		void static propogate(Ref<Eigen::VectorXd>);
-		//void h(Vector3d, Ref<Vector3d>);
-		MatrixXd static observe(MatrixXd, int);
+    MatrixXd static observe(int objectId, double base_yaw, const Affine3d transform,
+        const MatrixXd sigmas);
 		MatrixXd getCovariance(int objectId);
 		
 	private:

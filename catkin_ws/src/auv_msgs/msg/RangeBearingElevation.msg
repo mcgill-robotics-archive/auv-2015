@@ -5,9 +5,11 @@ Header header
 # published representing this object
 string name
 
-# Natural logarithm of distance from sensor to target
-float64 ln_range
+# Natural distance from sensor to target
+float64 range
+# The variance of ln(range)
 float64 ln_range_variance
+
 # Relative bearing: The angle between the projection of the vector
 # from the robot to the target into the xy plane and the x-axis in
 # radians e.g. if the target is along the y-axis, its bearing is pi/2
