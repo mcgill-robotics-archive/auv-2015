@@ -1,0 +1,10 @@
+<launch>
+  <!-- launches: the dependencies for planner but not the planner node itself (aka for front end use)-->
+
+  <!-- dependencies -->
+  <include file="$(find autonomy)/launch/autonomy.launch" />
+
+  <!-- node -->
+  <include file="$(find autonomy)/launch/sim_autonomy_setup.launch" />
+
+</launch>

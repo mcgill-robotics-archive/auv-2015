@@ -1,0 +1,16 @@
+<launch>
+  <!-- launches: just the autonomy node -->
+  <!-- Written by Alex Reiff, March 8, McGill Robotics -->
+
+<!--  <rosparam command="load" file="$(find autonomy)/config/dummy.yaml"/> -->
+
+  <arg name="dummy_arg1" default="foobar"/>
+  <arg name="dummy_arg2" default="0"/>
+
+  <node name="autonomy" pkg="autonomy" type="autonomy" respawn="false" output="screen">
+
+    <param name="dummy_param1" type="str" value="$(arg dummy_arg1)"/>
+    <param name="dummy_param2" type="int" value="$(arg dummy_arg2)"/>
+
+  </node>
+</launch>

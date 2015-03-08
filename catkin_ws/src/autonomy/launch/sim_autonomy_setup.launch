@@ -1,0 +1,17 @@
+<launch>
+  <!-- launches: the dependencies for autonomy but not the autonomy node itself (aka for front end use, or to isolate autonomy output to its own terminal)-->
+  <!-- WARNING: DOES NOT START AUTONOMY -->
+
+  <!-- Simulator -->
+  <include file="$(find simulator)/launch/simulator.launch" />
+
+  <!--control systems -->
+  <include file="$(find controls)/controls.launch" />
+
+  <!-- computer vision -->
+<!--  <include file="$(find computer_vision)/launch/computer_vision.launch" /> -->
+
+  <!-- state estimation -->
+  <include file="$(find state_estimation)/sim_state_estimation.launch" />
+
+</launch>
