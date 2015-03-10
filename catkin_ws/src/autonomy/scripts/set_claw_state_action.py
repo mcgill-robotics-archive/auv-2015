@@ -11,6 +11,6 @@ class SetClawStateAction(action.Action):
 
   def execute(self):
     self.print_start()
-    self.my_autonomy.drop_marker(state)
+    DROP = self.my_autonomy.drop_marker(self.state)
     self.print_success()
-    return state
+    return DROP

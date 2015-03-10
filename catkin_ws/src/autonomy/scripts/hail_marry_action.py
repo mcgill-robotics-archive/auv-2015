@@ -18,4 +18,4 @@ class HailMarry(action.Action):
     self.my_autonomy.drop_marker("left")
     self.my_autonomy.drop_marker("right")
     self.print_success()
-    return state
+    return True
