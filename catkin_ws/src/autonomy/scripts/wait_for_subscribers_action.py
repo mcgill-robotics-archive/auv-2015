@@ -14,8 +14,8 @@ class WaitForSubscribersAction(action.Action):
 
   def execute(self):
     self.print_start()
-    while (len(self.subscriptions) > 0):
-      if(self.subscriptions[0].get_num_connections() > 0):
-        self.subscriptions.remove(0)
+#    while (len(self.subscriptions) > 0):
+#      if(self.subscriptions[0].get_num_connections() > 0):
+#        self.subscriptions.remove(0)
     self.print_success()
     return True

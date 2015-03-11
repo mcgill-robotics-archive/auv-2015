@@ -13,7 +13,7 @@ import gate_task
 class TaskController():
   my_autonomy = None
   task_stack = []
-  test_val = True
+  test_val = False
 
   def __init__(self, my_autonomy):
     self.my_autonomy = my_autonomy

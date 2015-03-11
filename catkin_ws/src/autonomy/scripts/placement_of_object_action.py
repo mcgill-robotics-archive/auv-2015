@@ -13,12 +13,12 @@ class PlacementOfObjectAction(action.Action):
 
 
 	def execute(self):
-		self.print_start()
-		while (!self.my_autonomy.set_sonar_seek_target(self, target)):
-			self.my_autonomy.set_sonar_seek_target(self, target)
+#		self.print_start()
+#		while (!self.my_autonomy.set_sonar_seek_target(self, target)):
+#			self.my_autonomy.set_sonar_seek_target(self, target)
 
-		self.my_autonomy.toggle_grabber("front", "open")
+#		self.my_autonomy.toggle_grabber("front", "open")
 
-		self.print_success()
+#		self.print_success()
 		return True
 		

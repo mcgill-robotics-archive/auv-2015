@@ -13,6 +13,7 @@ import set_cv_target_action
 import fire_torpedo_action
 import open_loop_search_action
 import go_to_object_action
+import placement_of_object_action
 
 class TestRig(task.Task):
   def __init__(self, my_autonomy):

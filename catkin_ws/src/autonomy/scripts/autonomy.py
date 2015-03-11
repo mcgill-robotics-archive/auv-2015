@@ -33,6 +33,10 @@ class Autonomy():
   filtered_depth = -1
   target_info = ""
 
+  def wait(self, duration):
+    d = rospy.Duration.from_sec(duration)
+    rospy.sleep(d)
+
   """return a list of all topics the autonomy node subscribes to
   """
   def get_subscribers(self):
@@ -102,6 +106,7 @@ class Autonomy():
     velocity_msg.roll = desired[3]
     velocity_msg.pitch = desired[4]
     velocity_msg.yaw = desired[5]
+    rospy.loginfo("velocity published")
 
     self.velocity_publisher.publish(velocity_msg)
 

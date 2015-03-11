@@ -2,6 +2,7 @@
 
 import task
 import x_axis_movement_action
+import set_velocity_timed_action
 
 class GateTask(task.Task):
   def __init__(self, phase, my_autonomy):
@@ -18,5 +19,5 @@ class GateTask(task.Task):
 
   def load_action_stack(self):
     if (self.phase > 0):
-      my_x_axis_movement_action = x_axis_movement_action.XAxisMovementAction(self.my_autonomy, 3)
-      self.action_stack.insert(0, my_x_axis_movement_action)
+      my_set_velocity_timed_action = set_velocity_timed_action.SetVelocityTimedAction(self.my_autonomy, 3, 10)
+      self.action_stack.insert(0, my_set_velocity_timed_action)
