@@ -17,7 +17,7 @@ float64 bearing
 float64 bearing_variance
 # Elevation: the angle between the vectr from the robot to the 
 # target and the xy-plane e.g. if the target is along the z-axis its
-# elevation is pi/2. If elevation is not available, set the covariance
+# elevation is pi/2. If elevation is not available, set the variance
 # of elevation to be large.
 float64 elevation
 float64 elevation_variance

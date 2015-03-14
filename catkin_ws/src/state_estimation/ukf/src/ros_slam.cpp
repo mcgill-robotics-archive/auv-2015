@@ -1,33 +1,25 @@
-#include "ros/ros.h"
+#include "ros_slam.h"
 #include "geometry_msgs/Vector3.h"
 #include <tf/transform_broadcaster.h>
-#include <tf/transform_listener.h>
 #include <tf_conversions/tf_eigen.h>
-#include "auv_msgs/RangeBearingElevation.h"
 #include "auv_msgs/SlamEstimate.h"
 #include <string.h>
-#include "ukf_slam.h"
 #include <math.h>
 #include <boost/lexical_cast.hpp>
 #include <boost/unordered_map.hpp>
 
-ros::Subscriber sub;
-ros::Publisher pub;
-ukf_slam estimator(4);
-boost::unordered_map<std::string,int> map;
-int currentIndex = 2;	//Assuming first 3 are robot's state ?;
-tf::StampedTransform tf_sensor_transform;
-Affine3d sensor_transform;
+ros_slam::ros_slam(ros::NodeHandle& node) :
+  sub(node.subscribe("slam/measurement", 100, &ros_slam::dataCallback, this)),
+  pub(node.advertise<auv_msgs::SlamEstimate>("map_data", 100)),
+  estimator(4),
+  currentIndex(2)
+{
+  auv_msgs::RangeBearingElevation rbe;
+  ros::Publisher p2 = node.advertise<auv_msgs::RangeBearingElevation>("boo", 10);
+  p2.publish(rbe);
+}
 
-Vector3d measurement; //Holds the range bearing and elevation
-Vector3d covariance; // Holds the covariance of the above
-
-VectorXd position;
-
-
-tf::TransformListener listener;
-
-void dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
+void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
   static tf::TransformBroadcaster broadcaster;
   
   measurement << log(input->range), input->bearing, input->elevation;
@@ -48,6 +40,8 @@ void dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
   // TODO make sure this works well if the transforms don't exist or are being published slowly
   // there are various exceptions we still need to catch
   // transform from "/north" frame to the sensor frame
+  // Also, we should switch to using the version that takes a fixed frame so
+  // we can use odometry to compensate for sensor processing latency
   listener.lookupTransform("/north", input->header.frame_id,
       input->header.stamp, tf_sensor_transform);
       
@@ -79,12 +73,13 @@ void dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
 
 }
 
+void callback(const auv_msgs::RangeBearingElevation::ConstPtr& s) {
+}
 
 int main (int argc, char **argv) {
   ros::init(argc, argv, "slam_ukf");
   ros::NodeHandle node;
-  sub = node.subscribe("slam/measurement", 100, dataCallback);
-  pub = node.advertise<auv_msgs::SlamEstimate>("map_data", 100);
+  (ros_slam(node));
   ros::spin();
   return 0;
 }
