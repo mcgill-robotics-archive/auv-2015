@@ -11,10 +11,17 @@ add_executable(slam_ukf
   src/ukf_slam.cpp
 )
 
+add_executable(velocity_ukf
+  src/ukf.cpp
+  src/ukf_velocity.cpp
+)
+
 ## Specify libraries to link a library or executable target against
 target_link_libraries(pose_ukf ${catkin_LIBRARIES})
 
 target_link_libraries(slam_ukf ${catkin_LIBRARIES})
+
+target_link_libraries(velocity_ukf ${catkin_LIBRARIES})
 
 
 #############
