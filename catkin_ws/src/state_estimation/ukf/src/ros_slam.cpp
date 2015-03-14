@@ -9,10 +9,10 @@
 #include <boost/unordered_map.hpp>
 
 ros_slam::ros_slam(ros::NodeHandle& node) :
-  estimator(4),
+  estimator(3),
   sub(node.subscribe("slam/measurement", 100, &ros_slam::dataCallback, this)),
   pub(node.advertise<auv_msgs::SlamEstimate>("map_data", 100)),
-  currentIndex(2)
+  currentIndex(0)
 {}
 
 void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
@@ -24,7 +24,8 @@ void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& inp
   
   if (map.find(input->name) == map.end())	//Does boost hashmaps work this way ? Might need an Iterator instead
   {
-	  currentIndex = 3*currentIndex;	//Increment current index to accommodate for new object which is not already in hashmap
+	  currentIndex += 3;	//Increment current index to accommodate for new object which is not already in hashmap
+	  estimator.append(3);
 	  map[input->name] = currentIndex;	//Link new name to new index
   }
   else{	//Object already exists in hashmap

@@ -106,7 +106,7 @@ int main(int argc, char **argv)
 		for (int i = 0; i < numObjs; i++) {
 		  auv_msgs::RangeBearingElevation noisy_msg;
 		  std_msgs::Header header;
-		  header.frame_id = "/robot";
+		  header.frame_id = "/north";
 		  header.stamp = ros::Time::now();
 		  noisy_msg.header = header;
 		  noisy_msg.name = boost::lexical_cast<std::string>(i);

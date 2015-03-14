@@ -49,6 +49,19 @@ MatrixXd ukf_slam::getCovariance(int objectId) {
   return estimator.covariance.block(2*objectId, 2*objectId, 2, 2);
 }
 
+// Increases the size of the state vector and covariance by dime
+void ukf_slam::append(int dim) {
+  VectorXd newState(estimator.state.rows() + dim);
+  newState << estimator.state, VectorXd::Zero(dim);
+  
+  MatrixXd newCovar = MatrixXd::Zero(estimator.covariance.rows() + dim,
+      estimator.covariance.cols() + dim);
+  newCovar.block(0,0, estimator.covariance.rows(), estimator.covariance.cols())
+    = estimator.covariance;
+  newCovar.block(estimator.covariance.rows(), estimator.covariance.cols(), 
+      dim, dim) = 1e15 * MatrixXd::Identity(dim, dim);
+}
+
 VectorXd ukf_slam::update(int objectIndex, const Affine3d transform, const Vector3d msmt, const Vector3d covar)
 {
 	estimator.predict(&propogate, 0.01 * MatrixXd::Identity(3*N,3*N));

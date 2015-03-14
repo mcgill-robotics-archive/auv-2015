@@ -16,6 +16,7 @@ class ukf_slam
     MatrixXd static observe(int objectId, double base_yaw, const Affine3d transform,
         const MatrixXd sigmas);
 		MatrixXd getCovariance(int objectId);
+		void append(int);
 		
 	private:
 		ukf estimator;
