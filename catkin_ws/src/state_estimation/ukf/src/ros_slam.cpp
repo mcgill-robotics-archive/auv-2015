@@ -9,15 +9,11 @@
 #include <boost/unordered_map.hpp>
 
 ros_slam::ros_slam(ros::NodeHandle& node) :
+  estimator(4),
   sub(node.subscribe("slam/measurement", 100, &ros_slam::dataCallback, this)),
   pub(node.advertise<auv_msgs::SlamEstimate>("map_data", 100)),
-  estimator(4),
   currentIndex(2)
-{
-  auv_msgs::RangeBearingElevation rbe;
-  ros::Publisher p2 = node.advertise<auv_msgs::RangeBearingElevation>("boo", 10);
-  p2.publish(rbe);
-}
+{}
 
 void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
   static tf::TransformBroadcaster broadcaster;
@@ -79,7 +75,9 @@ void callback(const auv_msgs::RangeBearingElevation::ConstPtr& s) {
 int main (int argc, char **argv) {
   ros::init(argc, argv, "slam_ukf");
   ros::NodeHandle node;
-  (ros_slam(node));
+  // We have to give this object a name here because otherwise c++ doesn't
+  // create it! WTF c++?
+  ros_slam s(node);
   ros::spin();
   return 0;
 }
