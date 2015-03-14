@@ -12,6 +12,7 @@ add_executable(slam_ukf
 )
 
 add_executable(velocity_ukf
+  src/ros_velocity.cpp
   src/ukf.cpp
   src/ukf_velocity.cpp
 )
