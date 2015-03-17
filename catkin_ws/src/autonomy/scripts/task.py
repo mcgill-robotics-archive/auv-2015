@@ -30,3 +30,6 @@ class Task():
       print_string = "--Task: " + self.task_name + " success"  
       self.my_autonomy.print_info(print_string)   
     return True
+
+  def get_stack(self):
+    return self.action_stack

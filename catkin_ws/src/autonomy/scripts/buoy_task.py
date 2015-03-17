@@ -31,5 +31,5 @@ class BuoyTask(task.Task):
 	    self.action_stack.insert(3, my_second_ball)
             self.action_stack.insert(4, go_to_my_second_ball)
 	    self.action_stack.insert(5, my_backward_movement_action)
-            testStack = self.action_stack.get_stack
+            testStack = self.get_stack()
     return testStack

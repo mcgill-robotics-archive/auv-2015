@@ -22,13 +22,13 @@ class BinTask(task.Task):
 
   def load_action_stack(self):
     if (self.phase > 0):
-      my_first_bin = set_cv_target_action.SetCvTarget(self.my_autonomy,firstBin)
-      my_second_bin = set_cv_target_action.SetCvTarget(self.my_autonomy,secondBin)
-      go_to_first_bin = go_to_object_action.GoToObject(self.my_autonomy,firstBin,0)
-      go_to_second_bin = go_to_object_action.GoToObject(self.my_autonomy,secondBin,0)
+      my_first_bin = set_cv_target_action.SetCVTargetAction(self.my_autonomy,"firstBin")
+      my_second_bin = set_cv_target_action.SetCVTargetAction(self.my_autonomy,"secondBin")
+      go_to_first_bin = go_to_object_action.GoToObjectAction(self.my_autonomy,"firstBin",0)
+      go_to_second_bin = go_to_object_action.GoToObjectAction(self.my_autonomy,"secondBin",0)
       drop_left_bin = set_claw_state_action.SetClawStateAction(self.my_autonomy,"left")
       drop_right_bin = set_claw_state_action.SetClawStateAction(self.my_autonomy,"right")
-      hail_marry_bin = hail_marry_action.HailMarry(self.my_autonomy,lastBin)
+      hail_marry_bin = hail_marry_action.HailMarry(self.my_autonomy,"lastBin")
       self.action_stack.insert(0, my_first_bin)
       self.action_stack.insert(0, go_to_first_bin)
       self.action_stack.insert(0, drop_left_bin)
@@ -36,4 +36,6 @@ class BinTask(task.Task):
       self.action_stack.insert(0, go_to_second_bin)
       self.action_stack.insert(0, drop_right_bin)
       self.action_stack.insert(0, hail_marry_bin)
+      testStack = self.get_stack()
+    return testStack
 
