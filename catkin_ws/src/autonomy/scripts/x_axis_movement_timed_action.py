@@ -12,12 +12,13 @@ class XAxisMovementTimedAction(action.Action):
     self.action_name = "X Axis Movement Timed"
     self.desired_velocity = velocity
     self.my_autonomy = my_autonomy
+    self.duration = duration
 
   def execute(self):
     self.print_start()
-    while duration != 0:
+    while self.duration != 0:
       velocity_array = [self.desired_velocity, 0, 0, 0, 0, 0]
       self.my_autonomy.set_velocity(velocity_array)
-      duration = duration -1
+      self.duration = self.duration -1
     self.print_success()
     return True

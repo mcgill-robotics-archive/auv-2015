@@ -41,6 +41,11 @@ class buoy_test(unittest.TestCase):
 
       self.assertEquals(testStack,test_buoy_task)
 
+    def test_x_axis_timed(self):
+      myauto = autonomy.Autonomy()
+      x_timed = x_axis_movement_timed_action.XAxisMovementTimedAction(myauto,1,3)
+      self.assertTrue(x_timed.execute())
+
 if __name__ == '__main__':
 	import rostest
 	rostest.rosrun(PKG,'FUCK', buoy_test)
