@@ -20,7 +20,7 @@ class recoveryTask(task.Task):
 			self.load_action_stack()
 	
 		def load_action_stack(self):
-			#soon to be parsed from XML
+			
 			pathColor = "orange"
 			targetObject = "pole"
 
@@ -87,3 +87,6 @@ class recoveryTask(task.Task):
 				#surface in original octagon
 				surface_action = z_axis_movement_action.ZAxisMovementAction(self.my_autonomy, [0,0,3,0,0,0])
 				self.action_stack_insert(0, surface_action)
+
+				testStack = self.action_stack.get_stack
+				return testStack
