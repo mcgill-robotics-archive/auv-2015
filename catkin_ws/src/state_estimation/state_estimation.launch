@@ -10,4 +10,10 @@
 		type="tf_broadcaster"
 		pkg="state_estimation"
 	/>
+	
+	<node
+		name="bumpSensor"
+		type="bumpSensor"
+		pkg="state_estimation"
+	/>
 </launch>
