@@ -15,10 +15,8 @@ from unittest import TestCase
 
 class buoy_test(unittest.TestCase):
 
-
-
     def test_sanity(self):
-	  self.assertEquals(8,8,"8!=8")
+      self.assertEquals(8,8,"8!=8")
 
     def test_cv(self):
       myauto = autonomy.Autonomy()

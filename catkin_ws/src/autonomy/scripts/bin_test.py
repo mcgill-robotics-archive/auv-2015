@@ -16,10 +16,6 @@ from unittest import TestCase
 
 class bin_test(unittest.TestCase):
 
-    """def __init__(self,myautonomy):
-      self.myautonomy = autonomy
-"""
-
     def test_sanity(self):
 	  self.assertEquals(8,8,"8!=8")
 
