@@ -21,7 +21,6 @@ void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& inp
   measurement << log(input->range), input->bearing, input->elevation;
   covariance << input->ln_range_variance, input->bearing_variance,
       input->elevation_variance;
-  
   if (map.find(input->name) == map.end())	//Does boost hashmaps work this way ? Might need an Iterator instead
   {
 	  currentIndex += 3;	//Increment current index to accommodate for new object which is not already in hashmap
