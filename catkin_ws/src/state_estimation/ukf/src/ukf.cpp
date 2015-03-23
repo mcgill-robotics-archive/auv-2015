@@ -71,7 +71,7 @@ void ukf::recoverCorrection(Ref<MatrixXd> sigmas, Ref<MatrixXd> gammas,
 
   MatrixXd gain = measCovar.transpose().ldlt()
                       .solve(crossCovar.transpose()).transpose();
-  
+
   state += gain * (measurement - predMsmt);
   covariance -= crossCovar * gain.transpose();
 }
