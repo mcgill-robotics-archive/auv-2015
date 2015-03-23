@@ -1,7 +1,7 @@
 #include <angles/angles.h>
 #include <boost/bind.hpp>
-#include <math.h>
-#include <stdio.h>
+#include <cmath>
+#include <cstdio>
 #include "ukf.h"
 #include "ukf_slam.h"
 
@@ -11,7 +11,7 @@ ukf_slam::ukf_slam(int n):
 {}
 
 double lnRange(Vector3d v) {
-  return log(v(0)*v(0) + v(1)*v(1) + v(2)*v(2))/2.;
+  return sqrt(v(0)*v(0) + v(1)*v(1) + v(2)*v(2));
 }
 
 double bearing(Vector3d v) {

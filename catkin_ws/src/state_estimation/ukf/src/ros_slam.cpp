@@ -49,7 +49,7 @@ void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& inp
     broadcaster.sendTransform(
       tf::StampedTransform(
         tf::Transform(tf::Quaternion::getIdentity(),
-            tf::Vector3(position(2*i), position(2*i + 1), 0.)),
+            tf::Vector3(position(3*i), position(3*i + 1), position(3*i + 2))),
         ros::Time::now(),
         "robot",
         boost::lexical_cast<std::string>(i)    
