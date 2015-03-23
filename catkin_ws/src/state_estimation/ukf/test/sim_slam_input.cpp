@@ -2,6 +2,7 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/Point.h"
 #include "geometry_msgs/Vector3.h"
+#include "geometry_msgs/Vector3Stamped.h"
 #include "auv_msgs/RangeBearingElevation.h"
 #include <tf/transform_broadcaster.h>
 #include <math.h>
@@ -61,7 +62,7 @@ int main(int argc, char **argv)
 	tf::TransformBroadcaster broadcaster;
 
 	ros::Publisher velocity_pub = n.advertise<geometry_msgs::Vector3>("velocity", 1000);
-	ros::Publisher position_pub = n.advertise<geometry_msgs::Vector3>("sim_slam/position/actual", 1000);	
+	ros::Publisher position_pub = n.advertise<geometry_msgs::Vector3Stamped>("sim_slam/position/actual", 1000);	
 	ros::Publisher noisy_velocity_pub = n.advertise<geometry_msgs::Vector3>("noisy_velocity", 1000);
 	ros::Publisher noisy_position_pub = n.advertise<auv_msgs::RangeBearingElevation>("slam/measurement", 1000);
 	
@@ -118,7 +119,11 @@ int main(int argc, char **argv)
 		  noisy_msg.bearing_variance = bearing_noise*bearing_noise;
 		  noisy_msg.elevation_variance = elevation_noise*elevation_noise;
 		  noisy_position_pub.publish(noisy_msg);
-		  position_pub.publish(distance);
+		  geometry_msgs::Vector3Stamped position_msg;
+		  header.frame_id = boost::lexical_cast<std::string>(i);
+		  position_msg.header = header;
+		  position_msg.vector = distance;
+		  position_pub.publish(position_msg);
 		}
 
 		robot_position = update_position(robot_velocity, robot_position);

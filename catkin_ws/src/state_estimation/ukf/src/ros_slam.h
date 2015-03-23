@@ -18,7 +18,8 @@ class ros_slam
     ukf_slam estimator;
     tf::TransformListener listener;
     int currentIndex;
-    boost::unordered_map<std::string,int> map;
+    typedef boost::unordered_map<std::string,int> map_type;
+    map_type map;
     tf::StampedTransform tf_sensor_transform;
     Affine3d sensor_transform;
     Vector3d measurement; //Holds the range bearing and elevation

@@ -44,7 +44,7 @@ void ukf_slam::propogate(Ref<Eigen::VectorXd> state) {
 }
 
 MatrixXd ukf_slam::getCovariance(int objectId) {
-  return estimator.covariance.block(2*objectId, 2*objectId, 2, 2);
+  return estimator.covariance.block(objectId, objectId, 3, 3);
 }
 
 // Increases the size of the state vector and covariance by dim

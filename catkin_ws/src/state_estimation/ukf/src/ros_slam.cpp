@@ -5,6 +5,7 @@
 #include "auv_msgs/SlamEstimate.h"
 #include <string.h>
 #include <math.h>
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -38,28 +39,29 @@ void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& inp
   // transform from "/north" frame to the sensor frame
   // Also, we should switch to using the version that takes a fixed frame so
   // we can use odometry to compensate for sensor processing latency
-  listener.lookupTransform("/north", input->header.frame_id,
+  listener.lookupTransform("north", input->header.frame_id,
       input->header.stamp, tf_sensor_transform);
       
   tf::transformTFToEigen(tf_sensor_transform, sensor_transform);
   
   position = estimator.update(objectIndex, sensor_transform, measurement, covariance); 
   
-  for(int i = 0; i < 4; i++) {
+  BOOST_FOREACH(map_type::value_type& item, map) {
+    int i = item.second;
     broadcaster.sendTransform(
       tf::StampedTransform(
         tf::Transform(tf::Quaternion::getIdentity(),
-            tf::Vector3(position(3*i), position(3*i + 1), position(3*i + 2))),
+            tf::Vector3(position(i), position(i + 1), position(i + 2))),
         ros::Time::now(),
-        "robot",
+        "north",
         boost::lexical_cast<std::string>(i)    
       )
     );
     
     auv_msgs::SlamEstimate estimate;
-    estimate.ObjectID = i;
-    estimate.xPos = position(2*i);
-    estimate.yPos = position(2*i+1);
+    estimate.ObjectID = item.first;
+    estimate.xPos = position(i);
+    estimate.yPos = position(i+1);
     MatrixXd covar = estimator.getCovariance(i);
     estimate.var_xx = covar(0,0);
     estimate.var_xy = covar(0,1);
