@@ -124,6 +124,7 @@ class simple_pipe :
         Return:
         the function process:image->image which takes reduces all functions in pipeline and their respective arguments
         """
+        
         def process(image):
             """
             This function is the process function for the pipeline.
@@ -145,8 +146,18 @@ class simple_pipe :
                     del arguments[i-1:i+1]
                     rospy.logwarn("Gracefully removed faulty filters")
             # send to debug publisher
-            ros_image = self.bridge.cv2_to_imgmsg(image.content, "8UC1")
-            self.debuglisher.publish(ros_image)
+            output_type = "8UC1"
+            error_count = 0
+            try:
+                #ros_image = self.bridge.cv2_to_imgmsg(image.content, "8UC1")
+                ros_image = self.bridge.cv2_to_imgmsg(image.content, output_type)
+                self.debuglisher.publish(ros_image)
+            except Exception as e:
+                if not error_count:
+                    output_type = str(e).rsplit(None, 1)[-1]
+                    error_count = error_count + 1
+                else:
+                    print e
             return image
         return process
 
