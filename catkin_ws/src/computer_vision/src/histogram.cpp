@@ -8,6 +8,7 @@
 
   static const std::string HISTOGRAM_WINDOW = "Histogram";
   
+  // Hue peak is a class that stores a hue with it's left and right thresholds
   HuePeak::HuePeak(int l_valley, int peak, int r_valley)
   {
     _l_valley = l_valley;
@@ -44,7 +45,7 @@
       float hv = h_hist.at<float>(i); // hue left min value
 
       // if the hue value is a minimum, find the next relative max and min and calculate peakiness
-      if ((hv - h_hist.at<float>((i+179) % 180)) <= 0 && (hv - h_hist.at<float>((i+1) % 180)) < 0)
+      if ((h_hist.at<float>((i+179) % 180) - hv) >= 0 && (h_hist.at<float>((i+1) % 180) - hv) > 0)
       {
         float hSum = hv;
         int hDiff = 1;
@@ -54,12 +55,12 @@
         int hpi; // hue peak index
         for (int k = i + 1; k < (i + 180); k++) 
         {
-          hpv = h_hist.at<float>(k);
+          hpv = h_hist.at<float>(k % 180);
           hSum += hpv;
           hDiff++;
-          if ( (hpv - h_hist.at<float>((k+1) % 180)) > 0 )
+          if ( (hpv - h_hist.at<float>((k + 1) % 180)) > 0 )
           {
-            hpi = k;
+            hpi = k % 180;
             break;
           }
         }
@@ -69,12 +70,12 @@
         int hpmi; // huel right min index
         for (int k = hpi + 1; k < (i + 180); k++) 
         {
-          hrmv = h_hist.at<float>(k);
+          hrmv = h_hist.at<float>(k % 180);
           hSum += hrmv;
           hDiff++;
-          if ( (hrmv - h_hist.at<float>((k+1) % 180)) <= 0 )
+          if ( (hrmv - h_hist.at<float>((k + 1) % 180)) <= 0 )
           {
-            hpmi = k;
+            hpmi = k % 180;
             break;
           }
         }
@@ -153,7 +154,7 @@
     }
 
     // Show Histogram
-    //cv::namedWindow(HISTOGRAM_WINDOW);
+    cv::namedWindow(HISTOGRAM_WINDOW);
     cv::imshow(HISTOGRAM_WINDOW, img_hist);
     cv::waitKey(3);
   }

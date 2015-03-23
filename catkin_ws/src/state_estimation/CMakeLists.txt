@@ -39,7 +39,7 @@ catkin_package(
   tf_conversions
 )
 
-include_directories(${catkin_INCLUDE_DIRS})
+include_directories(${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
 ###########
 ## Build ##
