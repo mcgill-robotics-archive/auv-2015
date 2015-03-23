@@ -11,7 +11,7 @@ ukf_slam::ukf_slam(int n):
 {}
 
 double lnRange(Vector3d v) {
-  return sqrt(v(0)*v(0) + v(1)*v(1) + v(2)*v(2));
+  return log(std::max(v(0)*v(0) + v(1)*v(1) + v(2)*v(2), 1e-16))/2;
 }
 
 double bearing(Vector3d v) {
