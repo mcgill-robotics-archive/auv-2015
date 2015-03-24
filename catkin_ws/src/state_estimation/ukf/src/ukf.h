@@ -7,6 +7,9 @@
 
 using namespace Eigen;
 
+/* This class implements an Unscented Kalman Filter. The main reference used
+ * is Bayesian Estimation and Tracking: A Practical Guide by Anton J Haug. 
+ */
 class ukf
 {
     public:
@@ -24,7 +27,8 @@ class ukf
          * vectors. The measurementNoise parameter is the covariance of the 
          * measurement parameter.
          */
-        void correct(const VectorXd measurement, boost::function<MatrixXd (MatrixXd)> observe,
+        void correct(const VectorXd measurement, 
+            boost::function<MatrixXd (MatrixXd)> observe,
             const MatrixXd measurementNoise);
             
         // Current state estimate

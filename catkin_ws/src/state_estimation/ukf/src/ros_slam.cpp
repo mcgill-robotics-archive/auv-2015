@@ -1,64 +1,85 @@
-#include "ros/ros.h"
+#include "ros_slam.h"
 #include "geometry_msgs/Vector3.h"
 #include <tf/transform_broadcaster.h>
-#include "auv_msgs/SlamTarget.h"
+#include <tf_conversions/tf_eigen.h>
 #include "auv_msgs/SlamEstimate.h"
 #include <string.h>
-#include "ukf_slam.h"
+#include <math.h>
+#include <boost/foreach.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/unordered_map.hpp>
 
-ros::Subscriber sub;
-ros::Publisher pub;
-ukf_slam estimator(4);
+ros_slam::ros_slam(ros::NodeHandle& node) :
+  estimator(3),
+  sub(node.subscribe("slam/measurement", 100, &ros_slam::dataCallback, this)),
+  pub(node.advertise<auv_msgs::SlamEstimate>("map_data", 100)),
+  currentIndex(0)
+{}
 
-Vector2d measurement; //Holds the sonar measurement
-
-VectorXd position(8); 
-
-//Does this need to be changed to 2d? YES done.
-//void msgVectorToEigenVector(Ref<Vector2d> vector2d, 
-//    const geometry_msgs::Vector3::ConstPtr& vector) {
-//  vector2d << vector->x, vector->y;
-//}
-
-void dataCallback(const auv_msgs::SlamTarget::ConstPtr& input) {
+void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
   static tf::TransformBroadcaster broadcaster;
   
-  measurement << input->xPos, input->yPos;
-  int objectID =  input->ObjectID;
+  measurement << log(input->range), input->bearing, input->elevation;
+  covariance << input->ln_range_variance, input->bearing_variance,
+      input->elevation_variance;
+  if (map.find(input->name) == map.end())	//Does boost hashmaps work this way ? Might need an Iterator instead
+  {
+	  currentIndex += 3;	//Increment current index to accommodate for new object which is not already in hashmap
+	  estimator.append(3);
+	  map[input->name] = currentIndex;	//Link new name to new index
+  }
+  else{	//Object already exists in hashmap
+	  //Do nothing ?
+  }
   
-  estimator.update(measurement, position, objectID); 
-  for(int i = 0; i < 4; i++) {
+  int objectIndex = map.at(input->name);	//Declare returnIndex up there
+  
+  // TODO make sure this works well if the transforms don't exist or are being published slowly
+  // there are various exceptions we still need to catch
+  // transform from "/north" frame to the sensor frame
+  // Also, we should switch to using the version that takes a fixed frame so
+  // we can use odometry to compensate for sensor processing latency
+  listener.lookupTransform("north", input->header.frame_id,
+      input->header.stamp, tf_sensor_transform);
+      
+  tf::transformTFToEigen(tf_sensor_transform, sensor_transform);
+  
+  position = estimator.update(objectIndex, sensor_transform, measurement, covariance); 
+  
+  BOOST_FOREACH(map_type::value_type& item, map) {
+    int i = item.second;
     broadcaster.sendTransform(
       tf::StampedTransform(
         tf::Transform(tf::Quaternion::getIdentity(),
-            tf::Vector3(position(2*i), position(2*i + 1), 0.)),
+            tf::Vector3(position(i), position(i + 1), position(i + 2))),
         ros::Time::now(),
-        "robot",
+        "north",
         boost::lexical_cast<std::string>(i)    
       )
     );
+    
+    auv_msgs::SlamEstimate estimate;
+    estimate.ObjectID = item.first;
+    estimate.xPos = position(i);
+    estimate.yPos = position(i+1);
+    MatrixXd covar = estimator.getCovariance(i);
+    estimate.var_xx = covar(0,0);
+    estimate.var_xy = covar(0,1);
+    estimate.var_yy = covar(1,1);
+    pub.publish(estimate);
   }
-  
-  auv_msgs::SlamEstimate estimate;
-  estimate.ObjectID = objectID;
-  estimate.xPos = position(2*objectID);
-  estimate.yPos = position(2*objectID+1);
-  MatrixXd covar = estimator.getCovariance(objectID);
-  estimate.var_xx = covar(0,0);
-  estimate.var_xy = covar(0,1);
-  estimate.var_yy = covar(1,1);
-  pub.publish(estimate);
 
 }
 
+void callback(const auv_msgs::RangeBearingElevation::ConstPtr& s) {
+}
 
 int main (int argc, char **argv) {
   ros::init(argc, argv, "slam_ukf");
   ros::NodeHandle node;
-  //tf::TransformBroadcaster broadcaster;
-  sub = node.subscribe("sim_slam/position/noisy", 100, dataCallback);
-  pub = node.advertise<auv_msgs::SlamEstimate>("map_data", 100);
+  // We have to give this object a name here because otherwise c++ doesn't
+  // create it! WTF c++?
+  ros_slam s(node);
   ros::spin();
   return 0;
 }
