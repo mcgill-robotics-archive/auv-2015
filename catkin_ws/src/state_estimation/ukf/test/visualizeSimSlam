@@ -6,6 +6,7 @@ from std_msgs.msg import ColorRGBA
 from auv_msgs.msg import SlamTarget
 from auv_msgs.msg import SlamEstimate
 from visualization_msgs.msg import Marker
+from geometry_msgs.msg import Vector3Stamped
 import math
 
 red = ColorRGBA()
@@ -20,7 +21,7 @@ blue.a = 0.75
 
 def publishSphereMarker(name, color, msg):
   marker = Marker()
-  marker.header.frame_id = "/robot"
+  marker.header.frame_id = "north"
   marker.ns = name
   marker.id = msg.ObjectID
   marker.type = marker.SPHERE
@@ -35,17 +36,17 @@ def publishSphereMarker(name, color, msg):
   viz_pub.publish(marker)
 
 def actualPositionCallback(msg):
-  publishSphereMarker("actual", green, msg)
-  
-def noisyPositionCallback(msg):
-  publishSphereMarker("noisy", red, msg)
+  slam_msg = SlamTarget()
+  slam_msg.ObjectID = -1
+  slam_msg.xPos = msg.vector.x
+  slam_msg.yPos = msg.vector.y
+  publishSphereMarker("actual" + msg.header.frame_id, green, slam_msg)
   
 def mapDataCallback(msg):
   twice_theta = math.atan2(2*msg.var_xy, msg.var_xx - msg.var_xy)
   marker = Marker()
-  marker.header.frame_id = "/robot"
-  marker.ns = "estimate"
-  marker.id = msg.ObjectID
+  marker.header.frame_id = "north"
+  marker.ns = "estimate" + msg.ObjectID
   marker.type = marker.SPHERE
   marker.action = marker.ADD # (really this modifies it)
   marker.scale.x = 5*math.sqrt(msg.var_xx)
@@ -62,8 +63,7 @@ if __name__ == '__main__':
   global viz_pub
   rospy.init_node('visualizeSimSlam')
   viz_pub = rospy.Publisher('visualization_marker', Marker, queue_size=1000)
-  rospy.Subscriber('sim_slam/position/actual', SlamTarget, actualPositionCallback)
-  rospy.Subscriber('sim_slam/position/noisy', SlamTarget, noisyPositionCallback)
+  rospy.Subscriber('sim_slam/position/actual', Vector3Stamped, actualPositionCallback)
   rospy.Subscriber('map_data', SlamEstimate, mapDataCallback)
   
   rospy.spin()
