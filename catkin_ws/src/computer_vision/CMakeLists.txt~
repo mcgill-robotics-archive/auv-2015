@@ -85,6 +85,7 @@ set_target_properties(pyterface PROPERTIES
 add_executable(computer_vision_a src/computer_vision_a.cpp)
 add_executable(computer_vision_color src/computer_vision_COLOR.cpp)
 add_executable(image_publish src/image_publish.cpp)
+add_executable(imshow src/imshow.cpp)
 
 target_link_libraries(computer_vision_a computer_vision_lib
 			${catkin_LIBRARIES}
@@ -100,6 +101,12 @@ target_link_libraries(image_publish
 			${catkin_LIBRARIES}
 			${OpenCV_LIBRARIES}
 )
+
+target_link_libraries(imshow computer_vision_lib
+			${catkin_LIBRARIES}
+			${OpenCV_LIBRARIES}
+)
+
 
 # This makes sure message headers are generated before being used
 ##add_dependencies(distanceCalculator ${catkin_EXPORTED_TARGETS})
