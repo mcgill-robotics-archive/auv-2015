@@ -23,8 +23,11 @@ MatrixXd ukf_velocity::observe(MatrixXd sigmas) {
 	return sigmas;
 }		
 
+//Change to update acc
 void ukf_velocity::update(Vector2d acc, float dt, Ref<Vector2d> outVelocity){
 	estimator.predict(boost::bind(&ukf_velocity::propogate, acc, dt, _1), processNoise);
-	estimator.correct(acc, &observe, measurementNoise);
 	outVelocity = estimator.state;
-}	
+}
+
+//add updateVel(vel)
+//calls estimator.correct

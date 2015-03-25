@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   rospy
   auv_msgs
+  tf_conversions
 )
 
 ## Boost requires its own find_package
@@ -33,8 +34,10 @@ catkin_package(
   tf
   boost
   auv_msgs
+  tf_conversions
 )
 
+include_directories(${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})
 
 ###########
 ## Build ##
