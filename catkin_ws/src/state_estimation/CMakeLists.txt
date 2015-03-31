@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   auv_msgs
   angles
   tf_conversions
+  eigen_conversions
 )
 
 ## Boost requires its own find_package
@@ -37,6 +38,7 @@ catkin_package(
   auv_msgs
   angles
   tf_conversions
+  eigen_conversions
 )
 
 include_directories(${Boost_INCLUDE_DIRS} ${catkin_INCLUDE_DIRS})

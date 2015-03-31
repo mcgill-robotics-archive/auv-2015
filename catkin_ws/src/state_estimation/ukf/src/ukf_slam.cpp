@@ -43,10 +43,6 @@ void ukf_slam::propogate(Ref<Eigen::VectorXd> state) {
   // Does nothing because we don't have odometry implemented yet
 }
 
-MatrixXd ukf_slam::getCovariance(int objectId) {
-  return estimator.covariance.block(objectId, objectId, 3, 3);
-}
-
 // Increases the size of the state vector and covariance by dim
 void ukf_slam::append(int dim) {
   VectorXd newState(estimator.state.size() + dim);

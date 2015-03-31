@@ -4,7 +4,13 @@
 #include "ros/ros.h"
 #include "ukf_slam.h"
 #include "auv_msgs/RangeBearingElevation.h"
+#include "auv_msgs/ConfidenceRadius.h"
+#include "auv_msgs/XYConfidenceRadius.h"
+#include "auv_msgs/Covariance.h"
 #include <tf/transform_listener.h>
+#include "std_msgs/String.h"
+#include "std_msgs/Float64.h"
+#include "std_msgs/Float64MultiArray.h"
 
 class ros_slam
 {
@@ -12,9 +18,11 @@ class ros_slam
     ros_slam(ros::NodeHandle&);
             
   private:
-    void dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input);
     ros::Publisher pub;
     ros::Subscriber sub;
+    ros::ServiceServer confidence_radius_srv;
+    ros::ServiceServer xy_confidence_radius_srv;
+    ros::ServiceServer covariance_srv;
     ukf_slam estimator;
     tf::TransformListener listener;
     int currentIndex;
@@ -25,8 +33,14 @@ class ros_slam
     Vector3d measurement; //Holds the range bearing and elevation
     Vector3d covariance; // Holds the covariance of the above
     VectorXd position;
-
-    
+    void dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input);
+    const MatrixXd getCovariance(std::string, int=3);
+    bool confidenceRadiusCallback(auv_msgs::ConfidenceRadius::Request&,
+        auv_msgs::ConfidenceRadius::Response&);
+    bool xyConfidenceRadiusCallback(auv_msgs::XYConfidenceRadius::Request&,
+        auv_msgs::XYConfidenceRadius::Response&);
+    bool covarianceCallback(auv_msgs::Covariance::Request&,
+        auv_msgs::Covariance::Response&);
 };
 
 #endif 

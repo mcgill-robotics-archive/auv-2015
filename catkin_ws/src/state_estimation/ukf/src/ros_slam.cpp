@@ -1,7 +1,9 @@
 #include "ros_slam.h"
+#include <cmath>
 #include "geometry_msgs/Vector3.h"
 #include <tf/transform_broadcaster.h>
 #include <tf_conversions/tf_eigen.h>
+#include <eigen_conversions/eigen_msg.h>
 #include "auv_msgs/SlamEstimate.h"
 #include <string.h>
 #include <math.h>
@@ -13,6 +15,12 @@ ros_slam::ros_slam(ros::NodeHandle& node) :
   estimator(3),
   sub(node.subscribe("slam/measurement", 100, &ros_slam::dataCallback, this)),
   pub(node.advertise<auv_msgs::SlamEstimate>("map_data", 100)),
+  confidence_radius_srv(node.advertiseService("slam/confidence_radius",
+      &ros_slam::confidenceRadiusCallback, this)),
+  xy_confidence_radius_srv(node.advertiseService("slam/xy_confidence_radius",
+      &ros_slam::xyConfidenceRadiusCallback, this)),
+  covariance_srv(node.advertiseService("slam/covariance",
+      &ros_slam::covarianceCallback, this)),
   currentIndex(0)
 {}
 
@@ -32,6 +40,7 @@ void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& inp
 	  //Do nothing ?
   }
   
+  //TODO: Error handling
   int objectIndex = map.at(input->name);	//Declare returnIndex up there
   
   // TODO make sure this works well if the transforms don't exist or are being published slowly
@@ -62,7 +71,7 @@ void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& inp
     estimate.ObjectID = item.first;
     estimate.xPos = position(i);
     estimate.yPos = position(i+1);
-    MatrixXd covar = estimator.getCovariance(i);
+    MatrixXd covar = getCovariance(item.first);
     estimate.var_xx = covar(0,0);
     estimate.var_xy = covar(0,1);
     estimate.var_yy = covar(1,1);
@@ -71,8 +80,33 @@ void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& inp
 
 }
 
-void callback(const auv_msgs::RangeBearingElevation::ConstPtr& s) {
+//TODO: Convert to the covariance relative to the robot
+const MatrixXd ros_slam::getCovariance(std::string name, int size) {
+  //TODO: Error handling. What if string is invalid?
+  int index = map.at(name);
+  return estimator.estimator.covariance.block(index, index, size, size);
 }
+
+// Returns the radius of the sphere of 95% confidence
+bool ros_slam::confidenceRadiusCallback(auv_msgs::ConfidenceRadius::Request &req,
+    auv_msgs::ConfidenceRadius::Response &res) {
+  res.confidence_radius = 2. * sqrt(getCovariance(req.name).trace());
+  return true;
+}
+
+// Returns the radius of the circle in the xy-plane of 95% confidence
+bool ros_slam::xyConfidenceRadiusCallback(auv_msgs::XYConfidenceRadius::Request &req, 
+    auv_msgs::XYConfidenceRadius::Response &res) {
+  res.xy_confidence_radius =  2. * sqrt(getCovariance(req.name, 2).trace()); 
+  return true;
+}
+
+bool ros_slam::covarianceCallback(auv_msgs::Covariance::Request &req,
+    auv_msgs::Covariance::Response &res) {
+  tf::matrixEigenToMsg(getCovariance(req.name), res.covariance);
+  return true;
+}
+
 
 int main (int argc, char **argv) {
   ros::init(argc, argv, "slam_ukf");
