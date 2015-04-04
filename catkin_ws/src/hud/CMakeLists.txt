@@ -3,13 +3,14 @@ project(hud)
 
 find_package(catkin REQUIRED COMPONENTS
   rospy
-  roscpp
+  genmsg
   std_msgs
   geometry_msgs
 )
 
+catkin_python_setup()
+
 catkin_package(
   CATKIN_DEPENDS
   rospy
-  roscpp
 )
