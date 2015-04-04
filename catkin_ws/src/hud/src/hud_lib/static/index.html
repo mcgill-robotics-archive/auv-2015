@@ -4,7 +4,7 @@
   <script>
     window.onload = function() {
       var battery = document.getElementById("battery");
-      var conn = new WebSocket("ws://" + window.location.host + "/battery");
+      var conn = new WebSocket("ws://" + window.location.host + "/ros/battery");
       conn.onmessage = function(e) {
         battery.innerHTML = e.data;
       }
