@@ -14,4 +14,4 @@ class IndexHandler(RequestHandler):
 
     def get(self):
         """Renders index.html."""
-        self.render("../static/index.html")
+        self.render("index.html")

@@ -3,6 +3,7 @@
 """McGill Robotics HUD."""
 
 import rospy
+import os.path
 from handlers import get_handlers
 from tornado.ioloop import IOLoop
 from tornado.web import Application
@@ -16,9 +17,16 @@ class HUDApplication(Application):
 
     """HUD Application."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, debug):
         """Constructs HUDApplication."""
-        super(HUDApplication, self).__init__(get_handlers(), **kwargs)
+        directory = os.path.dirname(__file__)
+        settings = {
+            "debug": debug,
+            "static_path": os.path.join(directory, "static"),
+            "template_path": os.path.join(directory, "template")
+        }
+        handlers = get_handlers(settings)
+        super(HUDApplication, self).__init__(handlers, **settings)
 
 
 def run(port, debug, host="0.0.0.0"):
