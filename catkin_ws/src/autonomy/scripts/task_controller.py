@@ -9,6 +9,7 @@ import test_rig
 
 import init_task
 import gate_task
+import path_task
 
 class TaskController():
   my_autonomy = None
@@ -28,6 +29,8 @@ class TaskController():
       self.task_stack.insert(0, my_init_task)
       my_gate_task = gate_task.GateTask(self.my_autonomy)
       self.task_stack.insert(0, my_gate_task)
+      my_path_task = path_task.PathTask(self.my_autonomy)
+      self.task_stack.insert(0, my_path_task)
 
   def run_routine(self):
     self.my_autonomy.print_info("-Routine: startinng")
