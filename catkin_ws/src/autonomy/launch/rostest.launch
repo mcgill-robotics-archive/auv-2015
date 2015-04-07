@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="scripts" type="test_buoy" name="scripts" />
+  <test test-name="test_buoy" pkg="scripts" type="test_buoy.py" />
+</launch>
