@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="autonomy" type="test_buoy" name="autonomy" />
+  <test test-name="test_buoy" pkg="autonomy" type="scripts/test_buoy.py" />
+</launch>

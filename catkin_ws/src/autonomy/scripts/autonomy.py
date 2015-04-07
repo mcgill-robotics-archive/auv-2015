@@ -152,6 +152,9 @@ class Autonomy():
     sonar_msg.SonarTarget = new_target
     self.sonar_track_target_publisher.publish(sonar_msg)
 
+  def hydrophone_target_action(self, new_target):
+    return True
+
 #temporary method stubs representing control over the pneumatic systems
 
   def fire_torpedo(self, side):
