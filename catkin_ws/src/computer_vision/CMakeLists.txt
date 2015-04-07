@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   cv_bridge
   image_transport
   tf
+  message_generation
 )
 
 ## Python/c++ integration starts here
@@ -29,10 +30,16 @@ catkin_python_setup()
   ##VisibleObjectData.msg
 ##)
 
+add_message_files(
+	FILES
+	ObjectImageLocation.msg
+)
+
 # Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-# )
+generate_messages(
+   DEPENDENCIES
+   std_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -41,7 +48,7 @@ catkin_python_setup()
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES test_zone
-  CATKIN_DEPENDS roscpp std_msgs message_runtime cv_bridge image_transport
+  CATKIN_DEPENDS message_runtime roscpp std_msgs message_runtime cv_bridge image_transport
 )
 
 ###########
@@ -62,7 +69,7 @@ include_directories(
 
 include_directories(include ${catkin_INCLUDE_DIRS})
 
-add_library(computer_vision_lib src/threshold.cpp src/histogram.cpp src/object_finder.cpp)
+add_library(computer_vision_lib src/threshold.cpp src/histogram.cpp src/object_finder.cpp src/buoy.cpp)
 
 ### Python/c++ interface starts here
 add_library(pyterface src/pyterface.cpp)
@@ -75,32 +82,19 @@ set_target_properties(pyterface PROPERTIES
         LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION})
 ### Python/c++ ends
 
-
 add_executable(computer_vision_a src/computer_vision_a.cpp)
-
-target_link_libraries(computer_vision_a
-			computer_vision_lib
-			${catkin_LIBRARIES}
-			${OpenCV_LIBRARIES}
-)
-
-add_executable(computer_vision_COLOR src/computer_vision_COLOR.cpp)
-
-target_link_libraries(computer_vision_COLOR
-			computer_vision_lib
-			${catkin_LIBRARIES}
-			${OpenCV_LIBRARIES}
-)
-
-add_executable(computer_vision_OBJECT src/computer_vision_OBJECT.cpp)
-
-target_link_libraries(computer_vision_OBJECT
-			computer_vision_lib
-			${catkin_LIBRARIES}
-			${OpenCV_LIBRARIES}
-)
-
+add_executable(computer_vision_color src/computer_vision_COLOR.cpp)
 add_executable(image_publish src/image_publish.cpp)
+
+target_link_libraries(computer_vision_a computer_vision_lib
+			${catkin_LIBRARIES}
+			${OpenCV_LIBRARIES}
+)
+
+target_link_libraries(computer_vision_color computer_vision_lib
+			${catkin_LIBRARIES}
+			${OpenCV_LIBRARIES}
+)
 
 target_link_libraries(image_publish
 			${catkin_LIBRARIES}

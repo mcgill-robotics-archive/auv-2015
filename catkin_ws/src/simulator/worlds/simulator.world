@@ -304,8 +304,8 @@
     </model>
 	<!-- gate done -->
 	
-	<!-- line1 -->
-    <model name="line1">
+	<!-- lane 1 -->
+    <model name="lane">
       <pose>-2.46864 12.0738 1 1.5708 -0 -0.976815</pose>
       <static>false</static>
       <link name="body">
@@ -335,7 +335,7 @@
 	<!-- buoys -->
 
 	<!-- red buoy -->
-    <model name="redbuoy">
+    <model name="buoy_red">
       <pose>-1.11281 0.866034 4.5 1.5708 0 0.7</pose>
       <static>false</static>
       <link name="body">
@@ -361,7 +361,7 @@
     <!-- red buoy done -->
     
 	<!-- green buoy -->
-    <model name="greenbuoy">
+    <model name="buoy_green">
       <pose>0.110936 1.67764 4.5 1.5708 0 0.7</pose>
       <static>false</static>
       <link name="body">
@@ -387,7 +387,7 @@
     <!-- green buoy done -->
 
 	<!-- yellow buoy -->
-    <model name="yellowbuoy">
+    <model name="buoy_yellow">
       <pose>0.909955 2.96303 4.5 1.5708 0 0.7</pose>
       <static>false</static>
       <link name="body">

@@ -45,8 +45,8 @@
             int min_difference = getMinHueDifference (ho, h);
             
             // If the colors match return white
-            if ((min_difference <= 0 && std::abs(min_difference) <= left_threshold) ||
-                (min_difference > 0 && std::abs(min_difference) <= right_threshold) ) 
+            if ((min_difference <= 0 && std::abs(min_difference) < left_threshold) ||
+                (min_difference > 0 && std::abs(min_difference) < right_threshold) ) 
             {
               img_threshold.at<cv::Vec3b>(row, col) = cv::Vec3b(255,255,255);
             }
@@ -81,9 +81,9 @@
       std::ostringstream s;
       s << "Threshold hue = " << ho;
       std::string windowName = s.str();
-      //cv::namedWindow(windowName);
-      //cv::imshow(windowName, img);
-      //cv::waitKey(3);
+      cv::namedWindow(windowName);
+      cv::imshow(windowName, img);
+      cv::waitKey(3);
     }
   }
 

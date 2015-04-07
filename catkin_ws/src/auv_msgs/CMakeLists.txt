@@ -1,7 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(auv_msgs)
 
-find_package(catkin REQUIRED COMPONENTS message_generation)
+find_package(catkin REQUIRED COMPONENTS 
+  message_generation
+  std_msgs
+)
 
 add_message_files(FILES
                 #added by Elec Interface
@@ -16,6 +19,10 @@ add_message_files(FILES
                 #added by Autonomy
                   CVTarget.msg
                   SonarTarget.msg
+
+		#added by State Estimation
+		  SlamTarget.msg
+		  SlamEstimate.msg
                  )
 
 #add_service_files(FILES
@@ -24,6 +31,6 @@ add_message_files(FILES
 #                  RequestServiceInfo.srv
 #                 )
 
-generate_messages()
+generate_messages(DEPENDENCIES std_msgs)
 catkin_package(CATKIN_DEPENDS message_runtime)
 
