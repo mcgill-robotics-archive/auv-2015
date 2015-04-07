@@ -2,11 +2,13 @@
 #include "std_msgs/String.h"
 #include "geometry_msgs/Point.h"
 #include "geometry_msgs/Vector3.h"
-#include "auv_msgs/SlamTarget.h"
+#include "geometry_msgs/Vector3Stamped.h"
+#include "auv_msgs/RangeBearingElevation.h"
 #include <tf/transform_broadcaster.h>
 #include <math.h>
 #include <boost/random.hpp>
 #include <boost/random/normal_distribution.hpp>
+#include <boost/lexical_cast.hpp>
 
 boost::mt19937 rng; // I don't seed it on purpouse (it's not relevant)
 boost::normal_distribution<> nd(0.0, 1.0);
@@ -30,14 +32,16 @@ geometry_msgs::Vector3 relative_position(geometry_msgs::Point robot_position, ge
 	return relative_position;
 }
 
-float box_muller(float mean, float sigma) {
-	float x1, x2, y;
-	
-	x1 = rand()/ 1000.0;
-	x2 = rand() % 1000 / 1000.0;
-	if (x1 == 0) x1 = 0.5;
-	y = sqrt(-2*log(x1))*cos(2*M_PI*x2);
-	return( mean + y * sigma);
+double range(geometry_msgs::Vector3 v) {
+  return sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
+}
+
+double bearing(geometry_msgs::Vector3 v) {
+  return atan2(v.y, v.x);
+}
+
+double elevation(geometry_msgs::Vector3 v) {
+  return atan2(v.z, sqrt(v.x*v.x + v.y*v.y));
 }
 
 geometry_msgs::Vector3 add_noise(geometry_msgs::Vector3 vector, float sigma) {
@@ -58,9 +62,9 @@ int main(int argc, char **argv)
 	tf::TransformBroadcaster broadcaster;
 
 	ros::Publisher velocity_pub = n.advertise<geometry_msgs::Vector3>("velocity", 1000);
-	ros::Publisher position_pub = n.advertise<auv_msgs::SlamTarget>("sim_slam/position/actual", 1000);	
+	ros::Publisher position_pub = n.advertise<geometry_msgs::Vector3Stamped>("sim_slam/position/actual", 1000);	
 	ros::Publisher noisy_velocity_pub = n.advertise<geometry_msgs::Vector3>("noisy_velocity", 1000);
-	ros::Publisher noisy_position_pub = n.advertise<auv_msgs::SlamTarget>("sim_slam/position/noisy", 1000);
+	ros::Publisher noisy_position_pub = n.advertise<auv_msgs::RangeBearingElevation>("slam/measurement", 1000);
 	
 	//Update rate
 	ros::Rate loop_rate(10);
@@ -82,11 +86,12 @@ int main(int argc, char **argv)
   objs[3].x = 0; objs[3].y = -3; objs[3].z = 0;
     	
 	//Define noise
-	float obj_noise = 1;
+	double ln_range_noise = 0.5;
+	double bearing_noise = 0.1;
+	double elevation_noise = 0.1;
 	float v_noise = 1;
 
-	geometry_msgs::Vector3 relative_obj1_position;
-	geometry_msgs::Vector3 noisy_relative_position;
+	geometry_msgs::Vector3 distance;
 	geometry_msgs::Vector3 noisy_robot_velocity;
 
 	while (ros::ok())
@@ -100,16 +105,25 @@ int main(int argc, char **argv)
 		noisy_velocity_pub.publish(noisy_robot_velocity);
 		
 		for (int i = 0; i < numObjs; i++) {
-		  auv_msgs::SlamTarget noisy_msg, actual_msg;
-		  noisy_msg.ObjectID = i;
-		  actual_msg.ObjectID = i;
-		  noisy_relative_position = add_noise(relative_position(robot_position, objs[i]),obj_noise);
-		  noisy_msg.xPos = noisy_relative_position.x;
-		  noisy_msg.yPos = noisy_relative_position.y;
-		  actual_msg.xPos = relative_position(robot_position, objs[i]).x;
-		  actual_msg.yPos = relative_position(robot_position, objs[i]).y;
+		  auv_msgs::RangeBearingElevation noisy_msg;
+		  std_msgs::Header header;
+		  header.frame_id = "/north";
+		  header.stamp = ros::Time::now();
+		  noisy_msg.header = header;
+		  noisy_msg.name = boost::lexical_cast<std::string>(i);
+		  distance = relative_position(robot_position, objs[i]);
+		  noisy_msg.range = fabs((1+ln_range_noise*var_nor()) * range(distance));
+		  noisy_msg.bearing = bearing(distance) + bearing_noise*var_nor();
+		  noisy_msg.elevation = elevation(distance) + elevation_noise*var_nor();
+		  noisy_msg.ln_range_variance = ln_range_noise*ln_range_noise;
+		  noisy_msg.bearing_variance = bearing_noise*bearing_noise;
+		  noisy_msg.elevation_variance = elevation_noise*elevation_noise;
 		  noisy_position_pub.publish(noisy_msg);
-		  position_pub.publish(actual_msg);
+		  geometry_msgs::Vector3Stamped position_msg;
+		  header.frame_id = boost::lexical_cast<std::string>(i);
+		  position_msg.header = header;
+		  position_msg.vector = distance;
+		  position_pub.publish(position_msg);
 		}
 
 		robot_position = update_position(robot_velocity, robot_position);
