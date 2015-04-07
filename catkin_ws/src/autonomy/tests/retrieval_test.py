@@ -1,5 +1,9 @@
+#!/usr/bin/env python
+
 PKG = 'autonomy'
+NAME = 'retrieval_test'
 import rospy
+import rostest
 
 
 import sys
@@ -18,80 +22,51 @@ from std_msgs.msg import String
 
 MSG_DELAY=0.5
 
-#######################################	
-#######################################
-class TestCode(unittest.TestCase):
-#######################################
-#######################################	
 
+
+class TestCode(unittest.TestCase):	
 
 	def __init__(self, *args):
 		super(TestCode, self).__init__(*args)
 
-
-
-	####################################
 	def setUp(self):
 		rospy.init_node("test_retrieval_task")
 		self.retrieval_pub = rospy.Publisher("retrieval task", String)
-
-		
-		rospy.Subscriber("retrieval task", String, retrieval_callback)
+		rospy.Subscriber("retrieval task", String, retrievalCallback)
 		rospy.sleep(MSG_DELAY)
-	####################################
 
-
-	####################################
 	def publishMsgs(self, success, rate):
 		r = rospy.Rate(rate)
 		rospy.loginfo("-D- publishMsgs: I am experiencing %s" % success)
-	####################################
 
-	####################################	
 	def retrievalCallback(self, msg):
 		rospy.loginfo("-D- retrieval in progress? %s" % msg)
 		self.status = msg
 		self.time = rospy.Time.now()
-	####################################	
 
-
-
-	####################################
 	def bareBones(self):
 		rospy.loginfo("-D- SANITY TEST")
 		myAutonomy = autonomy.Autonomy()
 		self.assertEquals(1, 1, "1!=1")
-	####################################
 
-
-	###################################
 	def testSurfaceAction(self):
 		rospy.sleep(MSG_DELAY)
 		rospy.loginfo("-D- testing surface action")
 		myAutonomy = autonomy.Autonomy()
 		self.assertTrue(surface_action.surface(self, [0,0,0,0,0,0]))
-	###################################
-
-
-	###################################
+	
 	def testCVTargetAction(self):
 		rospy.loginfo("-D- testing CV target action")
 		myAutonomy = autonomy.Autonomy()
 		desired_velocity = 0
 		cv_target = None
 		self.assertTrue(set_cv_target_action.execute(self) != Nil)
-	####################################
 
-
-	####################################
 	def testGrabberToggle(self):
 		rospy.loginfo("-D- testing grabber toggle")
 		myAutonomy = autonomy.Autonomy()
 		self.assertTrue(self.myAutonomy.toggle_grabber(self, "front", "open") and self.myAutonomy.toggle_grabber(self,"front","close"))
-	####################################
 
-
-	####################################
 	def testMoveToPingerAction(self):
 		rospy.sleep(MSG_DELAY)
 		rospy.loginfo("-D- testing pinger action")
@@ -99,42 +74,26 @@ class TestCode(unittest.TestCase):
 		desired_velocity = [0,0,0,0,0,0]
 		x = move_to_pinger_action(desired_velocity)
 		self.assertTrue(x.execute())
-	####################################
 
-
-	####################################
 	def testPlacementOfObjectAction(self):
 		rospy.sleep(MSG_DELAY)
 		rospy.loginfo("-D- testing placement of object action")
 		myAutonomy = autonomy.Autonomy()
 		x = placement_of_object_action(myAutonomy, 'test')
 		self.assertTrue(x.execute())
-	####################################
 
-
-
-	####################################
 	def testClawStateAction(self):
 		rospy.sleep(MSG_DELAY)
 		rospy.loginfo("-D- testing claw state action")
 		myAutonomy = autonomy.Autonomy()
 		self.assertEquals((myAutonomy.drop_marker("left"),myAutonomy.drop_marker("right")))
-	####################################
 
-
-	####################################
 	def testHydrophoneAction(self):
 		rospy.sleep(MSG_DELAY)
 		rospy.loginfo("-D- testing hydrophone action")
 		myAutonomy = autonomy.Autonomy()
-		if (myAutonomy.hydrophone_target_action(None) == None):
-			self.assertTrue(True)
-		else:
-			self.assertTrue(False)
-	####################################
-	
+		self.assertTrue(myAutonomy.hydrophone_target_action)
 
-	####################################
 	def testPingerFound(self):
 		rospy.sleep(MSG_DELAY)
 		rospy.loginfo("-D- testing pinger found action")
@@ -142,23 +101,13 @@ class TestCode(unittest.TestCase):
 		target = None
 		self.desired_target = target
 		self.assertTrue(set_sonar_seek_target.execute())
-	####################################
 
-
-	####################################	
 	def testGrabAction(self):
 		rospy.sleep(MSG_DELAY)
 		rospy.loginfo("-D- testing grabber action")
 		myAutonomy = autonomy.Autonomy()
-		
 		self.assertTrue(grab_object_action.execute(self))
-	####################################
 
-
-	
-	#Integration testing attempt#
-
-	####################################
 	def testStack(self):
 		rospy.sleep(1)
 		rospy.loginfo("-D- Integration Testing Commencing")
@@ -226,17 +175,13 @@ class TestCode(unittest.TestCase):
 		placement_of_object_action = placement_of_object_action.PlacementOfObjectAction(myAutonomy)
 		testStack.append(0, placement_of_object_action)
 
-		
+	
 		surface_action = z_axis_movement_action.ZAxisMovementAction(myAutonomy, [0,0,3,0,0,0])
 		testStack.append(0, surface_action)
 
-
 		self.assertEquals(testStack, testRetrievalTask, "1!=1")
-	####################################
-
 
 
 if __name__ == "__main__":
-	import rostest
-	rospy.loginfo("Testing Retrieval Task Started")
-	rostest.rosrun(PKG, 'test_retrieval', TestCode)
+	rospy.init_node(NAME, anonymous=True)
+	rostest.unitrun(PKG, NAME, TestCode, sys.argv)
