@@ -36,12 +36,9 @@ void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& inp
 	  estimator.append(3);
 	  map[input->name] = currentIndex;	//Link new name to new index
   }
-  else{	//Object already exists in hashmap
-	  //Do nothing ?
-  }
   
   //TODO: Error handling
-  int objectIndex = map.at(input->name);	//Declare returnIndex up there
+  int objectIndex = map.at(input->name);
   
   // TODO make sure this works well if the transforms don't exist or are being published slowly
   // there are various exceptions we still need to catch

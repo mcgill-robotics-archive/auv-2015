@@ -39,6 +39,17 @@ MatrixXd ukf_slam::observe(int objectIndex, double base_yaw, const Affine3d tran
   return msmts;
 }
 
+MatrixXd ukf_slam::observe_depth(const Affine3d transform, const MatrixXd sigmas, double input)
+{
+	//Take into account positioning of depth sensor relative to center of gravity of the robot ?
+	//^ Maybe later
+	//MatrixXd msmts = MatrixXd(1, conv_sigmas.cols());
+	MatrixXd msmts = MatrixXd(1, sigmas.cols());
+	
+	msmts(2,0) = input;	//(2,0) for elevation of 1st column, robot's own state
+	return msmts;
+}
+
 void ukf_slam::propogate(Ref<Eigen::VectorXd> state) {
   // Does nothing because we don't have odometry implemented yet
 }
