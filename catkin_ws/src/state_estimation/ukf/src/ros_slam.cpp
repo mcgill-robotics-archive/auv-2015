@@ -81,7 +81,10 @@ void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& inp
 const MatrixXd ros_slam::getCovariance(std::string name, int size) {
   //TODO: Error handling. What if string is invalid?
   int index = map.at(name);
-  return estimator.estimator.covariance.block(index, index, size, size);
+  return  estimator.estimator.covariance.block(0, 0, size, size)
+       + estimator.estimator.covariance.block(index, index, size, size)
+       - estimator.estimator.covariance.block(0, index, size, size)
+       - estimator.estimator.covariance.block(index, 0, size, size);
 }
 
 // Returns the radius of the sphere of 95% confidence
