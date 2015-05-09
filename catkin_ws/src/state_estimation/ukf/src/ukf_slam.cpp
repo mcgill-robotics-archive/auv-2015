@@ -39,15 +39,11 @@ MatrixXd ukf_slam::observe(int objectIndex, double base_yaw, const Affine3d tran
   return msmts;
 }
 
-MatrixXd ukf_slam::observe_depth(const Affine3d transform, const MatrixXd sigmas, double input)
+MatrixXd ukf_slam::observe_depth(/*const Affine3d transform,*/ const MatrixXd sigmas)
 {
 	//Take into account positioning of depth sensor relative to center of gravity of the robot ?
-	//^ Maybe later
-	//MatrixXd msmts = MatrixXd(1, conv_sigmas.cols());
-	MatrixXd msmts = MatrixXd(1, sigmas.cols());
-	
-	msmts(2,0) = input;	//(2,0) for elevation of 1st column, robot's own state
-	return msmts;
+	//^ Maybe later	
+	return sigmas.row(2);
 }
 
 void ukf_slam::propogate(Ref<Eigen::VectorXd> state) {
