@@ -20,6 +20,7 @@ class ros_slam
   private:
     ros::Publisher pub;
     ros::Subscriber sub;
+    ros::Subscriber subDepth;
     ros::ServiceServer confidence_radius_srv;
     ros::ServiceServer xy_confidence_radius_srv;
     ros::ServiceServer covariance_srv;
@@ -30,10 +31,13 @@ class ros_slam
     map_type map;
     tf::StampedTransform tf_sensor_transform;
     Affine3d sensor_transform;
+    double depthMeasurement;	//Holds depth measurements
+    double depthCovariance;	//Holds covar of the above
     Vector3d measurement; //Holds the range bearing and elevation
     Vector3d covariance; // Holds the covariance of the above
     VectorXd position;
     void dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input);
+    void depthDataCallback(const std_msgs::Float64::ConstPtr& input);
     const MatrixXd getCovariance(std::string, int=3);
     bool confidenceRadiusCallback(auv_msgs::ConfidenceRadius::Request&,
         auv_msgs::ConfidenceRadius::Response&);

@@ -14,6 +14,7 @@
 ros_slam::ros_slam(ros::NodeHandle& node) :
   estimator(3),
   sub(node.subscribe("slam/measurement", 100, &ros_slam::dataCallback, this)),
+  subDepth(node.subscribe("/state_estimation/depth", 100, &ros_slam::depthDataCallback, this)),
   pub(node.advertise<auv_msgs::SlamEstimate>("map_data", 100)),
   confidence_radius_srv(node.advertiseService("slam/confidence_radius",
       &ros_slam::confidenceRadiusCallback, this)),
@@ -24,13 +25,19 @@ ros_slam::ros_slam(ros::NodeHandle& node) :
   currentIndex(0)
 {}
 
+void ros_slam::depthDataCallback(const std_msgs::Float64::ConstPtr& input)	{
+	depthMeasurement = input->data;
+	depthCovariance = 0.002;	//TODO : Fix
+	estimator.updateDepth(depthMeasurement, depthCovariance);
+}
+
 void ros_slam::dataCallback(const auv_msgs::RangeBearingElevation::ConstPtr& input) {
   static tf::TransformBroadcaster broadcaster;
   
   measurement << log(input->range), input->bearing, input->elevation;
   covariance << input->ln_range_variance, input->bearing_variance,
       input->elevation_variance;
-  if (map.find(input->name) == map.end())	//Does boost hashmaps work this way ? Might need an Iterator instead
+  if (map.find(input->name) == map.end())
   {
 	  currentIndex += 3;	//Increment current index to accommodate for new object which is not already in hashmap
 	  estimator.append(3);

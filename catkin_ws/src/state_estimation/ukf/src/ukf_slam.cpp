@@ -80,3 +80,18 @@ VectorXd ukf_slam::update(int objectIndex, const Affine3d transform, const Vecto
   //TODO: make sure this is a copy. Pretty sure it is
   return estimator.state;
 }
+
+VectorXd ukf_slam::updateDepth(double msmt, double covar)
+{
+  MatrixXd measurement(1, 1);
+  measurement(0,0) = msmt;
+  MatrixXd covariance(1, 1);
+  covariance(0,0) = covar;
+  estimator.predict(&propogate, 0.01 * MatrixXd::Identity(3*N, 3*N));	//Covar matrix is non zero at (2,2)
+  estimator.correct(measurement,	//Vector1d probs doesn't work
+   &ukf_slam::observe_depth,
+    covariance);
+  return estimator.state;
+}
+
+
