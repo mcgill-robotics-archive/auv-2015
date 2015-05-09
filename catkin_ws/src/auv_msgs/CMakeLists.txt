@@ -25,11 +25,11 @@ add_message_files(FILES
   SlamEstimate.msg
 )
 
-#add_service_files(FILES
-#                  RequestParam.srv
-#                  RequestMessageInfo.srv
-#                  RequestServiceInfo.srv
-#                 )
+add_service_files(FILES
+  ConfidenceRadius.srv
+  XYConfidenceRadius.srv
+  Covariance.srv
+)
 
 generate_messages(DEPENDENCIES std_msgs)
 catkin_package(CATKIN_DEPENDS message_runtime)
