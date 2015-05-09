@@ -55,7 +55,7 @@ public:
 	 * applies the corresponding wrench and the controls wrench
 	 */
 	bool applyWrenches() {
-		model->GetLink()->AddRelativeForce(controlsForce + calculateDrag(model->GetRelativeLinearVel(), 2.5, 1));
+		model->GetLink()->AddRelativeForce(controlsForce + calculateDrag(model->GetRelativeLinearVel(), 5, 2));
 		model->GetLink()->AddRelativeTorque(controlsTorque + calculateDrag(model->GetRelativeAngularVel(), 2.5, 1));
 	}
 	
