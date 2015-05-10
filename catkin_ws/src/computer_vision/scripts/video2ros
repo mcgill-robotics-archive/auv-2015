@@ -12,9 +12,9 @@ Author: Max Krogius
 Publish a video file as a ros topic
 
 Params:
-    _data - filename of the video file
-    _topic - topic name to publish on
-    _rate - framerate of the video (in hz)
+    ~data - filename of the video file
+    ~topic - topic name to publish on
+    ~rate - framerate of the video (in hz)
 '''
 
 rospy.init_node('video2ros')
