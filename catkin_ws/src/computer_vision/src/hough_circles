@@ -1,0 +1,47 @@
+#! /usr/bin/env python2.7
+import cv2
+import numpy as np
+from cv_backbone import CvBackbone
+
+cb = CvBackbone('hough_circles')
+
+def draw_circles(img, circles):
+    if circles is not None:
+        circles = np.round(circles[0, :]).astype("int")
+        for i in circles:
+            # draw the outer circle
+            cv2.circle(img,(i[0],i[1]),i[2],(0,255,0),2)
+            # draw the center of the circle
+            cv2.circle(img,(i[0],i[1]),2,(0,0,255),3)
+    
+
+def hough_circles1(img):
+    gray = cb.filters.smoothGray(img)
+    gray = cv2.equalizeHist(gray)
+    # param2 determines how stric the filter is
+    circles = cv2.HoughCircles(gray,cv2.cv.CV_HOUGH_GRADIENT,2,100,
+                                param1=200,param2=100,minRadius=0,maxRadius=0)
+    draw_circles(img, circles)
+    draw_circles(gray, circles)
+    cb.publishImage(img)
+    cb.publishImage(gray, cb.name + '/gray')
+
+
+def hough_circles2(img):
+    gray = cb.filters.grayScale(img)
+    #blurred = cb.filters.gaussianBlur(gray)
+    #sharpened = cv2.addWeighted(gray, 2, blurred, -1, 0)
+    #sharpened = cv2.bilateralFilter(gray, 9, 50, 50)
+    sharpened_64 = cv2.Laplacian(gray, cv2.CV_64F)
+    sharpened = np.uint8(np.absolute(sharpened_64))
+    # param2 determines how stric the filter is
+    circles = cv2.HoughCircles(sharpened,cv2.cv.CV_HOUGH_GRADIENT,2,100,
+                                param1=50,param2=30,minRadius=0,maxRadius=0)
+    draw_circles(img, circles)
+    draw_circles(sharpened, circles)
+    cb.publishImage(img)
+    cb.publishImage(sharpened, cb.name + '/gray')
+   
+if __name__ == '__main__':
+    cb.addImageCallback(hough_circles1)
+    cb.start()
