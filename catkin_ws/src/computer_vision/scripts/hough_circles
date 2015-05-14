@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from cv_backbone import CvBackbone
 
-cb = CvBackbone('hough_circles')
+cb = CvBackbone.CvBackbone('hough_circles')
 
 def draw_circles(img, circles):
     if circles is not None:
@@ -18,7 +18,7 @@ def draw_circles(img, circles):
 def hough_circles1(img):
     gray = cb.filters.smoothGray(img)
     gray = cv2.equalizeHist(gray)
-    # param2 determines how stric the filter is
+    # param2 determines how strict the filter is
     circles = cv2.HoughCircles(gray,cv2.cv.CV_HOUGH_GRADIENT,2,100,
                                 param1=200,param2=100,minRadius=0,maxRadius=0)
     draw_circles(img, circles)
