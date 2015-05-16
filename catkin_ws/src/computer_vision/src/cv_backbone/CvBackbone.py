@@ -13,6 +13,7 @@ import rospy
 import filters
 from sensor_msgs.msg import Image
 from cv_bridge import CvBridge
+import numpy as np
 
 class CvBackbone(object):
 
@@ -33,14 +34,17 @@ class CvBackbone(object):
     def addImageCallback(self, callback):
         self.imageCallbacks.append(callback)
 
-    def publishImage(self, img, name=None):
-        if not name:
-            name = self.name + '/image'
+    def publishImage(self, img, name='image'):
+        name = self.name + '/' + name
         pub = self.publishers.get(name, None)
         if not pub:
             pub = rospy.Publisher(name, Image, queue_size=10)
             self.publishers[name] = pub
         pub.publish(self.cv2_to_imgmsg(img))
+
+    def publishImages(self, imgs, name='images'):
+        img = np.concatenate(imgs)
+        self.publishImage(img, name)
 
     def cv2_to_imgmsg(self, img):
         # cv_bridge does not by default correctly transform mono images so
