@@ -8,7 +8,9 @@ aliases for open cv functions
 '''
 
 def grayScale(img):
-    return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    if len(img.shape)==3:
+        return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+    return img
 
 def medianBlur(img, size=5):
     return cv2.medianBlur(img, size)

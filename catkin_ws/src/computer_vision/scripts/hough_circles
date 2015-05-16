@@ -40,7 +40,7 @@ def hough_circles2(img):
     draw_circles(img, circles)
     draw_circles(sharpened, circles)
     cb.publishImage(img)
-    cb.publishImage(sharpened, cb.name + '/gray')
+    cb.publishImage(sharpened, '/gray')
    
 if __name__ == '__main__':
     cb.addImageCallback(hough_circles1)
