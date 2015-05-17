@@ -1,23 +1,11 @@
-#if defined(__XC16__)
-    #include <xc.h>
-#elif defined(__C30__)
-    #include <p33Exxxx.h>
-#endif
-
+#include <xc.h>
 #include <string.h>
+#include <libpic30.h>
 
 #define FCY 46875000UL
-#define UART_BAUD 9600
+#define UART_BAUD 115200
 #define BRGVAL ((FCY/UART_BAUD)/16)-1
 #define delay_ms(d) { __delay32( (unsigned long) ((d)*(FCY)/1000UL)); }
-
-#pragma config JTAGEN = OFF
-#pragma config FWDTEN = OFF
-
-// Select Internal FRC at POR
-_FOSCSEL(FNOSC_FRC & IESO_OFF);
-// Enable Clock Switching and Configure Primary Oscillator in XT mode
-_FOSC(FCKSM_CSECMD & OSCIOFNC_OFF & POSCMD_NONE);
 
 void configureClock(void);
 void configureUART(void);
@@ -27,9 +15,6 @@ int main(void) {
     configureClock();
     configureUART();
     delay_ms(100);
-
-    TRISDbits.TRISD1 = 0;
-    LATDbits.LATD1 = 1;
 
     while(1) {
         println("Hello world!");
@@ -42,16 +27,13 @@ int main(void) {
 void configureClock(void) {
     /*
      * This sets FCY  to 46875000
+     * I don't know why.
+     * I don't know how.
+     * Don't change it!
      */
     PLLFBD = 48;                    // M = 50
     CLKDIVbits.PLLPRE = 0;          // N2 = 2
     CLKDIVbits.PLLPOST = 0;         // N1 = 2
-    // Initiate Clock Switch to FRC oscillator with PLL (NOSC=0b001)
-    __builtin_write_OSCCONH(0x01);
-    __builtin_write_OSCCONL(OSCCON | 0x01);
-    // Wait for Clock switch to occur
-    while (OSCCONbits.COSC!= 0b001);
-    // Wait for PLL to lock
     while(OSCCONbits.LOCK != 1);    // Clock Stabilization
 }
 
