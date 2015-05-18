@@ -1,6 +1,10 @@
-#include <xc.h>
-#include <string.h>
+#if defined(__XC16__)
+    #include <xc.h>
+#elif defined(__C30__)
+    #include <p33Exxxx.h>
+#endif
 
+#include <string.h>
 #include <libpic30.h>
 
 #define INTERNAL_OSCILLATOR 7370000

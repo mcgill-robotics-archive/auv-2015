@@ -7,7 +7,6 @@
       <itemPath>config.h</itemPath>
       <itemPath>util.h</itemPath>
       <itemPath>interrupts.h</itemPath>
-      <itemPath>global.h</itemPath>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
                    displayName="Linker Files"
@@ -37,7 +36,7 @@
         <targetPluginBoard></targetPluginBoard>
         <platformTool>PICkit3PlatformTool</platformTool>
         <languageToolchain>XC16</languageToolchain>
-        <languageToolchainVersion>1.24</languageToolchainVersion>
+        <languageToolchainVersion>1.23</languageToolchainVersion>
         <platform>3</platform>
       </toolsSet>
       <compileType>
@@ -104,8 +103,6 @@
       <C30-AR>
         <property key="additional-options-chop-files" value="false"/>
       </C30-AR>
-      <C30-AS>
-      </C30-AS>
       <C30-LD>
         <property key="additional-options-use-response-files" value="false"/>
         <property key="boot-eeprom" value="no_eeprom"/>
@@ -227,6 +224,7 @@
         <property key="UART 2" value="true"/>
         <property key="UART 3" value="true"/>
         <property key="UART 4" value="true"/>
+        <property key="firmware.download.all" value="false"/>
         <property key="hwtoolclock.frcindebug" value="false"/>
         <property key="memories.aux" value="false"/>
         <property key="memories.bootflash" value="true"/>

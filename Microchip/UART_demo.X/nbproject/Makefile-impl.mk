@@ -31,7 +31,7 @@ DEFAULTCONF=Hydrophones_Board
 CONF=${DEFAULTCONF}
 
 # All Configurations
-ALLCONFS=Hydrophones_Board Dev_Board 
+ALLCONFS=Hydrophones_Board 
 
 
 # build
@@ -46,14 +46,12 @@ ALLCONFS=Hydrophones_Board Dev_Board
 # clobber
 .clobber-impl: .clobber-pre .depcheck-impl
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Hydrophones_Board clean
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Dev_Board clean
 
 
 
 # all
 .all-impl: .all-pre .depcheck-impl
 	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Hydrophones_Board build
-	    ${MAKE} SUBPROJECTS=${SUBPROJECTS} CONF=Dev_Board build
 
 
 

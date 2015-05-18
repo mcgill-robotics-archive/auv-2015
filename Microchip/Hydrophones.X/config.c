@@ -16,14 +16,12 @@ _FOSCSEL(FNOSC_FRC & IESO_OFF);
 // Enable Clock Switching and Configure Primary Oscillator in XT mode
 _FOSC(FCKSM_CSECMD & OSCIOFNC_OFF & POSCMD_NONE);
 
-void configureClock(void);
-void configureUART(void);
-void configureADC(void);
-
 void initApp(void) {
     configureClock();
     configureUART();
+    println("[+] configured Clock & UART");
     configureADC();
+    println("[+] configured ADC");
     //configureInterrupts();
 }
 
@@ -35,7 +33,7 @@ void configureClock(void) {
     __builtin_write_OSCCONH(1);
     __builtin_write_OSCCONL(OSCCON | 1);
     // Wait for Clock switch to occur
-    while (OSCCONbits.COSC!= 1);
+    while(OSCCONbits.COSC!= 1);
     while(OSCCONbits.LOCK != 1);    // Clock Stabilization
 }
 

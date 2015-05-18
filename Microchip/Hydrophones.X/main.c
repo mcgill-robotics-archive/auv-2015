@@ -4,6 +4,9 @@
     #include <p33Exxxx.h>
 #endif
 
+#include <string.h>
+#include <stdlib.h>
+
 #include "config.h"
 #include "util.h"
 //#include "global.h"
@@ -11,7 +14,7 @@
 int main(void)
 {
     initApp();
-
+   
     int buffer[4000];
 
     int i;
@@ -23,9 +26,29 @@ int main(void)
     }
 
     for(i = 0; i < 4000; i += 4) {
-        println(printf("%d,%d,%d,%d," , buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3];
-    }
+//        char *tempMsg1;
+//        intToString(buffer[i], tempMsg1);
+//        char *tempMsg2;
+//        intToString(buffer[i + 1], tempMsg2);
+//        char *tempMsg3;
+//        intToString(buffer[i + 2], tempMsg3);
+//        char *tempMsg4;
+//        intToString(buffer[i + 3], tempMsg4);
+//
+//        char *msg;
+//        strcat(msg, tempMsg1);
+//        strcat(msg, ",");
+//        strcat(msg, tempMsg2);
+//        strcat(msg, ",");
+//        strcat(msg, tempMsg3);
+//        strcat(msg, ",");
+//        strcat(msg, tempMsg4);
+//
+//        println(msg);
 
+        println(printf("%d,%d,%d,%d," , buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3]));
+    }
+//
 //    int burstBuffer[4][1000];
 //    //int passiveBuffer[4][1000];
 //
