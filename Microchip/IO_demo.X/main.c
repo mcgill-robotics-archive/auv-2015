@@ -4,15 +4,13 @@
     	#include <p33Exxxx.h>
 #endif
 
-#include <stdint.h>
-#include <stdbool.h>
 #include <libpic30.h>
 
-#define CRYSTAL 2800000UL
-#define FCY CRYSTAL*50UL/8UL
+#define INTERNAL_OSCILLATOR 7370000
+#define FCY INTERNAL_OSCILLATOR * 100/8
 
-#define delay_us(d) { __delay32( (unsigned long) ((d)*(FCY)/1000000UL)); }
-#define delay_ns(d) { __delay32( (unsigned long) ((d)*(FCY)/1000000000UL)); }
+#define delay_us(d) { __delay32( (unsigned long) (((unsigned long long) d)*(FCY)/1000000ULL)); }
+#define delay_ns(d) { __delay32( (unsigned long) (((unsigned long long) d)*(FCY)/1000000000ULL)); }
 
 #pragma config JTAGEN = OFF     //should not matter. only affects pins TDO, TCK, TDI,TMS
 #pragma config FWDTEN = OFF     //watchdog timer. should not be relevant
@@ -32,16 +30,13 @@ int main() {
 
     while(1) {
         LATDbits.LATD1 = !PORTDbits.RD1;
-        delay_ns(100);
+        delay_us(10);
     }
     return 1;
 }
 
 void configureClock(void) {
-    /*
-     * This sets FCY  to 46875000
-     */
-    PLLFBDbits.PLLDIV = 48;         // M = 50
+    PLLFBD = 98;                    // M = PLLFBD + 2
     CLKDIVbits.PLLPRE = 0;          // N2 = 2
     CLKDIVbits.PLLPOST = 0;         // N1 = 2
     // Initiate Clock Switch to FRC oscillator with PLL (NOSC=0b001)
@@ -49,6 +44,5 @@ void configureClock(void) {
     __builtin_write_OSCCONL(OSCCON | 0x01);
     // Wait for Clock switch to occur
     while (OSCCONbits.COSC!= 0b001);
-    // Wait for PLL to lock
-    while(OSCCONbits.LOCK != 1);
+    while(OSCCONbits.LOCK != 1);    // Clock Stabilization
 }
