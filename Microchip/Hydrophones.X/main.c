@@ -12,9 +12,18 @@ int main(void)
 {
     initApp();
 
-    while(1) {
-        println(printf("%d,%d,%d,%d,", ADC1BUF1, ADC1BUF2, ADC1BUF3, ADC1BUF0));
-        delay_ms(100);
+    int buffer[4000];
+
+    int i;
+    for(i = 0; i < 4000; i += 4) {
+        buffer[i] = ADC1BUF1;
+        buffer[i + 1] = ADC1BUF2;
+        buffer[i + 2] = ADC1BUF3;
+        buffer[i + 3] = ADC1BUF0;
+    }
+
+    for(i = 0; i < 4000; i += 4) {
+        println(printf("%d,%d,%d,%d," , buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3];
     }
 
 //    int burstBuffer[4][1000];
