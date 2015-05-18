@@ -4,7 +4,7 @@
 #include <libpic30.h>
 
 #define INTERNAL_OSCILLATOR 7370000
-#define FCY INTERNAL_OSCILLATOR*100/8
+#define FCY INTERNAL_OSCILLATOR * 100/8
 #define UART_BAUD 115200
 #define BRGVAL ((FCY/UART_BAUD)/16)-1
 
@@ -40,10 +40,10 @@ void configureClock(void) {
     CLKDIVbits.PLLPRE = 0;          // N2 = 2
     CLKDIVbits.PLLPOST = 0;         // N1 = 2
     // Initiate Clock Switch to FRC oscillator with PLL (NOSC=0b001)
-    __builtin_write_OSCCONH(0x01);
-    __builtin_write_OSCCONL(OSCCON | 0x01);
+    __builtin_write_OSCCONH(1);
+    __builtin_write_OSCCONL(OSCCON | 1);
     // Wait for Clock switch to occur
-    while (OSCCONbits.COSC!= 0b001);
+    while (OSCCONbits.COSC!= 1);
     while(OSCCONbits.LOCK != 1);    // Clock Stabilization
 }
 
@@ -52,8 +52,8 @@ void configureUART(void) {
     U1STA = 0;
     U1BRG = BRGVAL;
 
-    RPOR0bits.RP64R = 0b000001;     // set RP64 as U1TX
-    RPINR18bits.U1RXR = 0b1001011;  // RPI75 as U1RX
+    RPOR0bits.RP64R = 1;     // set RP64 as U1TX
+    RPINR18bits.U1RXR = 75;  // RPI75 as U1RX
 
     U1MODEbits.UARTEN = 1;          // Enable UART
     U1STAbits.UTXEN = 1;            // Enable TX. Do this only after enable UART!

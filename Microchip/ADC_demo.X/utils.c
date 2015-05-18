@@ -4,7 +4,6 @@
     #include <p33Exxxx.h>
 #endif
 
-#include <stdio.h>
 #include <string.h>
 
 #include "utils.h"
@@ -35,22 +34,21 @@ void configureUART(void) {
     U1STA = 0;
     U1BRG = BRGVAL;
 
-    RPOR0bits.RP64R = 0b000001;     // set RP64 as U1TX
-    RPINR18bits.U1RXR = 0b1001011;  // RPI75 as U1RX
+    RPOR0bits.RP64R = 1;     // set RP64 as U1TX
+    RPINR18bits.U1RXR = 75;  // RPI75 as U1RX
 
     U1MODEbits.UARTEN = 1;          // Enable UART
     U1STAbits.UTXEN = 1;            // Enable TX. Do this only after enable UART!
 }
 
 void configureClock(void) {
-    /*
-     * This sets FCY  to 46875000
-     * I don't know why.
-     * I don't know how.
-     * Don't change it!
-     */
-    PLLFBD = 48;                    // M = 50
+    PLLFBD = 98;                    // M = PLLFBD + 2
     CLKDIVbits.PLLPRE = 0;          // N2 = 2
     CLKDIVbits.PLLPOST = 0;         // N1 = 2
+    // Initiate Clock Switch to FRC oscillator with PLL (NOSC=0b001)
+    __builtin_write_OSCCONH(1);
+    __builtin_write_OSCCONL(OSCCON | 1);
+    // Wait for Clock switch to occur
+    while (OSCCONbits.COSC!= 1);
     while(OSCCONbits.LOCK != 1);    // Clock Stabilization
 }

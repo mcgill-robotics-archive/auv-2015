@@ -14,8 +14,10 @@ extern int **passiveBuffer[4];
 int main(void)
 {
     initApp();
+    
     while(1) {
         println("hello");
+        delay_s(1);
     }
 //    int i = 0;
 //    for(i = 0; i < 1000; i++) {

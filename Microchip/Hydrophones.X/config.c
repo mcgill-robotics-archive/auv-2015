@@ -11,6 +11,11 @@
 #define UART_BAUD 115200
 #define BRGVAL ((FCY/UART_BAUD)/16)-1
 
+// Select Internal FRC at POR
+_FOSCSEL(FNOSC_FRC & IESO_OFF);
+// Enable Clock Switching and Configure Primary Oscillator in XT mode
+_FOSC(FCKSM_CSECMD & OSCIOFNC_OFF & POSCMD_NONE);
+
 void configureClock(void);
 void configureUART(void);
 void configureADC(void);
@@ -19,17 +24,18 @@ void initApp(void) {
     configureClock();
     configureUART();
     configureADC();
-    configureInterrupts();
-    delay_s(1);
+    //configureInterrupts();
 }
 
 void configureClock(void) {
-    /*
-     * This sets FCY  to 46875000
-     */
-    PLLFBD = 48;                    // M = 50
-    CLKDIVbits.PLLPRE = 0;          // N2 = 2
-    CLKDIVbits.PLLPOST = 0;         // N1 = 2
+    PLLFBD = M - 2;
+    CLKDIVbits.PLLPRE = N2 - 2;
+    CLKDIVbits.PLLPOST = N1 - 2;
+    // Initiate Clock Switch to FRC oscillator with PLL (NOSC=0b001)
+    __builtin_write_OSCCONH(1);
+    __builtin_write_OSCCONL(OSCCON | 1);
+    // Wait for Clock switch to occur
+    while (OSCCONbits.COSC!= 1);
     while(OSCCONbits.LOCK != 1);    // Clock Stabilization
 }
 
