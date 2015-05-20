@@ -1,0 +1,47 @@
+#! /usr/bin/env python2.7
+
+from argparse import ArgumentParser
+import numpy as np
+import cv2
+import rospy
+from sensor_msgs.msg import Image
+from cv_bridge import  CvBridge
+
+'''
+Author: Max Krogius
+
+Publish a video file as a ros topic on /video_publisher/image)
+'''
+
+def play_video(file_name, rate, loop):
+    pub = rospy.Publisher('video_publisher/image', Image, queue_size=10)
+    cap = cv2.VideoCapture(file_name)
+    r = rospy.Rate(float(rate) if rate else cap.get(cv2.cv.CV_CAP_PROP_FPS))
+    bridge = CvBridge()
+    while not rospy.is_shutdown():
+        ret, frame = cap.read()
+        if not ret:
+            if loop:
+                # Recreate the VideoCapture since there is no easy way to reset
+                cap.release()
+                cap = cv2.VideoCapture(file_name)
+                continue
+            else:
+                break
+        pub.publish(bridge.cv2_to_imgmsg(frame, 'bgr8'))
+        r.sleep()
+
+    # When everything done, release the capture
+    cap.release()
+
+if __name__ == '__main__':
+    parser = ArgumentParser(description='Publish a video on a ros topic')
+    parser.add_argument('file_name', help='Filename of the video to play')
+    parser.add_argument('--loop', help='Loop the video when it ends',
+            action='store_true')
+    parser.add_argument('--rate', help='Framerate at which to publish the video')
+    args = parser.parse_known_args()[0]
+    
+    rospy.init_node('video_publisher')
+    play_video(**vars(args))
+
