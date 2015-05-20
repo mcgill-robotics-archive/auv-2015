@@ -1,0 +1,113 @@
+#! /usr/bin/env python2.7
+
+import cv2
+import math
+import numpy as np
+from cv_backbone import CvBackbone
+
+'''
+Author: Max Krogius
+
+The approach used here is to use findContours, and then filter out bad
+candidates based on size and shape. We are searching here for the inner
+edge of the bin, as the outer edges may be touching and so may not be 
+identified. No attempt at perspective correction is made, camera rectification
+will hopefully be good enough to make rectangles roughly rectangle.
+'''
+
+cb = CvBackbone.CvBackbone('bin_detection')
+
+def suppressSmall(contours, min_length, min_area):
+    # Removes small contours
+    return [c for c in contours
+            if cv2.arcLength(c, closed=True) > min_length
+            and cv2.contourArea(c) > min_area]
+
+def suppressBadShapes(contours):
+    # This works well without skew. It also applies the constraint that
+    # the rectangle we want is about twice as long in one direction
+    rect = np.array([[[0, 0]], [[0, 1]], [[2, 1]], [[2, 0]]])
+    return [c for c in contours if cv2.matchShapes(c, rect, 1, 0.0) < 0.1]
+    
+def suppressNonRectangles(contours):
+# TODO: this suppresses some good shapes, why? Because they have extra vertices
+# Increasing the tolerance causes more stuff to be fit as quadrilaterals
+    valid = []
+    for c in contours:
+        poly = cv2.approxPolyDP(c, 0.05*cv2.arcLength(c, True), True)
+        if len(poly) == 4 and cv2.isContourConvex(poly):
+            valid.append(poly)
+    return valid
+
+def dist(p1, p2):
+    # Distance between two points
+    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
+
+def sideLengths(rect):
+    # Returns the lengths of the sides of the rectangle
+    return map(lambda i: dist(rect[i-1, 0], rect[i,0]), range(4))
+
+def suppressOblongRectangles(rects):
+    # Test that the rectangle is about twice as long in one direction.
+    valid = []
+    for r in rects:
+        lengths = sideLengths(r)
+        oblongity = (lengths[0] + lengths[2])/(lengths[1] + lengths[3])
+        oblongity = oblongity if oblongity > 1 else 1/oblongity
+        if oblongity > 1.5 and oblongity < 2.5:
+            valid.append(r)
+    return valid
+
+def contourIntensityAverage(img, outerContour, innerContour=None):
+    # Calculates the average intensity inside outerContour and outside
+    # innerContour (if provided)
+    mask = np.zeros(img.shape, np.uint8)
+    cv2.drawContours(mask, [outerContour],0,255,-1)
+    if innerContour is not None:
+        cv2.drawContours(mask,[innerContour],0,0,-1)
+    return cv2.mean(img, mask=mask)[0]
+
+def suppressWrongIntensities(contours, img):
+    # Tests for rectangles where the area just outside the border
+    # is lighter than just inside. This is useful to suppress the
+    # outside of the bins.
+    valid = []
+    border = 0.1
+    for c in contours:
+        # Scale contour up and down
+        outer_border = np.int32((1+border)*c - border*np.average(c, axis=0))
+        inner_border = np.int32((1-border)*c + border*np.average(c, axis=0))
+        # Calculate average inner and outer border intensities
+        outer_avg = contourIntensityAverage(img, outer_border, c)
+        inner_avg = contourIntensityAverage(img, c, inner_border)
+        if outer_avg > inner_avg + 10:
+            valid.append(c)
+    return valid
+
+def validate(contours, img):
+# TODO: rewrite to use filter() or something nice
+# TODO: Pull out important params with descriptions
+    min_length = 4*20
+    min_area = 20*20
+    validContours = suppressSmall(contours, min_length, min_area)
+    validContours = suppressNonRectangles(validContours)
+    validContours = suppressOblongRectangles(validContours)
+    validContours = suppressWrongIntensities(validContours, img)
+    #TODO: suppress contours in contours
+    #TODO: Suppress overly skewed rectangles
+    return validContours
+
+
+def findByContours(orig):
+    img = orig.copy()
+    gray = cb.filters.grayScale(img)
+    gray = cb.filters.medianBlur(gray)
+    img = cv2.Canny(gray, 0, 100, apertureSize=5)
+    contours, _ = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+    contours = validate(contours, gray)
+    cv2.drawContours(orig, contours, -1, (0, 0, 255), 5) 
+    cb.publishImage(orig)
+
+if __name__ == '__main__':
+    cb.addImageCallback(findByContours)
+    cb.start()
