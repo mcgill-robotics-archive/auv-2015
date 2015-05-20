@@ -5,7 +5,7 @@ import math
 import numpy as np
 from cv_backbone import CvBackbone
 
-cb = CvBackbone.CvBackbone('fireant_so')
+cb = CvBackbone.CvBackbone('mser')
 min_radius = 10
 
 def drawCircles(circles, img):
