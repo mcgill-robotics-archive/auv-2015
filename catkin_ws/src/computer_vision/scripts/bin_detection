@@ -3,7 +3,9 @@
 import cv2
 import math
 import numpy as np
+import glob
 from cv_backbone import CvBackbone
+import sys
 
 '''
 Author: Max Krogius
@@ -11,11 +13,8 @@ Author: Max Krogius
 The approach used here is to use findContours, and then filter out bad
 candidates based on size and shape. We are searching here for the inner
 edge of the bin, as the outer edges may be touching and so may not be 
-identified. No attempt at perspective correction is made, camera rectification
-will hopefully be good enough to make rectangles roughly rectangle.
+identified. 
 '''
-
-cb = CvBackbone.CvBackbone('bin_detection')
 
 def filterSize(contours, min_length, min_area):
     # Removes small contours
@@ -34,8 +33,8 @@ def suppressBadShapes(contours):
     return [c for c in contours if cv2.matchShapes(c, rect, 1, 0.0) < 0.1]
     
 def filterRectangles(contours, tol):
-# This suppresses some good shapes, why? Because they have extra vertices.
-# Increasing the tolerance causes more stuff to be fit as quadrilaterals.
+    # This suppresses some good shapes, why? Because they have extra vertices.
+    # Increasing the tolerance causes more stuff to be fit as quadrilaterals.
     valid = []
     for c in contours:
         poly = cv2.approxPolyDP(c, tol*cv2.arcLength(c, True), True)
@@ -49,7 +48,7 @@ def dist(p1, p2):
 
 def sideLengths(rect):
     # Returns the lengths of the sides of the rectangle
-    return map(lambda i: dist(rect[i-1, 0], rect[i,0]), range(4))
+    return map(lambda i: dist(rect[i-1], rect[i]), range(4))
 
 def filterAspectRatio(rects, desired_aspect_ratio, aspect_ratio_tol):
     # Test that the aspect ratio of the rectangle i.e is it x times
@@ -58,6 +57,7 @@ def filterAspectRatio(rects, desired_aspect_ratio, aspect_ratio_tol):
             else 1/desired_aspect_ratio
     valid = []
     for r in rects:
+        r = r.reshape(-1, 2)
         lengths = sideLengths(r)
         aspect_ratio = (lengths[0] + lengths[2])/(lengths[1] + lengths[3])
         aspect_ratio = aspect_ratio if aspect_ratio > 1 else 1/aspect_ratio
@@ -118,7 +118,6 @@ def angle_cos(p0, p1, p2):
 def suppressSkewed(contours, cos_thresh):
     valid = []
     for c in contours:
-        c = c.reshape(-1, 2)
         coses = [angle_cos(c[i-2], c[i-1], c[i]) for i in range(4)]
         max_cos = np.max(coses)
         if max_cos < cos_thresh:
@@ -156,6 +155,68 @@ def validate(contours, img):
     validContours = suppressSkewed(validContours, max_cos)
     return validContours
 
+def matchShapes(img1, img2):
+    # Approach is to threshold and compare
+    
+    # Otsu threshold
+    thrsh11 = cb.filters.gaussianBlur(img1)
+    _, thrsh11 = cv2.threshold(thrsh11, 0, 255,
+            cv2.THRESH_OTSU + cv2.THRESH_BINARY)
+    
+    # Adaptive gaussian threshold
+    thrsh12 = cb.filters.gaussianBlur(img1.copy())
+    thrsh12 = cv2.adaptiveThreshold(thrsh12, 255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+    
+    # Combine the two. Otsu gets the internal details and adaptive threshold
+    # gets the general shape.
+    thrsh1 = cv2.bitwise_and(thrsh11, thrsh12)
+
+    # Remove any white around the edges. The silhouette won't reach that far
+    thickness = 10
+    cv2.rectangle(thrsh1, (0,0), (200, thickness),
+            color=0, thickness=cv2.cv.CV_FILLED)
+    cv2.rectangle(thrsh1, (0,0), (thickness, 100),
+            color=0, thickness=cv2.cv.CV_FILLED)
+    cv2.rectangle(thrsh1, (200,100), (200 - thickness, 0),
+            color=0, thickness=cv2.cv.CV_FILLED)
+    cv2.rectangle(thrsh1, (200,100), (0, 100 - thickness),
+            color=0, thickness=cv2.cv.CV_FILLED)
+
+    # Threshold the silhouette. Even if it looks black and white in your image
+    # editor, it is not necessarily binary
+    _, thrsh2 = cv2.threshold(img2, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
+    huMoments1 = cv2.HuMoments(cv2.moments(thrsh1, binaryImage=True))
+    huMoments2 = cv2.HuMoments(cv2.moments(thrsh2, binaryImage=True))
+    m1 = np.sign(huMoments1) * np.log(np.abs(huMoments1))
+    m2 = np.sign(huMoments2) * np.log(np.abs(huMoments2))
+    return np.sum(np.abs(m1 - m2))
+
+def matchSilhouettes(img, rects, orig):
+    src_rect = 100.0 * np.array([[0, 0], [0, 1], [2, 1], [2, 0]])
+    for rect in rects:
+        # Ensure that the rectangle has the long side matched with
+        # the long side of src_rect
+        lengths = sideLengths(rect)
+        aspect_ratio = (lengths[0] + lengths[2])/(lengths[1] + lengths[3])
+        if aspect_ratio < 1:
+            rect = np.roll(rect, 1, axis=0)
+        transform = cv2.getPerspectiveTransform(np.float32(rect),
+                np.float32(src_rect))
+        warped = cv2.warpPerspective(img, transform, (200, 100))
+
+        # Choose the silhouettes which is the closest match
+        name = 'unknown'
+        min_dist = float('inf')
+        for sil_name, sil in silhouettes.iteritems():
+            # TODO: Do we need copies here? Also the silhouette moments
+            # can be pre-computed. Also we should look at fourier descriptors.
+            dist = matchShapes(warped.copy(), sil.copy())
+            if dist < min_dist:
+                min_dist = dist
+                name = sil_name
+        cv2.putText(orig, name, tuple(np.int32(np.average(rect, axis=0))),
+                cv2.FONT_HERSHEY_PLAIN, 1, (0, 0, 255))
 
 def findByContours(orig):
     img = orig.copy()
@@ -163,10 +224,23 @@ def findByContours(orig):
     gray = cb.filters.medianBlur(gray)
     img = cv2.Canny(gray, 0, 100, apertureSize=5)
     contours, _ = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    contours = validate(contours, gray)
-    cv2.drawContours(orig, contours, -1, (0, 0, 255), 1) 
+    rects = validate(contours, gray)
+    matchSilhouettes(cv2.split(orig)[2], rects, orig)
+    cv2.drawContours(orig, rects, -1, (0, 0, 255), 1) 
     cb.publishImage(orig)
 
+def loadSilhouettes():
+    global silhouettes
+    silhouettes = {}
+    for file_name in glob.glob(cb.get_param('~silhouettesPath')):
+        img = cv2.imread(file_name, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+        name = file_name.split('.')[0]
+        name = name.split('/')[-1]
+        silhouettes[name] = img
+
 if __name__ == '__main__':
+    global cb
+    cb = CvBackbone.CvBackbone('bin_detection')
     cb.addImageCallback(findByContours)
+    cb.onStart(loadSilhouettes)
     cb.start()

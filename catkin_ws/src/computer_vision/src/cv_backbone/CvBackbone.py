@@ -18,13 +18,15 @@ import numpy as np
 class CvBackbone(object):
 
     def __init__(self, name):
-        rospy.init_node(name)
         self.name = name
-        self.sub = rospy.Subscriber('image', Image, self.onImageReceived)
         self.bridge = CvBridge()
         self.imageCallbacks = []
         self.filters = filters
         self.publishers = {}
+        self.on_start_fn = lambda : None
+
+    def onStart(self, fn):
+        self.on_start_fn = fn
 
     def onImageReceived(self, img):
         img = self.bridge.imgmsg_to_cv2(img)
@@ -46,6 +48,9 @@ class CvBackbone(object):
         img = np.concatenate(imgs)
         self.publishImage(img, name)
 
+    def get_param(self, param_name, default=None):
+        return rospy.get_param(param_name, default)
+
     def cv2_to_imgmsg(self, img):
         # cv_bridge does not by default correctly transform mono images so
         # here we make sure to publish them in a ros-compatible format
@@ -57,4 +62,9 @@ class CvBackbone(object):
             print('Image has wrong number of channels')
 
     def start(self):
+        rospy.init_node(self.name)
+        # This gives a way for users to do initialization with ros params
+        self.on_start_fn()
+        self.sub = rospy.Subscriber('image', Image, self.onImageReceived)
         rospy.spin()
+
