@@ -105,17 +105,17 @@ include_directories(
 
 ## Declare a cpp executable
 # add_executable(controls_node src/controls_node.cpp)
-add_executable(thrust_mapper src/thrust_mapper.cpp)
-add_dependencies(thrust_mapper auv_msgs_generate_messages_cpp)
+#add_executable(thrust_mapper src/thrust_mapper.cpp)	->Commented out for new python thrust mapper
+#add_dependencies(thrust_mapper auv_msgs_generate_messages_cpp)->Commented out for new python thrust mapper
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(controls_node controls_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(thrust_mapper
-  ${catkin_LIBRARIES}
-)
+#target_link_libraries(thrust_mapper ->Commented out for new python thrust mapper
+#  ${catkin_LIBRARIES}
+#)
 
 #############
 ## Install ##

@@ -103,6 +103,7 @@ if __name__ == '__main__':
     ei_depth = 0.0
     ed_depth = 0.0
 
+    ep_roll = 0.0	#Added for dry test
     ei_roll = 0.0
     ed_roll = 0.0
 
@@ -188,14 +189,15 @@ if __name__ == '__main__':
         # prev_depth = depth
         # fz = kp_depth*depth + ki_depth*ei_depth + kd_depth*ed_depth
 
-        # Roll PID control: Taken out for test on Asimov who can't control roll
-        # ei_roll += roll*dt
-        # ed_roll = (roll - prev_roll)/dt
-        # prev_roll = roll
-        # tx = kp_roll*roll + ki_roll*ei_roll + kd_roll*ed_roll
+        # Roll PID control: Taken out for test on Asimov who can't control roll	-> Taken back in for dry test
+        #ei_roll += roll*dt
+        #ed_roll = (roll - prev_roll)/dt
+        #prev_roll = roll
+        #tx = kp_roll*roll + ki_roll*ei_roll + kd_roll*ed_roll
 
         ep_yaw_prev = ep_yaw
         ep_pitch_prev = ep_pitch
+	ep_roll_prev = ep_roll	#Added for dry test
 
         before_transform = rospy.Time.now()
 
@@ -213,6 +215,7 @@ if __name__ == '__main__':
 
         ep_yaw = desired_yaw - estimated_yaw
         ep_pitch = desired_pitch - estimated_pitch
+	ep_roll = roll - estimated_roll	#Added for dry test
 
         #Correct angle error for wrap aroud
         if (ep_yaw > pi):
@@ -230,6 +233,12 @@ if __name__ == '__main__':
         ei_yaw += ep_yaw*dt
         ed_yaw = (ep_yaw - ep_yaw_prev)/dt
         tz = kp_yaw*ep_yaw + ki_yaw*ei_yaw + kd_yaw*ed_yaw
+
+	#Roll PID control -> Added for dry test
+	ei_roll += ep_roll*dt
+	ed_roll = (ep_roll - ep_roll_prev)/dt
+        tx = kp_roll*ep_roll + ki_roll*ei_roll + kd_roll*ed_roll
+
         
         wrenchMsg = Wrench()
 
