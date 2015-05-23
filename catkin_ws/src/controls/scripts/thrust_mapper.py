@@ -97,20 +97,22 @@ def Wrench_to_thrust_callback(data):
 	
 
 
-def thrustmap():
-	global thrust_pub 
-	thrust_pub = rospy.Publisher('thrustermap', Motor, queue_size = 5)
-	rospy.init_node('thrustermapper', anonymous=True)
-	rate = rospy.Rate(100)
-	while not rospy.is_shutdown():
-		rate.sleep()
+#def thrustmap():
 	
 	
 
 if __name__ == '__main__':
-	thrustmap()
+	#thrustmap()
 
-	rospy.Subscriber("controls/wrench", Wrench, Wrench_to_thrust_callback)
+        global thrust_pub 
+	rospy.init_node('thrustermapper')
+	thrust_pub = rospy.Publisher('thrustermap', Motor, queue_size = 5)
+	sub = rospy.Subscriber("controls/wrench", Wrench, Wrench_to_thrust_callback)
+	rate = rospy.Rate(100)
+	while not rospy.is_shutdown():
+		rate.sleep()
+	
+
 	
 	Motor_msg = Motor()
 
