@@ -232,11 +232,14 @@ def findByContours(orig):
 def loadSilhouettes():
     global silhouettes
     silhouettes = {}
-    for file_name in glob.glob(cb.get_param('~silhouettesPath')):
-        img = cv2.imread(file_name, cv2.CV_LOAD_IMAGE_GRAYSCALE)
-        name = file_name.split('.')[0]
-        name = name.split('/')[-1]
-        silhouettes[name] = img
+    try:
+        for file_name in glob.glob(cb.get_param('~silhouettesPath')):
+            img = cv2.imread(file_name, cv2.CV_LOAD_IMAGE_GRAYSCALE)
+            name = file_name.split('.')[0]
+            name = name.split('/')[-1]
+            silhouettes[name] = img
+    except:
+        print('Could not load silhouettes')
 
 if __name__ == '__main__':
     global cb
