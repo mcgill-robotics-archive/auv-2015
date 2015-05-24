@@ -56,5 +56,11 @@ coverage.xml
 # Sphinx documentation
 docs/_build/
 
+# MPLAB stuff:
+Microchip/**/private
+Microchip/**/nbproject/*.properties
+Microchip/**/nbproject/*.bash
+Microchip/**/nbproject/*.mk
+
 # Temporary files
 *~
