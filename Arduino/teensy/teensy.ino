@@ -3,18 +3,20 @@
 #include <std_msgs/Int16.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Float32.h>
-#include <controls/motorCommands.h>
-#include <robosub_msg/solenoid.h>
+#include <auv_msgs/motorCommands.h>
+//#include <robosub_msg/solenoid.h>
 
 //Pin definitions
 
   //PWM MOTOR
-  #define MOTOR_PIN_SU_ST 4
-  #define MOTOR_PIN_SU_PO 5
-  #define MOTOR_PIN_SW_BO 2
-  #define MOTOR_PIN_SW_ST 3
-  #define MOTOR_PIN_HE_BO 0
-  #define MOTOR_PIN_HE_ST 1
+  #define MOTOR_PIN_SU_ST 9 //Seabotix_1 : port_surge
+  #define MOTOR_PIN_SU_PO 10 //Seabotix_2 : starboard_surge
+  #define MOTOR_PIN_SW_BO 7 //T100_1 : bow_sway
+  #define MOTOR_PIN_SW_ST 6 //T100_2 : stern_sway
+  #define MOTOR_PIN_HE_BO 5 //T100_3 : port_bow_heave
+  #define MOTOR_PIN_HE_ST 4 //T100_4 : starboard_bow_heave
+  #define MOTOR_PIN_HE_PS 3 //T100_5 : port_stern_heave
+  #define MOTOR_PIN_HE_SS 2 //T100_6 : starboard_stern_heave
 
   //SOLENOID
   #define SOLENOID_PIN_D_1 6
@@ -38,13 +40,15 @@
 
 //TIME INTERVAL(unit microsecond)
   #define MOTOR_TIMEOUT 4000          //amount of no signal required to start to reset motors
-  #define TEMPERATURE_INTERVAL 1000   //amount of delay between each temeperatures read
+  #define TEMPERATURE_INTERVAL 1000   //amount of delay between each temperatures read
   #define VOLTAGE_INTERVAL 1000       //amount of delay between each voltages read
   #define DEPTH_INTERVAL 20          //amount of delay between each depth read
 
-const double VOLT_RATIO = (3.3*30.9 * 24.12) / (3.9 * 1024.0 * 23.46); //(teensy voltage * totoal resistance / (single resisitance * max bit))
+const double VOLT_RATIO = (3.3*30.9 * 24.12) / (3.9 * 1024.0 * 23.46); //(teensy voltage * total resistance / (single resisitance * max bit))
 
 ros::NodeHandle nh;
+
+/*
 std_msgs::Int16 depth_msg;
 std_msgs::Float32 batteryVoltage1_msg;
 std_msgs::Float32 batteryVoltage2_msg;
@@ -53,8 +57,9 @@ std_msgs::Float32 temperature2_msg;
 std_msgs::Float32 temperature3_msg;
 std_msgs::Float32 temperature4_msg;
 std_msgs::Float32 temperature5_msg;
+*/
 
-Servo myservo[6];
+Servo myservo[8];
 
 unsigned long depthSensorSchedule = 0;
 unsigned long batteryVoltageSchedule = 0;
@@ -72,23 +77,29 @@ int boundCheck(int x){
   return x;
 }
 
-void motorCb( const controls::motorCommands& msg){
+void motorCb( const auv_msgs::MotorCommands& msg){
+  int offset = 1500;
   lastMotorCommand = millis();
-  myservo[0].writeMicroseconds(1476 + boundCheck(msg.cmd_surge_starboard));
-  myservo[1].writeMicroseconds(1483 + boundCheck(msg.cmd_surge_port));
-  myservo[2].writeMicroseconds(1471 + boundCheck(msg.cmd_sway_bow));
-  myservo[3].writeMicroseconds(1476 + boundCheck(msg.cmd_sway_stern));
-  myservo[4].writeMicroseconds(1489 + boundCheck(msg.cmd_heave_bow));
-  myservo[5].writeMicroseconds(1508 + boundCheck(msg.cmd_heave_stern));
+  myservo[0].writeMicroseconds(1500 + boundCheck(msg.port_surge));
+  myservo[1].writeMicroseconds(1500 + boundCheck(msg.starboard_surge));
+  myservo[2].writeMicroseconds(1500 + boundCheck(msg.bow_sway));
+  myservo[3].writeMicroseconds(1500 + boundCheck(msg.stern_sway));
+  myservo[4].writeMicroseconds(1500 + boundCheck(msg.port_bow_heave));
+  myservo[5].writeMicroseconds(1500 + boundCheck(msg.starboard_bow_heave));
+  myservo[6].writeMicroseconds(1500 + boundCheck(msg.port_stern_heave));
+  myservo[7].writeMicroseconds(1500 + boundCheck(msg.starboard_stern_heave));
+  
 }
 
 void resetMotor(){
-  myservo[0].writeMicroseconds(1476);
-  myservo[1].writeMicroseconds(1483);
-  myservo[2].writeMicroseconds(1471);
-  myservo[3].writeMicroseconds(1476);
-  myservo[4].writeMicroseconds(1489);
-  myservo[5].writeMicroseconds(1508);
+  myservo[0].writeMicroseconds(1500);
+  myservo[1].writeMicroseconds(1500);
+  myservo[2].writeMicroseconds(1500);
+  myservo[3].writeMicroseconds(1500);
+  myservo[4].writeMicroseconds(1500);
+  myservo[5].writeMicroseconds(1500);
+  myservo[6].writeMicroseconds(1500);
+  myservo[7].writeMicroseconds(1500);
 }
 
 void resetSolenoid(){
@@ -101,7 +112,7 @@ void resetSolenoid(){
 }
 
 
-
+/*
 void solenoidCb( const robosub_msg::solenoid& msg){
   digitalWrite(SOLENOID_PIN_T_1,msg.torpedo1.data);
   digitalWrite(SOLENOID_PIN_T_2,msg.torpedo2.data);
@@ -112,11 +123,15 @@ void solenoidCb( const robosub_msg::solenoid& msg){
   lastSolenoidCommand= millis();
 }
 
+*/
 
+/*
 ros::Publisher depthPub("/electrical_interface/depth", &depth_msg);  // Publish the depth topic
 
 ros::Publisher voltagePub1("/electrical_interface/batteryVoltage1", &batteryVoltage1_msg);
 ros::Publisher voltagePub2("/electrical_interface/batteryVoltage2", &batteryVoltage2_msg);
+
+*/
 
 /*
 ros::Publisher temperaturePub1("/electrical_interface/temperature1", &temperature1_msg);
@@ -126,21 +141,23 @@ ros::Publisher temperaturePub4("/electrical_interface/temperature4", &temperatur
 ros::Publisher temperaturePub5("/electrical_interface/temperature5", &temperature5_msg);
 */
 
-ros::Subscriber<robosub_msg::solenoid> solenoidSub("/electrical_interface/solenoid", &solenoidCb );
-//ros::Subscriber<controls::motorCommands> motorSub("/electrical_interface/motor", &motorCb );
+//ros::Subscriber<robosub_msg::solenoid> solenoidSub("/electrical_interface/solenoid", &solenoidCb );
+ros::Subscriber<auv_msgs::MotorCommands> motorSub("/electrical_interface/motor", &motorCb );
 
 
 void setup(){
-  /*
+  
   myservo[0].attach(MOTOR_PIN_SU_ST);
   myservo[1].attach(MOTOR_PIN_SU_PO);
   myservo[2].attach(MOTOR_PIN_SW_BO);
   myservo[3].attach(MOTOR_PIN_SW_ST);
   myservo[4].attach(MOTOR_PIN_HE_BO);
   myservo[5].attach(MOTOR_PIN_HE_ST);
-  */
-  //resetMotor();
-  resetSolenoid();
+  myservo[6].attach(MOTOR_PIN_HE_PS);
+  myservo[7].attach(MOTOR_PIN_HE_SS);
+  
+  resetMotor();
+  //resetSolenoid();
   /*
   pinMode(SOLENOID_PIN_T_1,OUTPUT);
   pinMode(SOLENOID_PIN_T_2,OUTPUT);
@@ -154,24 +171,22 @@ void setup(){
   //ros node initialization
   nh.initNode();
 
+  /*
   //ros publisher initialization
   nh.advertise(depthPub);        //depth sensor
   nh.advertise(voltagePub1);     //battery level
   nh.advertise(voltagePub2);
-  /*
   nh.advertise(temperaturePub1);
   nh.advertise(temperaturePub2);
   nh.advertise(temperaturePub3);
   nh.advertise(temperaturePub4);
   nh.advertise(temperaturePub5);
   */
-
+  //nh.subscribe(solenoidSub);
   //ros subscribe initialization
-  //nh.subscribe(motorSub);
-  nh.subscribe(solenoidSub);
-
+  
+  nh.subscribe(motorSub);
   //resetMotor();
-
 }
 
 void loop(){
@@ -192,7 +207,6 @@ void loop(){
    temperaturePub5.publish(&temperature5_msg);
    temperatureSechedule += TEMPERATURE_INTERVAL;
   }
-  */
 
   //depth sensing
   if(depthSensorSchedule < currentTime){
@@ -212,14 +226,15 @@ void loop(){
     batteryVoltageSchedule += VOLTAGE_INTERVAL;
   }
 
-  if(lastMotorCommand + MOTOR_TIMEOUT < currentTime){
-    resetMotor();
-    lastMotorCommand = currentTime;
-  }
+
   if(lastSolenoidCommand + MOTOR_TIMEOUT < currentTime){
     resetSolenoid();
     lastSolenoidCommand = currentTime;
   }
-  
+  */
+    if(lastMotorCommand + MOTOR_TIMEOUT < currentTime){
+    resetMotor();
+    lastMotorCommand = currentTime;
+  }
   nh.spinOnce();
 }
