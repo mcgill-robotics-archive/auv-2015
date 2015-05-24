@@ -1,7 +1,6 @@
 <launch>
     <!-- Parameters needed for controls to work. TODO: namespace these; do we need controlsParameters.yaml?--> 
     <rosparam command="load" file="$(find controls)/gains.yaml" />
-    <rosparam command="load" file="$(find controls)/controlsParameters.yaml"/>
 
     <!-- Launch both nodes -->
     <node name="controls" pkg="controls" type="controls.py" respawn="false" output="screen"/>
