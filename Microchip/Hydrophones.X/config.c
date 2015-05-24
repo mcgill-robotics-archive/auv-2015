@@ -93,3 +93,10 @@ void configureADC(void) {
     //Activate ADC
     AD1CON1bits.ADON = 1;
 }
+
+void configureTimer(void) {
+    T1CONbits.TON = 0;              // Turn off for configuration
+    T1CONbits.TCKPS = 3;            // This should operate the timer at 1/256 FCY
+
+    T1CONbits.TON = 1;              // Turn on timer
+}

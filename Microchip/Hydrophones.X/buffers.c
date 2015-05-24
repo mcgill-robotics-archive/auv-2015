@@ -11,6 +11,8 @@
 int **burstBuffer;
 int **passiveBuffer;
 
+int bufferStatus = 0;
+
 void initializeBuffers(void) {
     burstBuffer = malloc(sizeof(*burstBuffer) * 4);
     passiveBuffer = malloc(sizeof(*passiveBuffer) * 4);
@@ -33,13 +35,21 @@ void store(int value, int hydroNum, int valNum, bufType buf) {
     }
 }
 
-int get(int hydroNum, int valNum, bufType buf) {
+int* get(int hydroNum, bufType buf) {
     switch(buf) {
     case BURST:
-        return burstBuffer[hydroNum - 1][valNum];
+        return burstBuffer[hydroNum - 1];
     case PASSIVE:
-        return passiveBuffer[hydroNum - 1][valNum];
+        return passiveBuffer[hydroNum - 1];
     default:
         return 0;
     }
+}
+
+void setBufferStatus(int status) {
+    bufferStatus = status;
+}
+
+int getBufferStatus(void) {
+    return bufferStatus;
 }

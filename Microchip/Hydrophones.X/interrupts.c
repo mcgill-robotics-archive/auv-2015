@@ -32,6 +32,7 @@ void __attribute__((interrupt, no_auto_psv)) _AD1Interrupt(void) {
 
     if(adcInterruptCounter >= 1000) { //limit to 1000 samples before transmiting
         adcInterruptCounter = 0;
+        setBufferStatus(1);
     }
 
     if(sample(1) > THRESHOLD || sample(2) > THRESHOLD ||
@@ -47,7 +48,9 @@ void __attribute__((interrupt, no_auto_psv)) _AD1Interrupt(void) {
     IFS0bits.AD1IF = 0;             // reset interrupt flag
 }
 
-// Interrupts every X ms
+// should interrupt every 5.5 us
 void __attribute__((interrupt, no_auto_psv)) _T1Interrupt(void) {
+    
+
     IFS0bits.T1IF = 0;              // reset interrupt flag
 }

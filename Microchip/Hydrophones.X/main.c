@@ -11,6 +11,7 @@
 #include "config.h"
 #include "util.h"
 #include "interrupts.h"
+#include "buffers.h"
 
 
 int main(void)
@@ -45,6 +46,16 @@ int main(void)
     // and initializeBuffer() in config.c
 
     initApp();
+
+    while(1) {
+        while(!getBufferStatus());
+
+        setBufferStatus(0);
+        transmitSample(get(1, BURST), 1);
+        transmitSample(get(2, BURST), 2);
+        transmitSample(get(3, BURST), 3);
+        transmitSample(get(4, BURST), 4);
+    }
 
     while(1);
     return 0;
