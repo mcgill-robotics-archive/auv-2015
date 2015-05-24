@@ -7,7 +7,6 @@
 #include <string.h>
 
 void println(const char *line) {
-    strcat(line, "\0");
     unsigned int size = strlen(line);
     while(size) {
         while(U1STAbits.UTXBF);     // wait while TX buffer full
@@ -49,24 +48,4 @@ int sample(int hydroNum) {
     default:
         return 0;
     }
-}
-
-char *intToString(int i, char msg[]) {
-    char const digit[] = "0123456789";
-    char *p = msg;
-    if(i<0){
-        *p++ = '-';
-        i *= -1;
-    }
-    int shifter = i;
-    do{ //Move to where representation ends
-        ++p;
-        shifter = shifter/10;
-    }while(shifter);
-    *p = '\0';
-    do{ //Move back, inserting digits as u go
-        *--p = digit[i%10];
-        i = i/10;
-    }while(i);
-    return msg;
 }

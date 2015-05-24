@@ -6,67 +6,45 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "config.h"
 #include "util.h"
-//#include "global.h"
+#include "interrupts.h"
+
 
 int main(void)
 {
+    // This is what was used to produce the data as seen on Podio
+    // to run this, comment configureInterrupts() and initializeBuffer() in config.c
+
     initApp();
-   
-    int buffer[4000];
 
+    int buffer[4][1000];
     int i;
-    for(i = 0; i < 4000; i += 4) {
-        buffer[i] = ADC1BUF1;
-        buffer[i + 1] = ADC1BUF2;
-        buffer[i + 2] = ADC1BUF3;
-        buffer[i + 3] = ADC1BUF0;
+
+    while(1) { // Note the sample operation is much quicker than the transfer
+        for(i = 0; i < 1000; i++) {
+            buffer[0][i] = sample(1);
+            buffer[1][i] = sample(2);
+            buffer[2][i] = sample(3);
+            buffer[3][i] = sample(4);
+        }
+
+        for(i = 0; i < 1000; i++) {
+            println((char*) printf("%d %d %d %d " , \
+                    buffer[0][i], \
+                    buffer[1][i], \
+                    buffer[2][i], \
+                    buffer[3][i]));
+        }
     }
 
-    for(i = 0; i < 4000; i += 4) {
-//        char *tempMsg1;
-//        intToString(buffer[i], tempMsg1);
-//        char *tempMsg2;
-//        intToString(buffer[i + 1], tempMsg2);
-//        char *tempMsg3;
-//        intToString(buffer[i + 2], tempMsg3);
-//        char *tempMsg4;
-//        intToString(buffer[i + 3], tempMsg4);
-//
-//        char *msg;
-//        strcat(msg, tempMsg1);
-//        strcat(msg, ",");
-//        strcat(msg, tempMsg2);
-//        strcat(msg, ",");
-//        strcat(msg, tempMsg3);
-//        strcat(msg, ",");
-//        strcat(msg, tempMsg4);
-//
-//        println(msg);
+    // This code is untested, but attempts to use interrupts
+    // to run it, comment the code above, and uncomment configureInterrupts()
+    // and initializeBuffer() in config.c
 
-        println(printf("%d,%d,%d,%d," , buffer[i], buffer[i + 1], buffer[i + 2], buffer[i + 3]));
-    }
-//
-//    int burstBuffer[4][1000];
-//    //int passiveBuffer[4][1000];
-//
-//    int i = 0;
-//    for(i = 0; i < 1000; i++) {
-//        burstBuffer[0][i] = sample(1);
-//        burstBuffer[1][i] = sample(2);
-//        burstBuffer[2][i] = sample(3);
-//        burstBuffer[3][i] = sample(4);
-//    }
-//
-//    for(i = 0; i < 1000; i++) {
-//        println(printf("%d,%d,%d,%d,", burstBuffer[0][i], burstBuffer[1][i], burstBuffer[2][i], burstBuffer[3][i]));
-//    }
-//
-//    for(i = 0; i < 4; i++) {
-//        transmitSample(burstBuffer[i], i + 1);
-//    }
+    initApp();
 
     while(1);
     return 0;

@@ -7,9 +7,7 @@
 #include "config.h"
 #include "util.h"
 #include "interrupts.h"
-
-#define UART_BAUD 115200
-#define BRGVAL ((FCY/UART_BAUD)/16)-1
+#include "buffers.h"
 
 // Select Internal FRC at POR
 _FOSCSEL(FNOSC_FRC & IESO_OFF);
@@ -18,11 +16,15 @@ _FOSC(FCKSM_CSECMD & OSCIOFNC_OFF & POSCMD_NONE);
 
 void initApp(void) {
     configureClock();
+    delay_s(4);
     configureUART();
     println("[+] configured Clock & UART");
     configureADC();
     println("[+] configured ADC");
-    //configureInterrupts();
+    initializeBuffers();
+    println("[+] initialized Buffers");
+    configureInterrupts();
+    println("[+] configured Interrupts");
 }
 
 void configureClock(void) {

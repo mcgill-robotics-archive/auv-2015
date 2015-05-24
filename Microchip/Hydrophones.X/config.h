@@ -11,6 +11,9 @@
 */
 #define FCY INTERNAL_OSCILLATOR * M/(N1 * N2 * 2)
 
+#define UART_BAUD 115200
+#define BRGVAL ((FCY/UART_BAUD)/16)-1
+
 void initApp(void);
 void configureClock(void);
 void configureUART(void);
