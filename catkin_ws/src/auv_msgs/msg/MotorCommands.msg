@@ -1,8 +1,8 @@
-int32 portSurge
-int32 starboardSurge
-int32 bowSway
-int32 sternSway
-int32 portBowHeave
-int32 starboardBowHeave
-int32 portSternHeave
-int32 starboardSternHeave
+int32 port_surge
+int32 starboard_surge
+int32 bow_sway
+int32 stern_sway
+int32 port_bow_heave
+int32 starboard_bow_heave
+int32 port_stern_heave
+int32 starboard_stern_heave

@@ -32,10 +32,10 @@ l_7y = 6.331*.0254
 l_8y = 6.331*.0254
 
 T1234_to_Fx_Fy_Mz = matrix([[-1,1,0,0],[0,0,1,-1],[-l_1z,l_2z,l_3z,l_4z]])
-Fx_Fy_Mz_to_T1234 = pinv(A1, rcond = 1e-15)
+Fx_Fy_Mz_to_T1234 = pinv(T1234_to_Fx_Fy_Mz, rcond = 1e-15)
 
 T5678_to_Fz_Mx_My = matrix([[1,1,1,1],[-l_5x,l_6x,l_7x,-l_8x],[-l_5y,-l_6y,l_7y,l_8y]])
-Fz_Mx_My_to_T5678 = pinv(A2, rcond= 1e-15)
+Fz_Mx_My_to_T5678 = pinv(T5678_to_Fz_Mx_My, rcond= 1e-15)
 
 def Wrench_to_thrust_callback(data):
     # Calculations are decoupled into those using the four in-plane thrusters
@@ -57,14 +57,14 @@ def Wrench_to_thrust_callback(data):
     #T7 = heave starboard stern    \heaves positive thrust towards bottom
     #T8 = heave port stern        \heaves positive thrust towards bottom
     cmds_msg = MotorCommands()
-    cmds_msg.portSurge = T1234[0]
-    cmds_msg.starboardSurge = T1234[1]
-    cmds_msg.bowSway = T1234[2]
-    cmds_msg.sternSway = T1234[3]
-    cmds_msg.portBowHeave = T5678[0]
-    cmds_msg.starboardBowHeave = T5678[1]
-    cmds_msg.starboardSternHeave = T5678[2]
-    cmds_msg.portSternHeave = T5678[3]
+    cmds_msg.port_surge = T1234[0]
+    cmds_msg.starboard_surge = T1234[1]
+    cmds_msg.bow_sway = T1234[2]
+    cmds_msg.stern_sway = T1234[3]
+    cmds_msg.port_bow_heave = T5678[0]
+    cmds_msg.starboard_bow_heave = T5678[1]
+    cmds_msg.starboard_stern_heave = T5678[2]
+    cmds_msg.port_stern_heave = T5678[3]
     thrust_pub.publish(cmds_msg)
 
 def loadCharacterization(filename):
