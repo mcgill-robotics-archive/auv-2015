@@ -1,12 +1,10 @@
 #!/usr/bin/env python
 import rospy
+from rospkg import RosPack
 from geometry_msgs.msg import Wrench
-from std_msgs.msg import Float64, String
-from std_msgs.msg import String
 from auv_msgs.msg import MotorCommands
 from numpy import *
 from numpy.linalg import *
-from thrust_character import Force_PWM
 
 #set length from axis for each thruster ex:l_1z is distance from T1 to z-axis
 #z-axis is down, x-axis is towards bow
@@ -40,8 +38,8 @@ Fz_Mx_My_to_T5678 = pinv(T5678_to_Fz_Mx_My, rcond= 1e-15)
 def Wrench_to_thrust_callback(data):
     # Calculations are decoupled into those using the four in-plane thrusters
     # and the four out of plane thrusters
-    Fx_Fy_Mz = [data.force.x, data.force.y, data.torque.z]
-    Fz_Mx_My = [data.force.z, data.torque.x, data.torque.y]
+    Fx_Fy_Mz = matrix([data.force.x, data.force.y, data.torque.z]).T
+    Fz_Mx_My = matrix([data.force.z, data.torque.x, data.torque.y]).T
 
     
     # TODO: Use seabotics calibration too
@@ -67,12 +65,18 @@ def Wrench_to_thrust_callback(data):
     cmds_msg.port_stern_heave = T5678[3]
     thrust_pub.publish(cmds_msg)
 
+def pwm(thrust, data):
+    min_thrust = 0.01
+    pwm = interp(thrust, data[:,0], data[:,1])
+    pwm[thrust < min_thrust] = 0
+    return pwm
+
 def loadCharacterization(filename):
     data = genfromtxt('t100_characterization.csv', delimiter=',')
     # Sort by pwm level. This is necessary so interpolation
     # doesn't mess up
     data = data[data[:,1].argsort()]
-    f = lambda x: interp(x, data[:,0], data[:,1])
+    f = lambda x: pwm(x, data)
 
     # Uncomment to visualize. Probably a good idea when adding
     # a new characterization file
@@ -80,14 +84,15 @@ def loadCharacterization(filename):
     #x = arange(-50, 50, 0.01)
     #plt.plot(x, f(x))
     #plt.show()
-
     return f
 
 if __name__ == '__main__':
-    global thrust_pub, t100_thrust 
-    t100_thrust = loadCharacterization('t100_characterization.py')
+    global thrust_pub, t100_pwm 
+    # TODO: Access resources in a better way
+    filename = RosPack().get_path('controls') + 't100_characterization.csv'
+    t100_pwm = loadCharacterization(filename)
     rospy.init_node('thrust_mapper')
     thrust_pub = rospy.Publisher('thrust_cmds', MotorCommands, queue_size = 5)
-    sub = rospy.Subscriber("controls/wrench", Wrench, Wrench_to_thrust_callback)
+    sub = rospy.Subscriber('controls/wrench', Wrench, Wrench_to_thrust_callback)
     rospy.spin()
 
