@@ -74,7 +74,7 @@ def get_transform(origin_frame, target_frame):
 
 
 def rosInit():
-    rospy.init_node('controls', anonymous=True)
+    rospy.init_node('controls')
 
     global wrenchPublisher
     wrenchPublisher = rospy.Publisher("controls/wrench", Wrench, queue_size=100)
@@ -83,13 +83,10 @@ def rosInit():
     t = rospy.Time.now() + rospy.Duration.from_sec(1)
     while rospy.Time.now() < t :
         try:
-	    get_transform("inital_horizon", "robot")
+	    get_transform("initial_horizon", "robot")
             break
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             pass
-    # We do not use the else clause to print a message of failure to find the transform
-    # because some later call to getTransform will throw an error and inform the user
-
 
 if __name__ == '__main__':
     rosInit()
@@ -161,6 +158,7 @@ if __name__ == '__main__':
 
 
     while not rospy.is_shutdown():
+        # TODO: clean up all this code
 
     	rospy.loginfo("pitch gain is: %f, desired_yaw is: %f, surgeSpeed is: %f, swaySpeed is: %f", kp_pitch, desired_yaw, surgeSpeed, swaySpeed,)
 
@@ -201,6 +199,7 @@ if __name__ == '__main__':
 
         before_transform = rospy.Time.now()
 
+        # TODO: Error handling
         (trans, rot) = get_transform("/initial_horizon", "/robot")
 
         if (rot):

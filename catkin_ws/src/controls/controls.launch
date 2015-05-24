@@ -1,9 +1,9 @@
 <launch>
-    <!-- Parameters needed for controls to work--> 
-  		<rosparam command="load" file="$(find controls)/gains.yaml" />
-                <rosparam command="load" file="$(find controls)/controlsParameters.yaml"/>
+    <!-- Parameters needed for controls to work. TODO: namespace these; do we need controlsParameters.yaml?--> 
+    <rosparam command="load" file="$(find controls)/gains.yaml" />
+    <rosparam command="load" file="$(find controls)/controlsParameters.yaml"/>
 
-  	<!-- Launch both nodes -->
-		 <node name="controls" pkg="controls" type="controls.py" args="--test"  respawn="false" output="screen"/>
-		 <node name="thrust_mapper" pkg="controls" type="thrust_mapper.py" respawn="false" output="screen"/>
+    <!-- Launch both nodes -->
+    <node name="controls" pkg="controls" type="controls.py" respawn="false" output="screen"/>
+    <node name="thrust_mapper" pkg="controls" type="thrust_mapper.py" respawn="false" output="screen"/>
 </launch>
