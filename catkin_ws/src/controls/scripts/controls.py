@@ -5,8 +5,10 @@ import rospy
 from geometry_msgs.msg import Wrench
 from auv_msgs.msg import SetPosition
 from auv_msgs.msg import SetVelocity
+from auv_msgs.msg import SetVelocityAction
 import tf
 from tf.transformations import euler_from_quaternion
+from actionlib import SimpleActionServer
 
 depth_desired = 0.0
 depth_estimated = 0.0
@@ -33,16 +35,21 @@ def normalize_angle(angle, max_angle=pi):
         angle -= 2*pi
     return angle
 
-def setVelocity_callback(data):
+def set_velocity_callback():
     global surgeSpeed, swaySpeed, depth_desired, roll, desired_pitch, desired_yaw, isSettingPosition
-    surgeSpeed = data.surgeSpeed
-    swaySpeed = data.swaySpeed
-    depth_desired = data.depth
-    angles_desired[0] = data.roll
-    angles_desired[1] = data.pitch
-    angles_desired[2] = data.yaw
+    cmd = server.accept_new_goal().cmd
+    surgeSpeed = cmd.surgeSpeed
+    swaySpeed = cmd.swaySpeed
+    depth_desired = cmd.depth
+    angles_desired[0] = cmd.roll
+    angles_desired[1] = cmd.pitch
+    angles_desired[2] = cmd.yaw
 
     isSettingPosition = 0
+    
+def set_velocity_preempt():
+    surgeSpeed = 0
+    swaySpeed = 0
 
 
 def get_transform(origin_frame, target_frame):
@@ -64,8 +71,13 @@ def get_transform(origin_frame, target_frame):
 def rosInit():
     rospy.init_node('controls')
 
-    global wrenchPublisher, listener
+    global wrenchPublisher, listener, server
     listener = tf.TransformListener()
+    #rospy.Subscriber("autonomy/set_velocity", SetVelocity, setVelocity_callback)
+    server = SimpleActionServer('server_name', SetVelocityAction, auto_start=False)
+    server.register_goal_callback(set_velocity_callback)
+    server.register_preempt_callback(set_velocity_preempt)
+    server.start()
     wrenchPublisher = rospy.Publisher("controls/wrench", Wrench, queue_size=100)
     # Maybe we can use rospy.wait_for_message instead of this?
     t = rospy.Time.now() + rospy.Duration.from_sec(1)
@@ -99,9 +111,6 @@ if __name__ == '__main__':
     dt = 0.1
     r = rospy.Rate(1/dt)
 
-    rospy.Subscriber("autonomy/set_velocity", SetVelocity, setVelocity_callback)
-
-
     while not rospy.is_shutdown():
         # Velocity control is open-loop
         fx = surge_coeff*surgeSpeed
@@ -122,16 +131,20 @@ if __name__ == '__main__':
         proportional_error[2] = normalize_angle(proportional_error[2])
         derivative_error[2] = normalize_angle(derivative_error[2])
 
-        moments = integral_error * integral_gains \
+        # Send feedback on yaw error
+        if server.is_active():
+            server.publish_feedback(proportional_error[2])
+
+        output = integral_error * integral_gains \
                 + proportional_error * proportional_gains \
                 + derivative_error * derivative_gains
 
         wrenchMsg = Wrench()
         wrenchMsg.force.x = fx;
         wrenchMsg.force.y = fy;
-        wrenchMsg.force.z = moments[3];
-        wrenchMsg.torque.x = moments[0];
-        wrenchMsg.torque.y = moments[1];
-        wrenchMsg.torque.z = moments[2];
+        wrenchMsg.force.z = output[3];
+        wrenchMsg.torque.x = output[0];
+        wrenchMsg.torque.y = output[1];
+        wrenchMsg.torque.z = output[2];
         wrenchPublisher.publish(wrenchMsg)
         r.sleep()
