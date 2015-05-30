@@ -3,28 +3,29 @@
 #include <std_msgs/Int16.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Float32.h>
-#include <auv_msgs/motorCommands.h>
-//#include <robosub_msg/solenoid.h>
+#include <std_msgs/Bool.h>
+#include <auv_msgs/MotorCommands.h>
+#include <auv_msgs/Solenoid.h>
 
 //Pin definitions
 
 //PWM MOTOR
 #define MOTOR_PIN_SU_ST 9 //SeabotimotorCommandValue_1 : port_surge
 #define MOTOR_PIN_SU_PO 10 //SeabotimotorCommandValue_2 : starboard_surge
-#define MOTOR_PIN_SW_BO 7 //T100_1 : bow_sway
-#define MOTOR_PIN_SW_ST 6 //T100_2 : stern_sway
-#define MOTOR_PIN_HE_BO 5 //T100_3 : port_bow_heave
-#define MOTOR_PIN_HE_ST 4 //T100_4 : starboard_bow_heave
-#define MOTOR_PIN_HE_PS 3 //T100_5 : port_stern_heave
-#define MOTOR_PIN_HE_SS 2 //T100_6 : starboard_stern_heave
+#define MOTOR_PIN_SW_BO 5 //T100_1 : bow_sway
+#define MOTOR_PIN_SW_ST 4 //T100_2 : stern_sway
+#define MOTOR_PIN_HE_BO 3 //T100_3 : port_bow_heave
+#define MOTOR_PIN_HE_ST 2 //T100_4 : starboard_bow_heave
+#define MOTOR_PIN_HE_PS 1 //T100_5 : port_stern_heave
+#define MOTOR_PIN_HE_SS 0 //T100_6 : starboard_stern_heave
 
-//SOLENOID
-#define SOLENOID_PIN_D_1 6
-#define SOLENOID_PIN_D_2 7
-#define SOLENOID_PIN_G_1 8
-#define SOLENOID_PIN_G_2 9
-#define SOLENOID_PIN_T_1 10
-#define SOLENOID_PIN_T_2 11
+//SOLENOID, one used pin for (Pin_33)
+#define SOLENOID_PIN_D_1 12
+#define SOLENOID_PIN_D_2 24
+#define SOLENOID_PIN_G_1 25
+#define SOLENOID_PIN_G_2 26
+#define SOLENOID_PIN_T_1 27
+#define SOLENOID_PIN_T_2 28
 
 //ANALOG
 #define VOLTAGE_PIN_1 A0
@@ -127,19 +128,15 @@ void resetSolenoid(){
   digitalWrite(SOLENOID_PIN_D_2,LOW);
 }
 
-
-/*
-void solenoidCb( const robosub_msg::solenoid& msg){
-  digitalWrite(SOLENOID_PIN_T_1,msg.torpedo1.data);
-  digitalWrite(SOLENOID_PIN_T_2,msg.torpedo2.data);
-  digitalWrite(SOLENOID_PIN_G_1,msg.grabber1.data);
-  digitalWrite(SOLENOID_PIN_G_2,msg.grabber2.data);
-  digitalWrite(SOLENOID_PIN_D_1,msg.dropper1.data);
-  digitalWrite(SOLENOID_PIN_D_2,msg.dropper2.data);
+void solenoidCb( const auv_msgs::Solenoid& msg){
+  digitalWrite(SOLENOID_PIN_T_1,msg.solenoid1);
+  digitalWrite(SOLENOID_PIN_T_2,msg.solenoid2);
+  digitalWrite(SOLENOID_PIN_G_1,msg.solenoid3);
+  digitalWrite(SOLENOID_PIN_G_2,msg.solenoid4);
+  digitalWrite(SOLENOID_PIN_D_1,msg.solenoid5);
+  digitalWrite(SOLENOID_PIN_D_2,msg.solenoid6);
   lastSolenoidCommand= millis();
 }
-
-*/
 
 /*
 ros::Publisher depthPub("/electrical_interface/depth", &depth_msg);  // Publish the depth topic
@@ -157,7 +154,7 @@ ros::Publisher temperaturePub4("/electrical_interface/temperature4", &temperatur
 ros::Publisher temperaturePub5("/electrical_interface/temperature5", &temperature5_msg);
 */
 
-//ros::Subscriber<robosub_msg::solenoid> solenoidSub("/electrical_interface/solenoid", &solenoidCb );
+ros::Subscriber<auv_msgs::Solenoid> solenoidSub("/electrical_interface/solenoid", &solenoidCb );
 ros::Subscriber<auv_msgs::MotorCommands> motorSub("/electrical_interface/motor", &motorCb );
 
 
@@ -173,17 +170,15 @@ void setup(){
   myservo[7].attach(MOTOR_PIN_HE_SS);
   
   resetMotor();
-  //resetSolenoid();
-  /*
+  resetSolenoid();
+  
   pinMode(SOLENOID_PIN_T_1,OUTPUT);
   pinMode(SOLENOID_PIN_T_2,OUTPUT);
   pinMode(SOLENOID_PIN_D_1,OUTPUT);
   pinMode(SOLENOID_PIN_D_2,OUTPUT);
   pinMode(SOLENOID_PIN_G_1,OUTPUT);
   pinMode(SOLENOID_PIN_G_2,OUTPUT);
-  */
-
-
+  
   //ros node initialization
   nh.initNode();
 
@@ -198,10 +193,10 @@ void setup(){
   nh.advertise(temperaturePub4);
   nh.advertise(temperaturePub5);
   */
-  //nh.subscribe(solenoidSub);
   
   //ros subscribe initialization
   nh.subscribe(motorSub);
+  nh.subscribe(solenoidSub);
   
   //resetMotor();
 }
@@ -243,13 +238,14 @@ void loop(){
     batteryVoltageSchedule += VOLTAGE_INTERVAL;
   }
 
-
+  */
+  
   if(lastSolenoidCommand + MOTOR_TIMEOUT < currentTime){
     resetSolenoid();
     lastSolenoidCommand = currentTime;
   }
-  */
-    if(timeLastMotorCommand + MOTOR_TIMEOUT < currentTime){
+  
+  if(timeLastMotorCommand + MOTOR_TIMEOUT < currentTime){
     resetMotor();
     timeLastMotorCommand = currentTime;
   }
