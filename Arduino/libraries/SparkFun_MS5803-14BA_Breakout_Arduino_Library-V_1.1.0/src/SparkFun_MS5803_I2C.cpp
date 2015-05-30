@@ -12,7 +12,7 @@ estimations. It can also be used underwater for water depth measurements.
 In this file are the functions in the MS5803 class
 
 Resources:
-This library uses the Arduino Wire.h to complete I2C transactions.
+This library uses the Arduino wire1.h to complete I2C transactions.
 
 Development environment specifics:
 	IDE: Arduino 1.0.5
@@ -27,13 +27,13 @@ local pub, and you've found our code helpful, please buy us a round!
 Distributed as-is; no warranty is given.
 ******************************************************************************/
 
-#include <Wire.h> // Wire library is used for I2C
+#include <i2c_t3.h> // Wire library is used for I2C
 #include "SparkFun_MS5803_I2C.h"
 
 MS5803::MS5803(ms5803_addr address)
 // Base library type I2C
 {
-	Wire.begin(); // Arduino Wire library initializer
+	//Wire1.begin(); // Arduino Wire library initializer
 	_address = address; //set interface used for communication
 }
 
@@ -50,9 +50,9 @@ uint8_t MS5803::begin(void)
 	uint8_t i;
 	for(i = 0; i <= 7; i++){
 		sendCommand(CMD_PROM + (i * 2));
-		Wire.requestFrom( _address, 2);
-		uint8_t highByte = Wire.read(); 
-		uint8_t lowByte = Wire.read();
+		Wire1.requestFrom( _address, 2);
+		uint8_t highByte = Wire1.read(); 
+		uint8_t lowByte = Wire1.read();
 		coefficient[i] = (highByte << 8)|lowByte;
 	// Uncomment below for debugging output.
 	//	Serial.print("C");
@@ -178,13 +178,13 @@ uint32_t MS5803::getADCconversion(measurement _measurement, precision _precision
 	}	
 	
 	sendCommand(CMD_ADC_READ);
-	Wire.requestFrom(_address, 3);
+	Wire1.requestFrom(_address, 3);
 	
-	while(Wire.available())    
+	while(Wire1.available())    
 	{ 
-		highByte = Wire.read();
-		midByte = Wire.read();
-		lowByte = Wire.read();	
+		highByte = Wire1.read();
+		midByte = Wire1.read();
+		lowByte = Wire1.read();	
 	}
 	
 	result = ((uint32_t)highByte << 16) + ((uint32_t)midByte << 8) + lowByte;
@@ -195,9 +195,9 @@ uint32_t MS5803::getADCconversion(measurement _measurement, precision _precision
 
 void MS5803::sendCommand(uint8_t command)
 {	
-	Wire.beginTransmission( _address);
-	Wire.write(command);
-	Wire.endTransmission();
+	Wire1.beginTransmission( _address);
+	Wire1.write(command);
+	Wire1.endTransmission();
 	
 }
 
