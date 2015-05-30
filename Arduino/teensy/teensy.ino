@@ -8,42 +8,45 @@
 
 //Pin definitions
 
-  //PWM MOTOR
-  #define MOTOR_PIN_SU_ST 9 //Seabotix_1 : port_surge
-  #define MOTOR_PIN_SU_PO 10 //Seabotix_2 : starboard_surge
-  #define MOTOR_PIN_SW_BO 7 //T100_1 : bow_sway
-  #define MOTOR_PIN_SW_ST 6 //T100_2 : stern_sway
-  #define MOTOR_PIN_HE_BO 5 //T100_3 : port_bow_heave
-  #define MOTOR_PIN_HE_ST 4 //T100_4 : starboard_bow_heave
-  #define MOTOR_PIN_HE_PS 3 //T100_5 : port_stern_heave
-  #define MOTOR_PIN_HE_SS 2 //T100_6 : starboard_stern_heave
+//PWM MOTOR
+#define MOTOR_PIN_SU_ST 9 //Seabotix_1 : port_surge
+#define MOTOR_PIN_SU_PO 10 //Seabotix_2 : starboard_surge
+#define MOTOR_PIN_SW_BO 7 //T100_1 : bow_sway
+#define MOTOR_PIN_SW_ST 6 //T100_2 : stern_sway
+#define MOTOR_PIN_HE_BO 5 //T100_3 : port_bow_heave
+#define MOTOR_PIN_HE_ST 4 //T100_4 : starboard_bow_heave
+#define MOTOR_PIN_HE_PS 3 //T100_5 : port_stern_heave
+#define MOTOR_PIN_HE_SS 2 //T100_6 : starboard_stern_heave
 
-  //SOLENOID
-  #define SOLENOID_PIN_D_1 6
-  #define SOLENOID_PIN_D_2 7
-  #define SOLENOID_PIN_G_1 8
-  #define SOLENOID_PIN_G_2 9
-  #define SOLENOID_PIN_T_1 10
-  #define SOLENOID_PIN_T_2 11
+//SOLENOID
+#define SOLENOID_PIN_D_1 6
+#define SOLENOID_PIN_D_2 7
+#define SOLENOID_PIN_G_1 8
+#define SOLENOID_PIN_G_2 9
+#define SOLENOID_PIN_T_1 10
+#define SOLENOID_PIN_T_2 11
 
-  //ANALOG
-  #define VOLTAGE_PIN_1 A0
-  #define VOLTAGE_PIN_2 A1
-  #define DEPTH_SENSOR_PIN A2
-  #define GRABBER_SWTCH_PIN_1 A3
-  #define GRABBER_SWTCH_PIN_2 A4
-  #define TEMPERATURE_PIN_1 A5
-  #define TEMPERATURE_PIN_2 A6
-  #define TEMPERATURE_PIN_3 A7
-  #define TEMPERATURE_PIN_4 A8
-  #define TEMPERATURE_PIN_5 A9
+//ANALOG
+#define VOLTAGE_PIN_1 A0
+#define VOLTAGE_PIN_2 A1
+#define DEPTH_SENSOR_PIN A2
+#define GRABBER_SWTCH_PIN_1 A3
+#define GRABBER_SWTCH_PIN_2 A4
+#define TEMPERATURE_PIN_1 A5
+#define TEMPERATURE_PIN_2 A6
+#define TEMPERATURE_PIN_3 A7
+#define TEMPERATURE_PIN_4 A8
+#define TEMPERATURE_PIN_5 A9
 
 //TIME INTERVAL(unit microsecond)
-  #define MOTOR_TIMEOUT 4000          //amount of no signal required to start to reset motors
-  #define TEMPERATURE_INTERVAL 1000   //amount of delay between each temperatures read
-  #define VOLTAGE_INTERVAL 1000       //amount of delay between each voltages read
-  #define DEPTH_INTERVAL 20          //amount of delay between each depth read
+#define MOTOR_TIMEOUT 4000          //amount of no signal required to start to reset motors
+#define TEMPERATURE_INTERVAL 1000   //amount of delay between each temperatures read
+#define VOLTAGE_INTERVAL 1000       //amount of delay between each voltages read
+#define DEPTH_INTERVAL 20          //amount of delay between each depth read
 
+//THRESHOLD for motor control
+
+#define THRESHOLD_MOTOR 50
 const double VOLT_RATIO = (3.3*30.9 * 24.12) / (3.9 * 1024.0 * 23.46); //(teensy voltage * total resistance / (single resisitance * max bit))
 
 ros::NodeHandle nh;
@@ -63,9 +66,11 @@ Servo myservo[8];
 
 unsigned long depthSensorSchedule = 0;
 unsigned long batteryVoltageSchedule = 0;
+unsigned long timeLastMotorCommand = 0;
 unsigned long temperatureSechedule = 0;
-unsigned long lastMotorCommand = 0;
 unsigned long lastSolenoidCommand = 0;
+
+int lastMotorCommands[] = {0,0,0,0,0,0,0};
 
 int boundCheck(int x){
   if(x> 500 || x< -500){
@@ -79,16 +84,27 @@ int boundCheck(int x){
 
 void motorCb( const auv_msgs::MotorCommands& msg){
   int offset = 1500;
-  lastMotorCommand = millis();
-  myservo[0].writeMicroseconds(1500 + boundCheck(msg.port_surge));
-  myservo[1].writeMicroseconds(1500 + boundCheck(msg.starboard_surge));
-  myservo[2].writeMicroseconds(1500 + boundCheck(msg.bow_sway));
-  myservo[3].writeMicroseconds(1500 + boundCheck(msg.stern_sway));
-  myservo[4].writeMicroseconds(1500 + boundCheck(msg.port_bow_heave));
-  myservo[5].writeMicroseconds(1500 + boundCheck(msg.starboard_bow_heave));
-  myservo[6].writeMicroseconds(1500 + boundCheck(msg.port_stern_heave));
-  myservo[7].writeMicroseconds(1500 + boundCheck(msg.starboard_stern_heave));
-  
+  timeLastMotorCommand = millis();
+  writeMotorCb(0, msg.port_surge);
+  writeMotorCb(1, msg.starboard_surge);
+  writeMotorCb(2, msg.bow_sway);
+  writeMotorCb(3, msg.stern_sway);
+  writeMotorCb(4, msg.port_bow_heave);
+  writeMotorCb(5, msg.starboard_bow_heave);
+  writeMotorCb(6, msg.port_stern_heave);
+  writeMotorCb(7, msg.starboard_stern_heave);
+}
+
+void writeMotorCb (int motorNumber, int x)
+{
+  if(abs(x-lastMotorCommands[motorNumber]) > THRESHOLD_MOTOR)
+    lastMotorCommands[motorNumber] = boundCheck(x);
+  else if (x-lastMotorCommands[motorNumber] > 0)
+    lastMotorCommands[motorNumber] = boundCheck(lastMotorCommands[motorNumber] + THRESHOLD_MOTOR);
+  else if (x-lastMotorCommands[motorNumber] < 0)
+    lastMotorCommands[motorNumber] = boundCheck(lastMotorCommands[motorNumber] - THRESHOLD_MOTOR); 
+ 
+  myservo[motorNumber].writeMicroseconds(1500 + lastMotorCommands[motorNumber]);
 }
 
 void resetMotor(){
@@ -183,9 +199,10 @@ void setup(){
   nh.advertise(temperaturePub5);
   */
   //nh.subscribe(solenoidSub);
-  //ros subscribe initialization
   
+  //ros subscribe initialization
   nh.subscribe(motorSub);
+  
   //resetMotor();
 }
 
@@ -232,9 +249,9 @@ void loop(){
     lastSolenoidCommand = currentTime;
   }
   */
-    if(lastMotorCommand + MOTOR_TIMEOUT < currentTime){
+    if(timeLastMotorCommand + MOTOR_TIMEOUT < currentTime){
     resetMotor();
-    lastMotorCommand = currentTime;
+    timeLastMotorCommand = currentTime;
   }
   nh.spinOnce();
 }
