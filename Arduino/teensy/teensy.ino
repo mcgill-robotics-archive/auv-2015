@@ -9,8 +9,8 @@
 //Pin definitions
 
 //PWM MOTOR
-#define MOTOR_PIN_SU_ST 9 //Seabotix_1 : port_surge
-#define MOTOR_PIN_SU_PO 10 //Seabotix_2 : starboard_surge
+#define MOTOR_PIN_SU_ST 9 //SeabotimotorCommandValue_1 : port_surge
+#define MOTOR_PIN_SU_PO 10 //SeabotimotorCommandValue_2 : starboard_surge
 #define MOTOR_PIN_SW_BO 7 //T100_1 : bow_sway
 #define MOTOR_PIN_SW_ST 6 //T100_2 : stern_sway
 #define MOTOR_PIN_HE_BO 5 //T100_3 : port_bow_heave
@@ -47,7 +47,7 @@
 //THRESHOLD for motor control
 
 #define THRESHOLD_MOTOR 50
-const double VOLT_RATIO = (3.3*30.9 * 24.12) / (3.9 * 1024.0 * 23.46); //(teensy voltage * total resistance / (single resisitance * max bit))
+const double VOLT_RATIO = (3.3*30.9 * 24.12) / (3.9 * 1024.0 * 23.46); //(teensy voltage * total resistance / (single resisitance * mamotorCommandValue bit))
 
 ros::NodeHandle nh;
 
@@ -72,14 +72,14 @@ unsigned long lastSolenoidCommand = 0;
 
 int lastMotorCommands[] = {0,0,0,0,0,0,0};
 
-int boundCheck(int x){
-  if(x> 500 || x< -500){
+int boundCheck(int motorCommandValue){
+  if(motorCommandValue> 500 || motorCommandValue< -500){
     char msg[70];
-    String("Motor Speed out of bound: " + String(x) +" !").toCharArray(msg,70);
+    String("Motor Speed out of bound: " + String(motorCommandValue) +" !").toCharArray(msg,70);
     nh.logerror(msg);
     return 0;
   }
-  return x;
+  return motorCommandValue;
 }
 
 void motorCb( const auv_msgs::MotorCommands& msg){
@@ -95,15 +95,15 @@ void motorCb( const auv_msgs::MotorCommands& msg){
   writeMotorCb(7, msg.starboard_stern_heave);
 }
 
-void writeMotorCb (int motorNumber, int x)
+void writeMotorCb (int motorNumber, int motorCommandValue)
 {
-  if(abs(x-lastMotorCommands[motorNumber]) > THRESHOLD_MOTOR)
-    lastMotorCommands[motorNumber] = boundCheck(x);
-  else if (x-lastMotorCommands[motorNumber] > 0)
+  if(abs(motorCommandValue-lastMotorCommands[motorNumber]) > THRESHOLD_MOTOR)
+    lastMotorCommands[motorNumber] = boundCheck(motorCommandValue);
+  else if (motorCommandValue-lastMotorCommands[motorNumber] > 0)
     lastMotorCommands[motorNumber] = boundCheck(lastMotorCommands[motorNumber] + THRESHOLD_MOTOR);
-  else if (x-lastMotorCommands[motorNumber] < 0)
+  else if (motorCommandValue-lastMotorCommands[motorNumber] < 0)
     lastMotorCommands[motorNumber] = boundCheck(lastMotorCommands[motorNumber] - THRESHOLD_MOTOR); 
- 
+	
   myservo[motorNumber].writeMicroseconds(1500 + lastMotorCommands[motorNumber]);
 }
 
@@ -255,3 +255,4 @@ void loop(){
   }
   nh.spinOnce();
 }
+
