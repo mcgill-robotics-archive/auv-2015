@@ -2,6 +2,7 @@
 import smach
 import smach_ros
 import rospy
+from threading import Thread
 
 # State Foo
 class Foo(smach.State):
@@ -40,6 +41,8 @@ with sm:
 rospy.init_node('test_smach')
 sis = smach_ros.IntrospectionServer('test_smach', sm, '/SM_ROOT')
 sis.start()
-sm.execute()
+smach_thread = Thread(target=sm.execute)
+smach_thread.start()
 rospy.spin()
+sm.request_preempt()
 sis.stop()

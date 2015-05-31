@@ -3,9 +3,7 @@ from math import pi
 import numpy as np
 import rospy
 from geometry_msgs.msg import Wrench
-from auv_msgs.msg import SetPosition
-from auv_msgs.msg import SetVelocity
-from auv_msgs.msg import SetVelocityAction
+from auv_msgs.msg import SetVelocity, SetVelocityAction, SetVelocityFeedback
 import tf
 from tf.transformations import euler_from_quaternion
 from actionlib import SimpleActionServer
@@ -37,6 +35,7 @@ def normalize_angle(angle, max_angle=pi):
 
 def set_velocity_callback():
     global surgeSpeed, swaySpeed, depth_desired, roll, desired_pitch, desired_yaw, isSettingPosition
+    print 'cmd recieved'
     cmd = server.accept_new_goal().cmd
     surgeSpeed = cmd.surgeSpeed
     swaySpeed = cmd.swaySpeed
@@ -50,6 +49,8 @@ def set_velocity_callback():
 def set_velocity_preempt():
     surgeSpeed = 0
     swaySpeed = 0
+    print 'preempted'
+    server.set_preempted()
 
 
 def get_transform(origin_frame, target_frame):
@@ -74,11 +75,11 @@ def rosInit():
     global wrenchPublisher, listener, server
     listener = tf.TransformListener()
     #rospy.Subscriber("autonomy/set_velocity", SetVelocity, setVelocity_callback)
-    server = SimpleActionServer('server_name', SetVelocityAction, auto_start=False)
+    server = SimpleActionServer('controls', SetVelocityAction, auto_start=False)
     server.register_goal_callback(set_velocity_callback)
     server.register_preempt_callback(set_velocity_preempt)
     server.start()
-    wrenchPublisher = rospy.Publisher("controls/wrench", Wrench, queue_size=100)
+    wrenchPublisher = rospy.Publisher('controls/wrench', Wrench, queue_size=100)
     # Maybe we can use rospy.wait_for_message instead of this?
     t = rospy.Time.now() + rospy.Duration.from_sec(1)
     while rospy.Time.now() < t :
@@ -133,7 +134,10 @@ if __name__ == '__main__':
 
         # Send feedback on yaw error
         if server.is_active():
-            server.publish_feedback(proportional_error[2])
+            feedback = SetVelocityFeedback()
+            feedback.yaw_error = proportional_error[2]
+            server.publish_feedback(feedback)
+            print 'feedback'
 
         output = integral_error * integral_gains \
                 + proportional_error * proportional_gains \

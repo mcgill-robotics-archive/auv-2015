@@ -4,4 +4,4 @@ SetVelocity cmd
 # Result definition.
 ---
 # Feedback definition.
-
+float32 yaw_error
