@@ -3,48 +3,52 @@
 #include <std_msgs/Int16.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Float32.h>
-#include <auv_msgs/motorCommands.h>
-//#include <robosub_msg/solenoid.h>
+#include <std_msgs/Bool.h>
+#include <auv_msgs/MotorCommands.h>
+#include <auv_msgs/Solenoid.h>
 
 //Pin definitions
 
-  //PWM MOTOR
-  #define MOTOR_PIN_SU_ST 9 //Seabotix_1 : port_surge
-  #define MOTOR_PIN_SU_PO 10 //Seabotix_2 : starboard_surge
-  #define MOTOR_PIN_SW_BO 7 //T100_1 : bow_sway
-  #define MOTOR_PIN_SW_ST 6 //T100_2 : stern_sway
-  #define MOTOR_PIN_HE_BO 5 //T100_3 : port_bow_heave
-  #define MOTOR_PIN_HE_ST 4 //T100_4 : starboard_bow_heave
-  #define MOTOR_PIN_HE_PS 3 //T100_5 : port_stern_heave
-  #define MOTOR_PIN_HE_SS 2 //T100_6 : starboard_stern_heave
+//PWM MOTOR
+#define MOTOR_PIN_SU_ST 9 //SeabotimotorCommandValue_1 : port_surge
+#define MOTOR_PIN_SU_PO 10 //SeabotimotorCommandValue_2 : starboard_surge
+#define MOTOR_PIN_SW_BO 5 //T100_1 : bow_sway
+#define MOTOR_PIN_SW_ST 4 //T100_2 : stern_sway
+#define MOTOR_PIN_HE_BO 3 //T100_3 : port_bow_heave
+#define MOTOR_PIN_HE_ST 2 //T100_4 : starboard_bow_heave
+#define MOTOR_PIN_HE_PS 1 //T100_5 : port_stern_heave
+#define MOTOR_PIN_HE_SS 0 //T100_6 : starboard_stern_heave
 
-  //SOLENOID
-  #define SOLENOID_PIN_D_1 6
-  #define SOLENOID_PIN_D_2 7
-  #define SOLENOID_PIN_G_1 8
-  #define SOLENOID_PIN_G_2 9
-  #define SOLENOID_PIN_T_1 10
-  #define SOLENOID_PIN_T_2 11
+//SOLENOID, one used pin for (Pin_33)
+#define SOLENOID_PIN_D_1 12
+#define SOLENOID_PIN_D_2 24
+#define SOLENOID_PIN_G_1 25
+#define SOLENOID_PIN_G_2 26
+#define SOLENOID_PIN_T_1 27
+#define SOLENOID_PIN_T_2 28
 
-  //ANALOG
-  #define VOLTAGE_PIN_1 A0
-  #define VOLTAGE_PIN_2 A1
-  #define DEPTH_SENSOR_PIN A2
-  #define GRABBER_SWTCH_PIN_1 A3
-  #define GRABBER_SWTCH_PIN_2 A4
-  #define TEMPERATURE_PIN_1 A5
-  #define TEMPERATURE_PIN_2 A6
-  #define TEMPERATURE_PIN_3 A7
-  #define TEMPERATURE_PIN_4 A8
-  #define TEMPERATURE_PIN_5 A9
+//ANALOG
+#define VOLTAGE_PIN_1 A0
+#define VOLTAGE_PIN_2 A1
+#define DEPTH_SENSOR_PIN A2
+#define GRABBER_SWTCH_PIN_1 A3
+#define GRABBER_SWTCH_PIN_2 A4
+#define TEMPERATURE_PIN_1 A5
+#define TEMPERATURE_PIN_2 A6
+#define TEMPERATURE_PIN_3 A7
+#define TEMPERATURE_PIN_4 A8
+#define TEMPERATURE_PIN_5 A9
 
 //TIME INTERVAL(unit microsecond)
-  #define MOTOR_TIMEOUT 4000          //amount of no signal required to start to reset motors
-  #define TEMPERATURE_INTERVAL 1000   //amount of delay between each temperatures read
-  #define VOLTAGE_INTERVAL 1000       //amount of delay between each voltages read
-  #define DEPTH_INTERVAL 20          //amount of delay between each depth read
+#define MOTOR_TIMEOUT 4000          //amount of no signal required to start to reset motors
+#define TEMPERATURE_INTERVAL 1000   //amount of delay between each temperatures read
+#define VOLTAGE_INTERVAL 1000       //amount of delay between each voltages read
+#define DEPTH_INTERVAL 20          //amount of delay between each depth read
 
-const double VOLT_RATIO = (3.3*30.9 * 24.12) / (3.9 * 1024.0 * 23.46); //(teensy voltage * total resistance / (single resisitance * max bit))
+//THRESHOLD for motor control
+
+#define THRESHOLD_MOTOR 50
+const double VOLT_RATIO = (3.3*30.9 * 24.12) / (3.9 * 1024.0 * 23.46); //(teensy voltage * total resistance / (single resisitance * mamotorCommandValue bit))
 
 ros::NodeHandle nh;
 
@@ -63,32 +67,45 @@ Servo myservo[8];
 
 unsigned long depthSensorSchedule = 0;
 unsigned long batteryVoltageSchedule = 0;
+unsigned long timeLastMotorCommand = 0;
 unsigned long temperatureSechedule = 0;
-unsigned long lastMotorCommand = 0;
 unsigned long lastSolenoidCommand = 0;
 
-int boundCheck(int x){
-  if(x> 500 || x< -500){
+int lastMotorCommands[] = {0,0,0,0,0,0,0};
+
+int boundCheck(int motorCommandValue){
+  if(motorCommandValue> 500 || motorCommandValue< -500){
     char msg[70];
-    String("Motor Speed out of bound: " + String(x) +" !").toCharArray(msg,70);
+    String("Motor Speed out of bound: " + String(motorCommandValue) +" !").toCharArray(msg,70);
     nh.logerror(msg);
     return 0;
   }
-  return x;
+  return motorCommandValue;
 }
 
 void motorCb( const auv_msgs::MotorCommands& msg){
   int offset = 1500;
-  lastMotorCommand = millis();
-  myservo[0].writeMicroseconds(1500 + boundCheck(msg.port_surge));
-  myservo[1].writeMicroseconds(1500 + boundCheck(msg.starboard_surge));
-  myservo[2].writeMicroseconds(1500 + boundCheck(msg.bow_sway));
-  myservo[3].writeMicroseconds(1500 + boundCheck(msg.stern_sway));
-  myservo[4].writeMicroseconds(1500 + boundCheck(msg.port_bow_heave));
-  myservo[5].writeMicroseconds(1500 + boundCheck(msg.starboard_bow_heave));
-  myservo[6].writeMicroseconds(1500 + boundCheck(msg.port_stern_heave));
-  myservo[7].writeMicroseconds(1500 + boundCheck(msg.starboard_stern_heave));
-  
+  timeLastMotorCommand = millis();
+  writeMotorCb(0, msg.port_surge);
+  writeMotorCb(1, msg.starboard_surge);
+  writeMotorCb(2, msg.bow_sway);
+  writeMotorCb(3, msg.stern_sway);
+  writeMotorCb(4, msg.port_bow_heave);
+  writeMotorCb(5, msg.starboard_bow_heave);
+  writeMotorCb(6, msg.port_stern_heave);
+  writeMotorCb(7, msg.starboard_stern_heave);
+}
+
+void writeMotorCb (int motorNumber, int motorCommandValue)
+{
+  if(abs(motorCommandValue-lastMotorCommands[motorNumber]) > THRESHOLD_MOTOR)
+    lastMotorCommands[motorNumber] = boundCheck(motorCommandValue);
+  else if (motorCommandValue-lastMotorCommands[motorNumber] > 0)
+    lastMotorCommands[motorNumber] = boundCheck(lastMotorCommands[motorNumber] + THRESHOLD_MOTOR);
+  else if (motorCommandValue-lastMotorCommands[motorNumber] < 0)
+    lastMotorCommands[motorNumber] = boundCheck(lastMotorCommands[motorNumber] - THRESHOLD_MOTOR); 
+	
+  myservo[motorNumber].writeMicroseconds(1500 + lastMotorCommands[motorNumber]);
 }
 
 void resetMotor(){
@@ -111,19 +128,15 @@ void resetSolenoid(){
   digitalWrite(SOLENOID_PIN_D_2,LOW);
 }
 
-
-/*
-void solenoidCb( const robosub_msg::solenoid& msg){
-  digitalWrite(SOLENOID_PIN_T_1,msg.torpedo1.data);
-  digitalWrite(SOLENOID_PIN_T_2,msg.torpedo2.data);
-  digitalWrite(SOLENOID_PIN_G_1,msg.grabber1.data);
-  digitalWrite(SOLENOID_PIN_G_2,msg.grabber2.data);
-  digitalWrite(SOLENOID_PIN_D_1,msg.dropper1.data);
-  digitalWrite(SOLENOID_PIN_D_2,msg.dropper2.data);
+void solenoidCb( const auv_msgs::Solenoid& msg){
+  digitalWrite(SOLENOID_PIN_T_1,msg.solenoid1);
+  digitalWrite(SOLENOID_PIN_T_2,msg.solenoid2);
+  digitalWrite(SOLENOID_PIN_G_1,msg.solenoid3);
+  digitalWrite(SOLENOID_PIN_G_2,msg.solenoid4);
+  digitalWrite(SOLENOID_PIN_D_1,msg.solenoid5);
+  digitalWrite(SOLENOID_PIN_D_2,msg.solenoid6);
   lastSolenoidCommand= millis();
 }
-
-*/
 
 /*
 ros::Publisher depthPub("/electrical_interface/depth", &depth_msg);  // Publish the depth topic
@@ -141,7 +154,7 @@ ros::Publisher temperaturePub4("/electrical_interface/temperature4", &temperatur
 ros::Publisher temperaturePub5("/electrical_interface/temperature5", &temperature5_msg);
 */
 
-//ros::Subscriber<robosub_msg::solenoid> solenoidSub("/electrical_interface/solenoid", &solenoidCb );
+ros::Subscriber<auv_msgs::Solenoid> solenoidSub("/electrical_interface/solenoid", &solenoidCb );
 ros::Subscriber<auv_msgs::MotorCommands> motorSub("/electrical_interface/motor", &motorCb );
 
 
@@ -157,17 +170,15 @@ void setup(){
   myservo[7].attach(MOTOR_PIN_HE_SS);
   
   resetMotor();
-  //resetSolenoid();
-  /*
+  resetSolenoid();
+  
   pinMode(SOLENOID_PIN_T_1,OUTPUT);
   pinMode(SOLENOID_PIN_T_2,OUTPUT);
   pinMode(SOLENOID_PIN_D_1,OUTPUT);
   pinMode(SOLENOID_PIN_D_2,OUTPUT);
   pinMode(SOLENOID_PIN_G_1,OUTPUT);
   pinMode(SOLENOID_PIN_G_2,OUTPUT);
-  */
-
-
+  
   //ros node initialization
   nh.initNode();
 
@@ -182,10 +193,11 @@ void setup(){
   nh.advertise(temperaturePub4);
   nh.advertise(temperaturePub5);
   */
-  //nh.subscribe(solenoidSub);
-  //ros subscribe initialization
   
+  //ros subscribe initialization
   nh.subscribe(motorSub);
+  nh.subscribe(solenoidSub);
+  
   //resetMotor();
 }
 
@@ -226,15 +238,17 @@ void loop(){
     batteryVoltageSchedule += VOLTAGE_INTERVAL;
   }
 
-
+  */
+  
   if(lastSolenoidCommand + MOTOR_TIMEOUT < currentTime){
     resetSolenoid();
     lastSolenoidCommand = currentTime;
   }
-  */
-    if(lastMotorCommand + MOTOR_TIMEOUT < currentTime){
+  
+  if(timeLastMotorCommand + MOTOR_TIMEOUT < currentTime){
     resetMotor();
-    lastMotorCommand = currentTime;
+    timeLastMotorCommand = currentTime;
   }
   nh.spinOnce();
 }
+

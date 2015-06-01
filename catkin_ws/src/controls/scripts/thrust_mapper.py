@@ -3,7 +3,7 @@ import rospy
 from rospkg import RosPack
 from geometry_msgs.msg import Wrench
 from auv_msgs.msg import MotorCommands
-import numpy as np
+from numpy import matrix, interp, genfromtxt
 from numpy.linalg import pinv
 
 #set length from axis for each thruster ex:l_1z is distance from T1 to z-axis
