@@ -1,0 +1,54 @@
+#! /usr/bin/env python2.7
+import smach
+import smach_ros
+import rospy
+import math
+from auv_msgs.msg import SetVelocity, SetVelocityGoal, SetVelocityAction
+from threading import Thread
+from planner.components import (createSetYawState, createSetDepthState,
+        createMoveForwardState)
+from smach.user_data import UserData
+from smach_ros import SimpleActionState
+
+rospy.init_node('yaw_test')
+
+speed = rospy.get_param('~speed')
+yaws = rospy.get_param('~yaws')
+times = rospy.get_param('~times')
+if len(yaws) != len(times):
+    raise ValueError('~yaws and ~times must have the same length')
+
+sm = smach.StateMachine(outcomes=['succeeded', 'aborted', 'preempted'],
+        input_keys=['yaw_setpoint', 'depth_setpoint'])
+with sm:
+    for i in range(len(yaws)):
+        smach.StateMachine.add('Yaw {}'.format(yaws[i]),
+                createSetYawState(yaws[i]),
+                transitions={'succeeded':'Move Forward {}'.format(times[i])})
+        smach.StateMachine.add('Move Forward {}'.format(times[i]),
+                createMoveForwardState(speed, rospy.Duration.from_sec(times[i])),
+                transitions={'succeeded':'Stop {}'.format(i)})
+        next_state = 'Yaw {}'.format(yaws[i+1]) if i+1 < len(times) else 'succeeded'
+        smach.StateMachine.add('Stop {}'.format(i),
+                createMoveForwardState(0, rospy.Duration.from_sec(1)),
+                transitions={'succeeded':next_state})
+
+sis = smach_ros.IntrospectionServer('yaw_test', sm, '/SM_ROOT')
+sis.start()
+
+# Create the user data with the initial yaw and depth setpoints.
+userData = UserData()
+userData['yaw_setpoint'] = 0
+userData['depth_setpoint'] = 0
+
+# In order to get smach to respond to ctrl+c we run it in a different thread
+# and request a preempt on ctrl+c.
+smach_thread = Thread(target=lambda : sm.execute(userData))
+smach_thread.start()
+# It is critical to use the on_shutdown method to request the preempt rather than
+# waiting until after rospy spin to do so. Otherwise, the state machine will not respond
+# to ctrl+c. I don't know why
+rospy.on_shutdown(sm.request_preempt)
+rospy.spin()
+smach_thread.join()
+sis.stop()

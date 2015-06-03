@@ -88,7 +88,8 @@ def loadCharacterization(filename):
 if __name__ == '__main__':
     global thrust_pub, t100_pwm 
     # TODO: Access resources in a better way
-    filename = RosPack().get_path('controls') + '/t100_characterization.csv'
+    filename = RosPack().get_path('controls') + \
+            '/config/t100_characterization.csv'
     t100_pwm = loadCharacterization(filename)
     rospy.init_node('thrust_mapper')
     thrust_pub = rospy.Publisher('thrust_cmds', MotorCommands, queue_size = 5)

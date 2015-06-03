@@ -105,6 +105,7 @@ if __name__ == '__main__':
             rospy.get_param("~kd_pitch"),
             rospy.get_param("~kd_yaw"),
             rospy.get_param("~kd_depth")])
+    print derivative_gains
 
     surge_coeff = rospy.get_param("~surge_coeff")
     sway_coeff = rospy.get_param("~sway_coeff")
@@ -121,7 +122,7 @@ if __name__ == '__main__':
         (trans, rot) = get_transform("/initial_horizon", "/robot")
         angles_estimated = euler_from_quaternion(rot)
 
-        proportional_error_prev = proportional_error
+        proportional_error_prev = proportional_error.copy()
         proportional_error[0:3] =  angles_desired - angles_estimated
         proportional_error[3] = depth_desired - depth_estimated
         integral_error += proportional_error * dt

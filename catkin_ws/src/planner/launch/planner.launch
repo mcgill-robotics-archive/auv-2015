@@ -1,0 +1,5 @@
+<launch>
+    <node name="planner" pkg="planner" type="planner">
+        <rosparam file="$(find planner)/config/dead_reckoning.yaml" />
+    </node>
+</launch>
