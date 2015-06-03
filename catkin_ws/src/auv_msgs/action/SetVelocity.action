@@ -5,3 +5,4 @@ SetVelocity cmd
 ---
 # Feedback definition.
 float32 yaw_error
+float32 depth_error

@@ -22,16 +22,25 @@ sm = smach.StateMachine(outcomes=['succeeded', 'aborted', 'preempted'],
         input_keys=['yaw_setpoint', 'depth_setpoint'])
 with sm:
     for i in range(len(yaws)):
-        smach.StateMachine.add('Yaw {}'.format(yaws[i]),
+        smach.StateMachine.add(
+                'Yaw {}'.format(yaws[i]),
                 createSetYawState(yaws[i]),
-                transitions={'succeeded':'Move Forward {}'.format(times[i])})
-        smach.StateMachine.add('Move Forward {}'.format(times[i]),
-                createMoveForwardState(speed, rospy.Duration.from_sec(times[i])),
-                transitions={'succeeded':'Stop {}'.format(i)})
-        next_state = 'Yaw {}'.format(yaws[i+1]) if i+1 < len(times) else 'succeeded'
-        smach.StateMachine.add('Stop {}'.format(i),
+                transitions={'succeeded':'Move Forward {}'.format(times[i])}
+        )
+        smach.StateMachine.add(
+                'Move Forward {}'.format(times[i]),
+                createMoveForwardState(speed,
+                    rospy.Duration.from_sec(times[i])),
+                transitions={'succeeded':'Stop {}'.format(i)}
+        )
+        next_state = 'Yaw {}'.format(yaws[i+1])
+        if i+1 >= len(times):
+            next_state = 'succeeded'
+        smach.StateMachine.add(
+                'Stop {}'.format(i),
                 createMoveForwardState(0, rospy.Duration.from_sec(1)),
-                transitions={'succeeded':next_state})
+                transitions={'succeeded':next_state}
+        )
 
 sis = smach_ros.IntrospectionServer('yaw_test', sm, '/SM_ROOT')
 sis.start()
@@ -45,9 +54,10 @@ userData['depth_setpoint'] = 0
 # and request a preempt on ctrl+c.
 smach_thread = Thread(target=lambda : sm.execute(userData))
 smach_thread.start()
-# It is critical to use the on_shutdown method to request the preempt rather than
-# waiting until after rospy spin to do so. Otherwise, the state machine will not respond
-# to ctrl+c. I don't know why
+
+# It is necessary to use the on_shutdown method to request the preempt rather
+# than waiting until after rospy spin to do so. Otherwise, the state machine
+# will not respond to ctrl+c.
 rospy.on_shutdown(sm.request_preempt)
 rospy.spin()
 smach_thread.join()

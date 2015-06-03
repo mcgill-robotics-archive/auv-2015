@@ -36,7 +36,6 @@ class SetVelocityState(SimpleActionState):
         )
 
     def _goal_cb(self, user_data, goal):
-        print 'starting'
         # Initialize this state
         self.requested_preempt = False
         self.initial_time = rospy.Time.now() 
@@ -46,7 +45,6 @@ class SetVelocityState(SimpleActionState):
 
     def _goal_feedback_cb(self, feedback):
         super(SetVelocityState, self)._goal_feedback_cb(feedback)
-        print 'feedback'
 
         # Exit if we timed out.
         if (self.duration is not None 
