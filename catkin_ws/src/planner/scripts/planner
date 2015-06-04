@@ -33,9 +33,9 @@ with sm:
                     rospy.Duration.from_sec(times[i])),
                 transitions={'succeeded':'Stop {}'.format(i)}
         )
-        next_state = 'Yaw {}'.format(yaws[i+1])
-        if i+1 >= len(times):
-            next_state = 'succeeded'
+        next_state = 'succeeded'
+        if i+1 < len(times):
+            next_state = 'Yaw {}'.format(yaws[i+1])
         smach.StateMachine.add(
                 'Stop {}'.format(i),
                 createMoveForwardState(0, rospy.Duration.from_sec(1)),
