@@ -42,7 +42,7 @@ class SetVelocityState(SimpleActionState):
 
     def _goal_cb(self, user_data, goal):
         # Initialize this state.
-        self.requested_preempt = False
+        self.succeeded = False
         self.initial_time = rospy.Time.now()
 
         # Get the goal to send to controls.
@@ -60,7 +60,7 @@ class SetVelocityState(SimpleActionState):
 
     def result_cb(self, user_data, goal_status, goal_result):
         # If we preempted based on the timeout, the result should be success.
-        if self.requested_preempt and goal_status == GoalStatus.PREEMPTED:
+        if self.succeeded and goal_status == GoalStatus.PREEMPTED:
             if self.success_cb is not None:
                 self.success_cb(user_data)
             return 'succeeded'
@@ -71,5 +71,70 @@ class SetVelocityState(SimpleActionState):
     def exit_success(self):
         # This will cancel the pending action and transition to the next state.
         # The preempt is redefined to be success in result_cb.
-        self.requested_preempt = True
+        self.succeeded = True
         self.request_preempt()
+
+    @classmethod
+    def create_move_forward_state(cls, speed, duration):
+        '''
+        Creates a state which moves the robot forward at the given speed for
+        the given duration. duration should be a rospy.Duration instance.
+        '''
+        def goal_cb(user_data, goal):
+            goal.cmd.yaw = user_data.yaw_setpoint
+            goal.cmd.surgeSpeed = speed
+            goal.cmd.depth = user_data.depth_setpoint
+
+        return cls(
+            goal_cb,
+            duration=duration,
+            input_keys=['yaw_setpoint', 'depth_setpoint'],
+            output_keys=['yaw_setpoint', 'depth_setpoint'])
+
+    @classmethod
+    def create_set_depth_state(cls, depth, tolerance=0.01):
+        '''
+        Creates a state which moves the robot to the given depth. The depth
+        must be within the tolerance twice in a row before the state exits.
+        '''
+        def goal_cb(user_data, goal):
+            goal.cmd.yaw = user_data.yaw_setpoint
+            goal.cmd.depth = depth
+
+        def feedback_cb(state, feedback):
+            if abs(feedback.depth_error) < tolerance:
+                state.exit_success()
+
+        def success_cb(user_data):
+            user_data.depth_setpoint = depth
+
+        return cls(
+            goal_cb,
+            feedback_cb=feedback_cb,
+            success_cb=success_cb,
+            input_keys=['yaw_setpoint', 'depth_setpoint'],
+            output_keys=['yaw_setpoint', 'depth_setpoint'])
+
+    @classmethod
+    def create_set_yaw_state(cls, yaw_offset, tolerance=0.01):
+        '''
+        Creates a state to set the yaw of the robot. Terminates when the yaw
+        error is less than tolerance twice in a row.
+        '''
+        def goal_cb(user_data, goal):
+            goal.cmd.yaw = user_data.yaw_setpoint + yaw_offset
+            goal.cmd.depth = user_data.depth_setpoint
+
+        def feedback_cb(state, feedback):
+            if abs(feedback.yaw_error) < tolerance:
+                state.exit_success()
+
+        def success_cb(user_data):
+            user_data.yaw_setpoint += yaw_offset
+
+        return cls(
+            goal_cb,
+            feedback_cb=feedback_cb,
+            success_cb=success_cb,
+            input_keys=['yaw_setpoint', 'depth_setpoint'],
+            output_keys=['yaw_setpoint', 'depth_setpoint'])
