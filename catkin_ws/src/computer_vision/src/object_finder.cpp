@@ -41,7 +41,7 @@
       contours_poly = std::vector<std::vector<cv::Point> > ( contours.size() );
       std::vector<cv::RotatedRect> boundRect ( contours.size() ); // Best bounding rectangels
       std::vector<cv::Point2f> center ( contours.size() ); // Best bounding circles' centers
-      std::vector<float> radii ( contours.size() ); // Best boinding circles' radii
+      std::vector<float> radii ( contours.size() ); // Best bounding circles' radii
       std::vector<cv::Vec4f> lines ( contours.size() ); // Line along the longest axis of an object
 
       // Finds a bounding box for each of those shapes
