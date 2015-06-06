@@ -1,6 +1,8 @@
-import smach
+# -*- coding: utf-8 -*-
 from planner.primitives import SetVelocityState
-from auv_msgs.msg import SetVelocity
+
+__author__ = 'Max Krogius'
+
 
 def createMoveForwardState(speed, duration):
     '''
@@ -9,12 +11,15 @@ def createMoveForwardState(speed, duration):
     '''
     def goal_cb(user_data, goal):
         goal.cmd.yaw = user_data.yaw_setpoint
-        goal.cmd.surgeSpeed = speed 
+        goal.cmd.surgeSpeed = speed
         goal.cmd.depth = user_data.depth_setpoint
 
-    return SetVelocityState(goal_cb, duration=duration,
-                input_keys=['yaw_setpoint', 'depth_setpoint'],
-                output_keys=['yaw_setpoint', 'depth_setpoint'])
+    return SetVelocityState(
+        goal_cb,
+        duration=duration,
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
+
 
 def createSetDepthState(depth, tolerance=0.01):
     '''
@@ -24,7 +29,7 @@ def createSetDepthState(depth, tolerance=0.01):
     def goal_cb(user_data, goal):
         goal.cmd.yaw = user_data.yaw_setpoint
         goal.cmd.depth = depth
-    
+
     def feedback_cb(state, feedback):
         if abs(feedback.depth_error) < tolerance:
             state.exit_success()
@@ -32,10 +37,13 @@ def createSetDepthState(depth, tolerance=0.01):
     def success_cb(user_data):
         user_data.depth_setpoint = depth
 
-    return SetVelocityState(goal_cb, feedback_cb=feedback_cb,
-            success_cb=success_cb,
-            input_keys=['yaw_setpoint', 'depth_setpoint'],
-            output_keys=['yaw_setpoint', 'depth_setpoint'])
+    return SetVelocityState(
+        goal_cb,
+        feedback_cb=feedback_cb,
+        success_cb=success_cb,
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
+
 
 def createSetYawState(yaw_offset, tolerance=0.01):
     '''
@@ -53,9 +61,9 @@ def createSetYawState(yaw_offset, tolerance=0.01):
     def success_cb(user_data):
         user_data.yaw_setpoint += yaw_offset
 
-    return SetVelocityState(goal_cb, feedback_cb=feedback_cb, 
-            success_cb = success_cb,
-            input_keys=['yaw_setpoint', 'depth_setpoint'],
-            output_keys=['yaw_setpoint', 'depth_setpoint'])
-
-
+    return SetVelocityState(
+        goal_cb,
+        feedback_cb=feedback_cb,
+        success_cb=success_cb,
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
