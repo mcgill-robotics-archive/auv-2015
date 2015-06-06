@@ -5,7 +5,7 @@ import smach
 import smach_ros
 import rospy
 from threading import Thread
-from planner.components import createSetYawState, createMoveForwardState
+from planner.components import create_set_yaw_state, create_move_forward_state
 from smach.user_data import UserData
 
 __author__ = 'Max Krogius'
@@ -25,19 +25,19 @@ def create_state_machine():
         for i in range(len(yaws)):
             smach.StateMachine.add(
                 'Yaw {}'.format(yaws[i]),
-                createSetYawState(yaws[i]),
+                create_set_yaw_state(yaws[i]),
                 transitions={'succeeded': 'Move Forward {}'.format(times[i])})
             smach.StateMachine.add(
                 'Move Forward {}'.format(times[i]),
-                createMoveForwardState(speed,
-                                       rospy.Duration.from_sec(times[i])),
+                create_move_forward_state(speed,
+                                          rospy.Duration.from_sec(times[i])),
                 transitions={'succeeded': 'Stop {}'.format(i)})
             next_state = 'succeeded'
             if i+1 < len(times):
                 next_state = 'Yaw {}'.format(yaws[i+1])
             smach.StateMachine.add(
                 'Stop {}'.format(i),
-                createMoveForwardState(0, rospy.Duration.from_sec(1)),
+                create_move_forward_state(0, rospy.Duration.from_sec(1)),
                 transitions={'succeeded': next_state})
     return sm
 

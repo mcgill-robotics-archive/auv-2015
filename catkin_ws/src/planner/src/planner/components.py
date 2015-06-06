@@ -5,7 +5,7 @@ from planner.primitives import SetVelocityState
 __author__ = 'Max Krogius'
 
 
-def createMoveForwardState(speed, duration):
+def create_move_forward_state(speed, duration):
     '''
     Creates a state which moves the robot forward at the given speed for the
     given duration. duration should be a rospy.Duration instance.
@@ -22,7 +22,7 @@ def createMoveForwardState(speed, duration):
         output_keys=['yaw_setpoint', 'depth_setpoint'])
 
 
-def createSetDepthState(depth, tolerance=0.01):
+def create_set_depth_state(depth, tolerance=0.01):
     '''
     Creates a state which moves the robot to the given depth. The depth must be
     within the tolerance twice in a row before the state exits.
@@ -46,7 +46,7 @@ def createSetDepthState(depth, tolerance=0.01):
         output_keys=['yaw_setpoint', 'depth_setpoint'])
 
 
-def createSetYawState(yaw_offset, tolerance=0.01):
+def create_set_yaw_state(yaw_offset, tolerance=0.01):
     '''
     Creates a state to set the yaw of the robot. Terminates when the yaw error
     is less than tolerance twice in a row.
