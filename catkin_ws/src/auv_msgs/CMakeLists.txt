@@ -3,6 +3,7 @@ project(auv_msgs)
 
 find_package(catkin REQUIRED COMPONENTS
   message_generation
+  actionlib_msgs
   std_msgs
 )
 
@@ -31,6 +32,12 @@ add_service_files(FILES
   Covariance.srv
 )
 
-generate_messages(DEPENDENCIES std_msgs)
-catkin_package(CATKIN_DEPENDS message_runtime)
+add_action_files(
+  DIRECTORY action
+  FILES SetVelocity.action
+)
+
+
+generate_messages(DEPENDENCIES actionlib_msgs std_msgs)
+catkin_package(CATKIN_DEPENDS message_runtime actionlib_msgs)
 

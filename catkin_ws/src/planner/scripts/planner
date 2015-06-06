@@ -1,0 +1,68 @@
+#! /usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+
+import smach
+import smach_ros
+import rospy
+from threading import Thread
+from planner.primitives import SetVelocityState
+from smach.user_data import UserData
+
+__author__ = 'Max Krogius'
+
+
+def create_state_machine():
+    speed = rospy.get_param('~speed')
+    yaws = rospy.get_param('~yaws')
+    times = rospy.get_param('~times')
+    if len(yaws) != len(times):
+        raise ValueError('~yaws and ~times must have the same length')
+
+    sm = smach.StateMachine(
+        outcomes=['succeeded', 'aborted', 'preempted'],
+        input_keys=['yaw_setpoint', 'depth_setpoint'])
+    with sm:
+        for i in range(len(yaws)):
+            smach.StateMachine.add(
+                'Yaw {}'.format(yaws[i]),
+                SetVelocityState.create_set_yaw_state(yaws[i]),
+                transitions={'succeeded': 'Move Forward {}'.format(times[i])})
+            smach.StateMachine.add(
+                'Move Forward {}'.format(times[i]),
+                SetVelocityState.create_move_forward_state(
+                    speed, rospy.Duration.from_sec(times[i])),
+                transitions={'succeeded': 'Stop {}'.format(i)})
+            next_state = 'succeeded'
+            if i+1 < len(times):
+                next_state = 'Yaw {}'.format(yaws[i+1])
+            smach.StateMachine.add(
+                'Stop {}'.format(i),
+                SetVelocityState.create_move_forward_state(
+                    0, rospy.Duration.from_sec(1)),
+                transitions={'succeeded': next_state})
+    return sm
+
+
+if __name__ == '__main__':
+    rospy.init_node('yaw_test')
+    sm = create_state_machine()
+    sis = smach_ros.IntrospectionServer('yaw_test', sm, '/SM_ROOT')
+    sis.start()
+
+    # Create the user data with the initial yaw and depth setpoints.
+    userData = UserData()
+    userData['yaw_setpoint'] = 0
+    userData['depth_setpoint'] = 0
+
+    # In order to get smach to respond to ctrl+c we run it in a different
+    # thread and request a preempt on ctrl+c.
+    smach_thread = Thread(target=lambda: sm.execute(userData))
+    smach_thread.start()
+
+    # It is necessary to use the on_shutdown method to request the preempt
+    # rather than waiting until after rospy spin to do so. Otherwise, the
+    # state machine will not respond to ctrl+c.
+    rospy.on_shutdown(sm.request_preempt)
+    rospy.spin()
+    smach_thread.join()
+    sis.stop()
