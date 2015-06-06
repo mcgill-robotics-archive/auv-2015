@@ -19,13 +19,14 @@ class SetVelocityState(SimpleActionState):
     def __init__(self, goal_cb, duration=None, feedback_cb=None,
                  success_cb=None, input_keys=[], output_keys=[]):
         '''
-        goal_cb -- Callback called when the state becomes active.
-            Variables which need to be initialized each time the state starts
-            should be initialized here. Will be called with the user_data as an
-            argument. It should return a SetVelocity message.
-        duration -- How long to allow controls to work.
-        feedback_cb -- Callback to recieve feedback from the action server.
-        success_cb -- Called on success. Do cleanup here.
+        Args:
+            goal_cb: Callback called when the state becomes active. Variables
+                which need to be initialized each time the state starts should
+                be initialized here. Will be called with the user_data as an
+                argument. It should return a SetVelocity message.
+            duration: How long to allow controls to work.
+            feedback_cb: Callback to recieve feedback from the action server.
+            success_cb: Called on success. Do cleanup here.
         '''
         self.goal_cb = goal_cb
         self.duration = duration
@@ -40,11 +41,11 @@ class SetVelocityState(SimpleActionState):
             output_keys=output_keys)
 
     def _goal_cb(self, user_data, goal):
-        # Initialize this state
+        # Initialize this state.
         self.requested_preempt = False
         self.initial_time = rospy.Time.now()
 
-        # Get the goal to send to controls
+        # Get the goal to send to controls.
         self.goal_cb(user_data, goal)
 
     def _goal_feedback_cb(self, feedback):
@@ -58,16 +59,17 @@ class SetVelocityState(SimpleActionState):
             self.feedback_cb(self, feedback)
 
     def result_cb(self, user_data, goal_status, goal_result):
-        # If we preempted based on the timeout, the result should be success
+        # If we preempted based on the timeout, the result should be success.
         if self.requested_preempt and goal_status == GoalStatus.PREEMPTED:
             if self.success_cb is not None:
                 self.success_cb(user_data)
             return 'succeeded'
         # For all other cases, we let the super handle it, so no need to
         # return anything.
+        return None
 
     def exit_success(self):
         # This will cancel the pending action and transition to the next state.
-        # The preempt is redefined to be success in result_cb
+        # The preempt is redefined to be success in result_cb.
         self.requested_preempt = True
         self.request_preempt()
