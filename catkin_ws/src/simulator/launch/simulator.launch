@@ -21,5 +21,16 @@
   <group if="$(arg useRviz)">
  	<node name="rviz" pkg="rviz" type="rviz" />
   </group>
- 
+
+  <!-- Optionally run the camera visualization -->
+  <arg name="showCameraFeeds" default="0"/>
+  <group if="$(arg showCameraFeeds)">
+    <node name="view_camera_1" pkg="image_view" type="image_view"
+        args="image:=/simulator/camera1/image_raw"/>
+    <node name="view_camera_2" pkg="image_view" type="image_view"
+        args="image:=/simulator/camera2/image_raw"/>
+    <node name="view_camera_3" pkg="image_view" type="image_view"
+        args="image:=/simulator/camera3/image_raw"/>
+  </group>
+
 </launch>

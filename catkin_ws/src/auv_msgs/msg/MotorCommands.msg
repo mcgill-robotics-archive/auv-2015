@@ -1,6 +1,8 @@
-int32 cmd_surge_starboard
-int32 cmd_surge_port
-int32 cmd_sway_bow
-int32 cmd_sway_stern
-int32 cmd_heave_bow
-int32 cmd_heave_stern
+int32 port_surge
+int32 starboard_surge
+int32 bow_sway
+int32 stern_sway
+int32 port_bow_heave
+int32 starboard_bow_heave
+int32 port_stern_heave
+int32 starboard_stern_heave

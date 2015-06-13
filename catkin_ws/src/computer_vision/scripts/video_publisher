@@ -1,0 +1,62 @@
+#! /usr/bin/env python2.7
+
+from argparse import ArgumentParser
+import numpy as np
+import cv2
+import rospy
+from sensor_msgs.msg import Image
+from cv_bridge import  CvBridge
+
+'''
+Author: Max Krogius
+
+Publish a video file as a ros topic on /video_publisher/image)
+'''
+
+def play_video(file_name, rate, loop, grayscale, resolution):
+    pub = rospy.Publisher('video_publisher/image', Image, queue_size=10)
+    cap = cv2.VideoCapture(file_name)
+    r = rospy.Rate(float(rate) if rate else cap.get(cv2.cv.CV_CAP_PROP_FPS))
+    bridge = CvBridge()
+    while not rospy.is_shutdown():
+        try:
+            ret, frame = cap.read()
+            if not ret:
+                if loop:
+                    # Recreate the VideoCapture since there is no easy way to reset
+                    cap.release()
+                    cap = cv2.VideoCapture(file_name)
+                    continue
+                else:
+                    break
+            if resolution:
+                # Yes, it does have to be cast to a tuple.
+                # Otherwise there are segfaults.
+                frame = cv2.resize(frame, tuple(resolution))
+            if grayscale:
+                pub.publish(bridge.cv2_to_imgmsg(cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY), 'mono8'))
+            else:
+                pub.publish(bridge.cv2_to_imgmsg(frame, 'bgr8'))
+            r.sleep()
+        except:
+            pass
+
+    # When everything done, release the capture
+    cap.release()
+
+if __name__ == '__main__':
+    parser = ArgumentParser(description='Publish a video on a ros topic')
+    parser.add_argument('file_name', help='Filename of the video to play')
+    parser.add_argument('--loop', help='Loop the video when it ends',
+            action='store_true')
+    parser.add_argument('--rate', help='Framerate at which to publish the video')
+    parser.add_argument('--grayscale', help='Convert to grayscale before publishing',
+            action='store_true')
+    parser.add_argument('--resolution', nargs=2, metavar=('width', 'height'),
+            type=int, help='Convert to the given resolution')
+
+    args = parser.parse_known_args()[0]
+    
+    rospy.init_node('video_publisher')
+    play_video(**vars(args))
+

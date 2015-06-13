@@ -49,6 +49,11 @@
   <build_depend>nav_msgs</build_depend>
   <build_depend>message_generation</build_depend>
   <build_depend>tf</build_depend>
+  <build_depend>boost</build_depend>
+  <build_depend>auv_msgs</build_depend>
+  <build_depend>angles</build_depend>
+  <build_depend>tf_conversions</build_depend>
+  <build_depend>eigen_conversions</build_depend>
 
   <test_depend>unittest</test_depend>
 
@@ -60,6 +65,11 @@
   <run_depend>nav_msgs</run_depend>
   <run_depend>message_runtime</run_depend>
   <run_depend>tf</run_depend>
+  <run_depend>boost</run_depend>
+  <run_depend>auv_msgs</run_depend>
+  <run_depend>angles</run_depend>
+  <run_depend>tf_conversions</run_depend>
+  <run_depend>eigen_conversions</run_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

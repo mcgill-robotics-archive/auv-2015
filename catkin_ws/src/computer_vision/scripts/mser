@@ -1,0 +1,61 @@
+#! /usr/bin/env python2.7
+
+import cv2
+import math
+import numpy as np
+from cv_backbone import CvBackbone
+
+cb = CvBackbone.CvBackbone('mser')
+min_radius = 10
+
+def drawCircles(circles, img):
+    d_red = cv2.cv.RGB(150, 55, 65)
+    l_red = cv2.cv.RGB(250, 200, 200)
+    for f in circles:
+        cv2.circle(img, (int(f.pt[0]), int(f.pt[1])), int(f.size/2), d_red, 2, cv2.CV_AA)
+        cv2.circle(img, (int(f.pt[0]), int(f.pt[1])), int(f.size/2), l_red, 1, cv2.CV_AA)
+
+def suppressAdjacent(features):
+    validFeatures = []
+    for x in features:
+        for f in features:
+            distx = f.pt[0] - x.pt[0]
+            disty = f.pt[1] - x.pt[1]
+            dist = math.sqrt(distx*distx + disty*disty)
+            if (f.size > x.size) and (dist < 2 * f.size):
+                break
+        else:
+            validFeatures.append(x)
+    return validFeatures
+
+def suppressOffscreen(features, img):
+    width = img.shape[0]
+    height = img.shape[1]
+    return [f for f in features if
+        f.pt[0] > f.size/2 and f.pt[0] < height - f.size/2
+        and f.pt[1] > f.size/2 and f.pt[1] < width - f.size/2]
+
+def suppressSmall(features, radius):
+    return [f for f in features if f.size/2 > radius]
+
+def validateBuoys(features, img):
+    validFeatures = suppressSmall(features, min_radius)
+    validFeatures = suppressOffscreen(validFeatures, img)
+    validFeatures = suppressAdjacent(validFeatures)
+    return validFeatures
+
+
+def mser(orig):
+    img = orig.copy()
+    img2 = cb.filters.grayScale(img)
+
+    detector = cv2.FeatureDetector_create('MSER')
+    fs = detector.detect(img2)
+    fs.sort(key = lambda x: -x.size)
+    fs = validateBuoys(fs, img)
+    drawCircles(fs, img)
+    cb.publishImage(img)
+
+if __name__ == '__main__':
+    cb.addImageCallback(mser)
+    cb.start()

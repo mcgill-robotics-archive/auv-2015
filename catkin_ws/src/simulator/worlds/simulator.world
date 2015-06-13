@@ -34,7 +34,7 @@
       <plugin name="robot" filename="librobot.so"></plugin>
       <static>false</static>
       <!-- x-pos y-pos z-pos roll pitch yaw -->
-      <pose> 1.58725 -3.98664 4.5 3.14159265359 0 1.57079632679 </pose>
+      <pose> 0.58725 -1.98664 4 3.14159265359 0 1.57079632679 </pose>
 
       <link name='body'>
 	    <!-- Metric Inertial Properties -->
@@ -43,11 +43,8 @@
       		<mass>22.2006</mass>
       		<inertia>
       			<ixx>0.649156</ixx>
-				<ixy>-0.00094</ixy>
-				<ixz>-0.04679</ixz>
-				<iyy>1.160882</iyy>
-				<iyz>0.005052</iyz>
-				<izz>1.142592</izz>      			
+			<iyy>1.160882</iyy>
+			<izz>1.142592</izz>      			
       		</inertia>
       	</inertial>
       		
@@ -58,7 +55,8 @@
 			  <scale> .008 .008 .008</scale>
 			</mesh>
 		  </geometry>
-                  <pose> 0 0 0 3.14159265359 0 -1.57079632679 </pose>
+		  <!-- <pose> 0 0 0 3.14159265359 0 -1.57079632679 </pose> -->
+                  <pose> 0.3 0 0 3.14159265359 0 -1.57079632679 </pose>
 		</collision>
 		
 		<visual name='visual'>
@@ -68,19 +66,9 @@
 			  <scale> .008 .008 .008</scale>			
 			</mesh>
 		  </geometry>
-		  <pose> 0 0 0 3.14159265359 0 -1.57079632679 </pose>
+		  <pose> 0.3 0 0 3.14159265359 0 -1.57079632679 </pose>
 		</visual>
       </link>
-
-	<joint name="rrf_joint" type="revolute">
-		<parent>body</parent>
-		<child>robot_reference_frame</child>
-		<axis>0 0 1</axis>
-	</joint>
-	
-	<link name="robot_reference_frame">
-		<pose>0 0 0 3.14159265359 0 1.57079632679</pose> <!--is this still good?-->
-	</link>
 
 	  <!-- camera1 -->
       <joint name='camera1' type='revolute'>
@@ -91,7 +79,7 @@
       </joint>
 
       <link name='camera1_link'>
-	<pose>0 0.1 0 0 0 0</pose>
+	<pose>0.3 0.1 0 0 0 0</pose>
 
 	<collision name='collision'>
 	  <geometry>
@@ -159,7 +147,7 @@
       </joint>
 
       <link name='camera2_link'>
-	<pose>0 -.1 0 0 0 0</pose>
+	<pose>0.3 -.1 0 0 0 0</pose>
 
 	<collision name='collision'>
 	  <geometry>
@@ -226,7 +214,7 @@
       </joint>
 
       <link name='camera3_link'>
-	<pose>-.2 0 .2 0 1.57079632679 3.14159</pose>
+	<pose>0.1 0 .2 0 -1.57079632679 3.14159</pose>
 
 	<collision name='collision'>
 	  <geometry>
@@ -316,8 +304,8 @@
     </model>
 	<!-- gate done -->
 	
-	<!-- line1 -->
-    <model name="line1">
+	<!-- lane 1 -->
+    <model name="lane">
       <pose>-2.46864 12.0738 1 1.5708 -0 -0.976815</pose>
       <static>false</static>
       <link name="body">
@@ -347,7 +335,7 @@
 	<!-- buoys -->
 
 	<!-- red buoy -->
-    <model name="redbuoy">
+    <model name="buoy_red">
       <pose>-1.11281 0.866034 4.5 1.5708 0 0.7</pose>
       <static>false</static>
       <link name="body">
@@ -373,7 +361,7 @@
     <!-- red buoy done -->
     
 	<!-- green buoy -->
-    <model name="greenbuoy">
+    <model name="buoy_green">
       <pose>0.110936 1.67764 4.5 1.5708 0 0.7</pose>
       <static>false</static>
       <link name="body">
@@ -399,7 +387,7 @@
     <!-- green buoy done -->
 
 	<!-- yellow buoy -->
-    <model name="yellowbuoy">
+    <model name="buoy_yellow">
       <pose>0.909955 2.96303 4.5 1.5708 0 0.7</pose>
       <static>false</static>
       <link name="body">
