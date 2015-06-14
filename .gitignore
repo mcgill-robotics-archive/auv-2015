@@ -60,3 +60,6 @@ docs/_build/
 *~
 *.swo
 *.swp
+
+# rosserial lib
+ros_lib/
