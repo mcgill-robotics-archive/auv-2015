@@ -17,10 +17,6 @@ add_message_files(FILES
   SetVelocity.msg
   MotorCommands.msg
 
-  #added by Autonomy
-  CVTarget.msg
-  SonarTarget.msg
-
   #added by State Estimation
   RangeBearingElevation.msg
   SlamEstimate.msg
