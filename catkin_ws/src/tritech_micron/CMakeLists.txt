@@ -5,24 +5,17 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   genmsg
   std_msgs
-  actionlib
+  sensor_msgs
   geometry_msgs
-  actionlib_msgs
-)
-
-add_action_files(
-  FILES
-  Scan.action
+  dynamic_reconfigure
 )
 
 catkin_python_setup()
 
-generate_messages(
-  DEPENDENCIES
-  std_msgs
-  geometry_msgs
-  actionlib_msgs
-)
+generate_dynamic_reconfigure_options(cfg/Scan.cfg)
+
+add_message_files(FILES TritechMicronConfig.msg)
+generate_messages(DEPENDENCIES std_msgs)
 
 catkin_package(
   CATKIN_DEPENDS
