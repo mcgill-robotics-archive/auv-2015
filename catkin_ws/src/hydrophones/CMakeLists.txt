@@ -14,3 +14,5 @@ catkin_package(
   CATKIN_DEPENDS
   rospy
 )
+
+catkin_add_nosetests(test)
