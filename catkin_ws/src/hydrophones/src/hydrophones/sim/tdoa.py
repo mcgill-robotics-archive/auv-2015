@@ -17,8 +17,8 @@ def compute_tdoa(pinger, mics, speed):
         speed: Speed of sound in the medium in m/s.
 
     Returns:
-        List of time difference of arrivals in seconds. The size of the array
-        will be N - 1 where N is the number of mics.
+        List of time difference of arrivals in seconds. The size of the list is
+        the number of mics.
     """
     # Compute theoretical travel time for each mic using Pythagorean theorem.
     dt = []
@@ -29,8 +29,8 @@ def compute_tdoa(pinger, mics, speed):
 
     # Compute travel time difference between each mic and the origin mic.
     tdoa = [
-        t - dt[0]
-        for t in dt[1:]
+        (t - dt[0])
+        for t in dt
     ]
 
     return tdoa
