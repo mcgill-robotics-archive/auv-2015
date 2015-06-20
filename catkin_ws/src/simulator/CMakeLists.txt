@@ -20,7 +20,7 @@ include_directories(
 	include/
 	${roscpp_INCLUDE_DIRS}
 	${Boost_INCLUDE_DIR}
-	${catkin_INCLUDE_DIRS} 
+	${catkin_INCLUDE_DIRS}
 	${GAZEBO_INCLUDE_DIRS})
 
 include(cmake/rospack.cmake)
@@ -51,10 +51,6 @@ target_link_libraries(robot ${roscpp_LIBRARIES} ${catkin_LIBRARIES} ${GAZEBO_LIB
 add_executable(tf_broadcaster_simulator src/tf_broadcaster_simulator.cpp)
 target_link_libraries(tf_broadcaster_simulator ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 add_dependencies(tf_broadcaster_simulator ${catkin_EXPORTED_TARGETS})
-
-# gtest
-catkin_add_gtest(test_robot test/test_robot.cc)
-target_link_libraries(test_robot robot)
 
 add_executable(gazeboDepthEstimator src/gazeboDepthEstimator.cpp)
 target_link_libraries(gazeboDepthEstimator ${catkin_LIBRARIES})
