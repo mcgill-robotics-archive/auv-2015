@@ -1,7 +1,6 @@
 <?xml version ='1.0'?>
 
 <sdf version ='1.4'>
-
   <world name='default'> <!-- Assuming pool is 5m deep -->
 
     <physics type='ode'>
@@ -26,15 +25,16 @@
 	<end>100</end>
 	<density>50</density>
       </fog>
+      <ambient> 1 1 1 1 </ambient>
     </scene>
 	<!-- scene done -->
 
-	<!-- robot -->
+    <!-- robot -->
     <model name="robot">
       <plugin name="robot" filename="librobot.so"></plugin>
       <static>false</static>
       <!-- x-pos y-pos z-pos roll pitch yaw -->
-      <pose> 0.58725 -1.98664 4 3.14159265359 0 1.57079632679 </pose>
+      <pose> 0 -9 5 3.14159265359 0 1.57079632679 </pose>
 
       <link name='body'>
 	    <!-- Metric Inertial Properties -->
@@ -48,26 +48,26 @@
       		</inertia>
       	</inertial>
       		
-		<collision name='collision'>
-		  <geometry>
-			<mesh>
-			  <uri>file://../models/RobotColorGazebo.dae</uri>
-			  <scale> .008 .008 .008</scale>
-			</mesh>
-		  </geometry>
-		  <!-- <pose> 0 0 0 3.14159265359 0 -1.57079632679 </pose> -->
-                  <pose> 0.3 0 0 3.14159265359 0 -1.57079632679 </pose>
-		</collision>
-		
-		<visual name='visual'>
-		  <geometry>
-			<mesh>
-			  <uri>file://../models/RobotColorGazebo.dae</uri>
-			  <scale> .008 .008 .008</scale>			
-			</mesh>
-		  </geometry>
-		  <pose> 0.3 0 0 3.14159265359 0 -1.57079632679 </pose>
-		</visual>
+	<collision name='collision'>
+	  <geometry>
+		<mesh>
+		  <uri>file://../models/RobotColorGazebo.dae</uri>
+		  <scale> .008 .008 .008</scale>
+		</mesh>
+	  </geometry>
+	  <!-- <pose> 0 0 0 3.14159265359 0 -1.57079632679 </pose> -->
+	  <pose> 0.3 0 0 3.14159265359 0 -1.57079632679 </pose>
+	</collision>
+	
+	<visual name='visual'>
+	  <geometry>
+		<mesh>
+		  <uri>file://../models/RobotColorGazebo.dae</uri>
+		  <scale> .008 .008 .008</scale>			
+		</mesh>
+	  </geometry>
+	  <pose> 0.3 0 0 3.14159265359 0 -1.57079632679 </pose>
+	</visual>
       </link>
 
 	  <!-- camera1 -->
@@ -277,7 +277,7 @@
 
 	<!-- gate -->
     <model name="gate">
-      <pose>-0.813998 -0.667664 4.503149 1.5 -0 0</pose>
+      <pose>-1.5 0 5 1.57 -0 0</pose>
       <static>false</static>
       <link name="body">
 
@@ -303,10 +303,40 @@
       <plugin name="move_model" filename="libmove_model.so"></plugin>
     </model>
 	<!-- gate done -->
+
+<!-- maneuver -->
+    <model name="maneuver">
+      <pose>-10.2 8.8 3 1.57 3.14159 -2</pose>
+      <static>false</static>
+      <link name="body">
+
+        <collision name="visual">
+          <geometry>
+            <mesh>
+	      <uri>file://../models/GateColor.dae</uri>
+	      <scale> .01 .01 .01</scale>
+	    </mesh>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <mesh>
+	      <uri>file://../models/GateColor.dae</uri>
+	      <scale> .01 .01 .01</scale>
+	    </mesh>
+          </geometry>
+        </visual>
+
+      </link>
+      <plugin name="move_model" filename="libmove_model.so"></plugin>
+    </model>
+	<!-- gate done -->
+
 	
 	<!-- lane 1 -->
-    <model name="lane">
-      <pose>-2.46864 12.0738 1 1.5708 -0 -0.976815</pose>
+    <model name="lane1">
+      <pose>0 2.2 1 1.5708 -0 -0.976815</pose>
       <static>false</static>
       <link name="body">
 
@@ -332,18 +362,74 @@
     </model>
 	<!-- line1 done -->
 
+<!-- lane 2 -->
+    <model name="lane2">
+      <pose>-4 7.5 1 1.5708 -0 -0.4</pose>
+      <static>false</static>
+      <link name="body">
+
+        <collision name="visual">
+          <geometry>
+            <mesh>
+	      <uri>file://../models/PathColor.dae</uri>
+	      <scale> .01 .01 .01</scale>
+	    </mesh>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <mesh>
+	      <uri>file://../models/PathColor.dae</uri>
+	      <scale> .01 .01 .01</scale>
+	    </mesh>
+          </geometry>
+        </visual>
+
+      </link>
+    </model>
+	<!-- line2 done -->
+
+<!-- lane 3 -->
+    <model name="lane3">
+      <pose>-12.7 11 1 1.5708 -0 0</pose>
+      <static>false</static>
+      <link name="body">
+
+        <collision name="visual">
+          <geometry>
+            <mesh>
+	      <uri>file://../models/PathColor.dae</uri>
+	      <scale> .01 .01 .01</scale>
+	    </mesh>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <mesh>
+	      <uri>file://../models/PathColor.dae</uri>
+	      <scale> .01 .01 .01</scale>
+	    </mesh>
+          </geometry>
+        </visual>
+
+      </link>
+    </model>
+	<!-- line3 done -->
+
+
 	<!-- buoys -->
 
 	<!-- red buoy -->
     <model name="buoy_red">
-      <pose>-1.11281 0.866034 4.5 1.5708 0 0.7</pose>
+      <pose>-2.7 5.3 4 1.5708 0 0.7</pose>
       <static>false</static>
       <link name="body">
         <collision name="visual">
           <geometry>
             <mesh>
-			  <uri>file://../models/RedBuoyColor.dae</uri>
-			  <scale> .01 .01 .01</scale>
+			  <uri>file://../models/RedBuoy.dae</uri>
 		    </mesh>
           </geometry>
         </collision>
@@ -351,8 +437,7 @@
         <visual name="visual">
           <geometry>
             <mesh>
-			  <uri>file://../models/RedBuoyColor.dae</uri>
-			  <scale> .01 .01 .01</scale>
+			  <uri>file://../models/RedBuoy.dae</uri>
 		    </mesh>
           </geometry>
         </visual>
@@ -362,14 +447,13 @@
     
 	<!-- green buoy -->
     <model name="buoy_green">
-      <pose>0.110936 1.67764 4.5 1.5708 0 0.7</pose>
+      <pose>-2.2 5.8 4 1.5708 0 0.7</pose>
       <static>false</static>
       <link name="body">
         <collision name="visual">
           <geometry>
             <mesh>
-			  <uri>file://../models/GreenBuoyColor.dae</uri>
-			  <scale> .01 .01 .01</scale>
+			  <uri>file://../models/GreenBuoy.dae</uri>
 		    </mesh>
           </geometry>
         </collision>
@@ -377,8 +461,7 @@
         <visual name="visual">
           <geometry>
             <mesh>
-			  <uri>file://../models/GreenBuoyColor.dae</uri>
-			  <scale> .01 .01 .01</scale>
+			  <uri>file://../models/GreenBuoy.dae</uri>
 		    </mesh>
           </geometry>
         </visual>
@@ -388,14 +471,13 @@
 
 	<!-- yellow buoy -->
     <model name="buoy_yellow">
-      <pose>0.909955 2.96303 4.5 1.5708 0 0.7</pose>
+      <pose>-1.7 6.3 4 1.5708 0 0.7</pose>
       <static>false</static>
       <link name="body">
         <collision name="visual">
           <geometry>
             <mesh>
-			  <uri>file://../models/YellowBuoyColor.dae</uri>
-			  <scale> .01 .01 .01</scale>
+			  <uri>file://../models/YellowBuoy.dae</uri>
 		    </mesh>
           </geometry>
         </collision>
@@ -403,8 +485,7 @@
         <visual name="visual">
           <geometry>
             <mesh>
-			  <uri>file://../models/YellowBuoyColor.dae</uri>
-			  <scale> .01 .01 .01</scale>
+			  <uri>file://../models/YellowBuoy.dae</uri>
 		    </mesh>
           </geometry>
         </visual>
@@ -414,6 +495,35 @@
 
 	<!-- buoys done -->
 	
+	<!-- bins -->
+    <model name="bin1">
+      <pose>-18 11 0.15 0 0 0</pose>
+      <static>false</static>
+      <link name="body">
+        <collision name="visual">
+          <geometry>
+            <mesh>
+			  <uri>file://../models/EmptyBin.dae</uri>
+			  <!--scale> .01 .01 .01</scale-->
+		    </mesh>
+          </geometry>
+        </collision>
+
+        <visual name="visual">
+          <geometry>
+            <mesh>
+			  <uri>file://../models/EmptyBin.dae</uri>
+			  <!--scale> .01 .01 .01</scale-->
+		    </mesh>
+          </geometry>
+        </visual>
+      </link>
+    </model>
+    
+
+	<!-- bins done -->
+
+
 	<plugin name="create_torpedo" filename="libcreate_torpedo.so"></plugin>
 	
 	<!-- adjust camera so the whole arena is visible -->
