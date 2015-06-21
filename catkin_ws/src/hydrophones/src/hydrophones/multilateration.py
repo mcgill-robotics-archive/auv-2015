@@ -16,7 +16,7 @@ http://en.wikipedia.org/wiki/Multilateration
 
 import numpy as np
 from random import random
-from hydrophones.exceptions import CouldNotBeSolvedError
+from .exceptions import CouldNotBeSolvedError
 
 __author__ = "Anass Al-Wohoush"
 

@@ -4,9 +4,9 @@
 """Tests hydrophones TDOA simulation."""
 
 import rosunit
+from hydrophones import Mic
 from unittest import TestCase
-from hydrophones.models import Mic, Pinger
-from hydrophones.sim.tdoa import compute_tdoa
+from hydrophones.sim import Pinger, compute_tdoa
 
 __author__ = "Anass Al-Wohoush"
 

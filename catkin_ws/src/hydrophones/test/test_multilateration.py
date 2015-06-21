@@ -5,9 +5,9 @@
 
 import rosunit
 from unittest import TestCase
-from hydrophones.models import Mic, Pinger
-from hydrophones.sim.tdoa import compute_tdoa
-from hydrophones.solver.multilateration import solve
+from hydrophones import Mic
+from hydrophones.multilateration import solve
+from hydrophones.sim import Pinger, compute_tdoa
 from hydrophones.exceptions import CouldNotBeSolvedError
 
 __author__ = "Anass Al-Wohoush"
