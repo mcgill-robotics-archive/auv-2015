@@ -75,7 +75,6 @@ def solve(mics, tdoa, speed):
 
         # Solve for (x, y) by QR.
         # 0 = A[m]x + B[m]y + C[m]
-        print A, B, C
         try:
             (x, y) = -np.linalg.solve(np.transpose([A, B]), C)
         except np.linalg.LinAlgError as e:
