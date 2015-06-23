@@ -41,8 +41,8 @@ def solve(mics, tdoa, speed):
     # Force raise Error instead of printing RuntimeWarning.
     np.seterr(all="raise")
 
-    # Add picosecond random noise to lower decrease the chances of having a
-    # singular matrix.
+    # Add picosecond random noise to decrease the chances of having a singular
+    # matrix.
     tdoa = [
         dt + random() * 1e-12
         for dt in tdoa
@@ -52,10 +52,11 @@ def solve(mics, tdoa, speed):
         # Construct vectors.
         # All vectors were multiplied by t[1] * t[0] in order to avoid division
         # by zero.
-        # A[m] = (2 * x[m]) / (v * t[m]) - (2 * x[1]) / (v * t[1])
-        # B[m] = (2 * y[m]) / (v * t[m]) - (2 * y[1]) / (v * t[1])
-        # C[m] = v * (t[m] - t[1]) - (x[m]^2 + y[m]^2) / (v * t[m])
-        #      + (x[1]^2 + y[1]^2) / (v * t[1])
+        # A[m] = 2 * ((x[m] * t[1]) - (x[1] * t[m])) / v
+        # B[m] = 2 * ((y[m] * t[1]) - (y[1] * t[m])) / v
+        # C[m] = t[m] * t[1] * v * (t[m] - t[1])
+        #      - t[1] * (x[m]^2 + y[m]^2) / v
+        #      + t[m] * (x[1]^2 + y[1]^2) / v
         A = [
             (2 / speed) * ((mics[i].x * tdoa[1]) - (mics[1].x * tdoa[i]))
             for i in range(2, NUMBER_OF_MICS)
