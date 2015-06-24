@@ -1,13 +1,12 @@
 class Tracker(object):
-    def __init__(self, target_class, max_empty_frames):
-        self.target_class = target_class
+    def __init__(self, generate_configs, max_empty_frames):
+        self.generate_configs = generate_configs 
         self.max_empty_frames = max_empty_frames
         self.empty_frames_count = 0
         self.configurations = []
 
     def createConfigurations(self, locations):
-        self.configurations = \
-            self.target_class.generateConfigurations(locations)
+        self.configurations = self.generate_configs(locations)
 
     def update(self, locations):
         # Update the empty frames count and fail if too many frames dropped

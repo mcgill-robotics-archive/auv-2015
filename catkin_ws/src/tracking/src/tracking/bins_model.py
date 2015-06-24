@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class LargePositionError(Exception):
+class PositionError(Exception):
     pass
 
 
@@ -14,7 +14,7 @@ class BinsModel(object):
     spacing = 0.6  # 60 cm
     max_pos_error = 0.1  # 10 cm
 
-    def __init__(self, direction, position, num_bins):
+    def __init__(self, position, direction, num_bins):
         '''
         Params:
             direction: Direction along which the bins are arrayed.
@@ -26,17 +26,25 @@ class BinsModel(object):
         self.num_bins = num_bins
 
     def update(self, locations):
+        # Calculate direction and location.
         try:
             direction = self.calculate_bins_direction(locations)
         except NoDirectionError:
             return False
         if np.arccos(np.dot(self.direction, direction)) > self.yaw_dev:
             return False
+        try:
+            position, min_offset, max_offset = self.calculate_bins_locations(
+                np.average(locations, axis=1), direction)
+        except PositionError:
+            return False
 
-        position, min_offset, max_offset = self.calculate_bins_locations(
-            np.average(locations, axis=1), direction, self.spacing)
-
-        if min_offset < 0 or max_offset >= self.num_bins:
+        # Check that it matches with this bins model.
+        offset, error = self.directed_distance_offset(
+            self.position, position, direction, self.spacing)
+        if np.linalg.norm(error) > self.max_pos_error:
+            return False
+        if offset + min_offset < 0 or offset + max_offset >= self.num_bins:
             return False
 
         self.direction = direction
@@ -54,19 +62,26 @@ class BinsModel(object):
             return []
 
         try:
-            center, min_offset, max_offset = cls.calculate_bin_locations(
-                np.average(locations, axis=1), direction, cls.spacing)
-        except LargePositionError:
+            # TODO: sort bins by position first
+            center, min_offset, max_offset = cls.calculate_bins_locations(
+                np.average(locations, axis=1), direction)
+        except PositionError:
             return []
 
-        return [cls(direction, center + i * cls.spacing * direction, num_bins)
+        return [cls(center + i * cls.spacing * direction, direction, num_bins)
                 for i in range(max_offset + 1 - num_bins, min_offset + 1)]
 
     @staticmethod
     def calculate_direction(points):
+        if len(points) == 1:
+            raise NoDirectionError
+        if len(points) = 2:
+            # We can't use method below as covariance of just two points is undefined
+            direction = points[1] - points[0]
+            return direction / np.linalg.norm(direction)
         try:
-            eig_val, eig_vec = np.linalg.eig(np.cov(points))
-            return eig_vec[np.argmax(eig_val, axis=0)]
+            eig_val, eig_vec = np.linalg.eig(np.cov(points, rowvar=0))
+            return eig_vec[np.argmax(np.abs(eig_val), axis=0)]
         except np.linalg.LinAlgError:
             raise NoDirectionError
 
@@ -76,7 +91,7 @@ class BinsModel(object):
         # direction, as an integer multiple of divisor plus a remainder
         diff = p2 - p1
         proj = np.dot(diff, direction)
-        quotient = np.round(proj / divisor)
+        quotient = int(round(proj / divisor))
         remainder = diff - quotient * divisor * direction
         return quotient, remainder
 
@@ -87,33 +102,35 @@ class BinsModel(object):
         # we choose the direction perpendicular to its long axis.
         if len(locations) == 1:
             long_dir = cls.calculate_direction(locations[0])
-            return [long_dir[1], -long_dir[0]]
+            return np.array([long_dir[1], -long_dir[0]])
         else:
             centers = np.average(locations, axis=1)
             return cls.calculate_direction(centers)
 
     @classmethod
-    def calculate_bins_locations(cls, centers, direction, spacing):
+    def calculate_bins_locations(cls, centers, direction):
         min_offset = 0
         max_offset = 0
         errors = [[0, 0]]
+        cum_offset = 0
         for i in range(0, len(centers) - 1):
             # check that the diff between successive locations mod spacing
             # along yaw direction is small.
             offset, error = cls.directed_distance_offset(
-                centers[i], centers[i+1], direction, spacing)
+                centers[i], centers[i+1], direction, cls.spacing)
             if np.linalg.norm(error) > cls.max_pos_error:
-                raise LargePositionError
+                raise PositionError
 
             # and average the diffs including a diff of zero for the first one
             # to get offset from first bin.
             errors.append(error)
 
             # and track the limiting bins
-            if offset > max_offset:
-                max_offset = offset
-            if offset < min_offset:
-                min_offset = offset
+            cum_offset += offset
+            if cum_offset > max_offset:
+                max_offset = cum_offset
+            if cum_offset < min_offset:
+                min_offset = cum_offset
 
-        center = centers[0] + np.average(error, axis=0)
+        center = centers[0] + np.average(errors, axis=0)
         return center, min_offset, max_offset

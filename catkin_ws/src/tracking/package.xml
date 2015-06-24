@@ -46,6 +46,7 @@
   <run_depend>auv_msgs</run_depend>
   <run_depend>rospy</run_depend>
   <run_depend>std_msgs</run_depend>
+  <test_depend>unit_test</test_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

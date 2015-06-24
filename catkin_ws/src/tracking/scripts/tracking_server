@@ -1,0 +1,65 @@
+#! /usr/bin/env python2.7
+
+import rospy
+import tf
+from tracking.tracker import Tracker
+from tracking.models import BinsModel
+from auv_msgs.msg import SetTargetAction
+from actionlib import SimpleActionServer
+
+sub = None
+tracker = None
+transform_broadcaster = None
+
+
+def target_callback(msg):
+    if msg.header.frame_id != 'floating_horizon':
+        rospy.logerror('Target frame transformation not implemented')
+    targets = []
+    height = None
+    for polygon in msg.targets:
+        target = []
+        for point in polygon.points:
+            if not height:
+                height = point.z
+            if abs(height - point.z) > 1e-10:
+                rospy.logerror('Points not in a plane')
+            target.append([point.x, point.y])
+        targets.append(target)
+        tracker.update(targets)
+    if len(tracker.configurations) == 1:
+        conf = tracker.configurations[0]
+        for i in range(conf.num_bins):
+            position = conf.position + i * conf.direction
+            transform_broadcaster.sendTransform(
+                (position[0], position[1], height),
+                (0, 0, 0, 1),
+                msg.header.stamp,
+                'Bin'+str(i),
+                'floating_horizon')
+    else:
+        rospy.logdebug('Tracker has {} configurations'
+                       .format(len(tracker.configurations)))
+
+
+def set_target(goal):
+    global sub
+    if goal.target_name:
+        sub = rospy.Subscriber('cv/identified_targets', target_callback)
+    else:
+        rospy.logerror('Unknown Target')
+
+
+def cancel_target():
+    sub.unregister()
+
+
+if __name__ == '__main__':
+    global tracker
+    tracker = Tracker(lambda x: BinsModel.generate_configs(x, num_bins=4))
+    transform_broadcaster = tf.TransformBroadcaster()
+    server = SimpleActionServer('tracking', SetTargetAction, autostart=False)
+    server.register_goal_callback(set_target)
+    server.register_preempt_callback(cancel_target)
+    server.start()
+    rospy.spin()

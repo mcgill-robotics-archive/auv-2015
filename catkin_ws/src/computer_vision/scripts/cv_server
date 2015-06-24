@@ -1,0 +1,97 @@
+#! /usr/bin/env python2.7
+
+import rospy
+import tf
+import numpy as np
+from std_msgs.msg import Header
+from auv_msgs.msg import CVTarget, SetCVTargetAction
+from geometry_msgs.msg import Polygon, Point32
+import bins_detection
+from actionlib import SimpleActionServer
+from image_geometry import PinholeCameraModel
+from cv_bridge import CvBridge
+
+listener = None
+bins_depth = 4.572  # 15 ft
+subscribers = []
+pub = None
+down_camera_model = None
+bridge = CvBridge()
+
+
+def bins_callback(msg):
+    global down_camera_model, bins_depth
+    if not down_camera_model:
+        rospy.logwarn('No camera info')
+        return
+    rects = bins_detection.findByContours(bridge.imgmsg_to_cv2(msg.data))
+    try:
+        transform = listener.asMatrix('floating_horizon', msg.header)
+        # The camera pinhole, in the floating_horizon frame
+        perspective_point = transform * np.matrix((0., 0., 0., 1.))
+        perspective_transform = tf.transformations(
+            np.array(0., 0., bins_depth),
+            np.array(0., 0., 1.),
+            perspective=perspective_point)
+        target_msg = CVTarget()
+        header = Header()
+        header.frame_id = 'floating_horizon'
+        target_msg.header = header
+        target_msg.targets = []
+        for rect in rects:
+            polygon = Polygon()
+            for xy in rect:
+                camera_ray = down_camera_model.projectPixelTo3dRay(xy)
+                # Convert to homogeneous vector
+                camera_ray.append(1.0)
+                point = np.dot(perspective_transform,
+                               np.dot(transform, camera_ray))
+                point_msg = Point32()
+                point_msg.x = point[0]
+                point_msg.y = point[1]
+                point_msg.z = point[2]
+                polygon.points.append(point_msg)
+            target_msg.targets.append(polygon)
+        pub.publish(target_msg)
+    # TODO: Use wait_for_transform?
+    except tf.Exception:
+        rospy.logerror('Could not get tf between frames {} and {}'
+                       .format('floating_horizon', msg.header.frame_id))
+
+
+def camera_info_callback(msg):
+    global down_camera_model
+    if down_camera_model:
+        down_camera_model.fromCameraInfo(msg)
+    else:
+        down_camera_model = PinholeCameraModel()
+
+
+def register_target(goal):
+    if goal.target_name == CVTarget.BINS:
+        subscribers.append(
+            rospy.Subscriber('camera_down/camera_info', camera_info_callback))
+        subscribers.append(
+            rospy.Subscriber('camera_down/image_rect_color', bins_callback))
+    else:
+        rospy.logerror('Unknown Target')
+
+
+def cancel_target():
+    global subscribers
+    [s.unregister() for s in subscribers]
+    subscribers = []
+
+target_map = {CVTarget.BINS: bins_callback}
+
+if __name__ == '__main__':
+    global listener, pub
+    rospy.init_node('cv_server')
+    server = SimpleActionServer('cv_server', SetTargetAction,
+                                auto_start=False)
+    server.register_goal_callback(register_target)
+    server.register_preempt_callback(cancel_target)
+    server.start()
+    listener = tf.TransformListener()
+    pub = rospy.Publisher('cv/identified_targets')
+    rospy.spin()
