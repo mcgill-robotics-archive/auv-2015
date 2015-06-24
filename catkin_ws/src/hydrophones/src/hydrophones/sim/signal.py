@@ -2,6 +2,7 @@
 
 """Pinger model."""
 
+import rospy
 import numpy as np
 from scipy import signal as sp
 
@@ -42,9 +43,9 @@ def generate_signal(buffersize, target_freq, fs, time_offset=0.00,
     current_ping_index = 0
     pinging = False
 
-    while True:
+    while not rospy.is_shutdown():
         # Setup random signal of the correct buffersize.
-        signal = np.random.normal(0, 1e-2, buffersize)
+        signal = np.random.normal(0, 1, buffersize)
 
         for i, s in enumerate(signal):
             # Decrement time until next ping.
