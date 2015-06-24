@@ -1,4 +1,5 @@
 import numpy as np
+from math import pi
 
 
 class PositionError(Exception):
@@ -31,6 +32,8 @@ class BinsModel(object):
             direction = self.calculate_bins_direction(locations)
         except NoDirectionError:
             return False
+        if np.dot(self.direction, direction) < 0:
+            direction = -direction
         if np.arccos(np.dot(self.direction, direction)) > self.yaw_dev:
             return False
         try:
@@ -75,13 +78,9 @@ class BinsModel(object):
     def calculate_direction(points):
         if len(points) == 1:
             raise NoDirectionError
-        if len(points) = 2:
-            # We can't use method below as covariance of just two points is undefined
-            direction = points[1] - points[0]
-            return direction / np.linalg.norm(direction)
         try:
             eig_val, eig_vec = np.linalg.eig(np.cov(points, rowvar=0))
-            return eig_vec[np.argmax(np.abs(eig_val), axis=0)]
+            return eig_vec.T[np.argmax(np.abs(eig_val), axis=0)]
         except np.linalg.LinAlgError:
             raise NoDirectionError
 
