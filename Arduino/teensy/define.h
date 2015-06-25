@@ -38,9 +38,10 @@
 #define VOLTAGE_PIN_2 A1
 
 //TIME INTERVAL(unit microsecond)
+#define SOLENOID_TIMEOUT 100
 #define MOTOR_TIMEOUT 500          //amount of no signal required to start to reset motors
 #define TEMPERATURE_INTERVAL 1000   //amount of delay between each temperatures read
-#define VOLTAGE_INTERVAL 1000       //amount of delay between each voltages read
+#define VOLTAGE_INTERVAL 500       //amount of delay between each voltages read
 #define DEPTH_INTERVAL 20          //amount of delay between each depth read
 #define MOTOR_STATUS_INTERVAL 500
 
