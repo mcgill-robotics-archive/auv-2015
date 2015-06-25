@@ -34,7 +34,7 @@ class BinsModel(object):
             return False
         if np.dot(self.direction, direction) < 0:
             direction = -direction
-        if np.arccos(np.dot(self.direction, direction)) > self.yaw_dev:
+        if np.arccos(np.min((1-1e-16, np.dot(self.direction, direction)))) > self.yaw_dev:
             return False
         try:
             position, min_offset, max_offset = self.calculate_bins_locations(

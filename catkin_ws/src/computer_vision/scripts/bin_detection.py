@@ -4,7 +4,7 @@ import cv2
 import math
 import numpy as np
 import glob
-from cv_backbone import CvBackbone
+from cv_backbone import CvBackbone, filters
 
 '''
 Author: Max Krogius
@@ -237,8 +237,8 @@ def matchSilhouettes(img, rects, orig):
 
 def findByContours(orig):
     img = orig.copy()
-    gray = cb.filters.grayScale(img)
-    gray = cb.filters.medianBlur(gray)
+    gray = filters.grayScale(img)
+    gray = filters.medianBlur(gray)
     img = cv2.Canny(gray, 0, 100, apertureSize=5)
     contours, _ = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     rects = validate(contours, gray)
