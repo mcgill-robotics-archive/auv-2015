@@ -12,8 +12,8 @@
 #include <computer_vision/threshold.hpp>
 #include <computer_vision/buoy.hpp>
 
-static const std::string IMAGE_WINDOW = "Live Feed";
-std::string feed_name = "/camera/image_rect_color";
+std::string IMAGE_WINDOW = "Live Feed";
+std::string feed_name = "/camera_front_left/camera/image_rect_color";
 
 class ImageFeed
 {
@@ -50,6 +50,8 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "image_publisher");
   if (argc != 1 ) {
     feed_name = argv[1];
+    IMAGE_WINDOW = "Live Feed of " + feed_name;
+    std::cout << feed_name << std::endl;
   }
   ImageFeed _if;
   ros::spin();
