@@ -10,7 +10,7 @@ from math import atan2, pi, sin, cos
 
 sub = None
 transform_broadcaster = None
-num_bins = 4
+num_bins = 2
 
 
 def target_callback(msg):

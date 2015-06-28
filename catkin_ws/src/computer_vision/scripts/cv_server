@@ -11,6 +11,7 @@ from actionlib import SimpleActionServer
 from image_geometry import PinholeCameraModel
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, CameraInfo
+import cv2
 
 bins_depth = 4.7268  # 16 ft - 15 cm
 subscribers = []
@@ -22,10 +23,18 @@ def bins_callback(img):
     if not down_camera_model:
         rospy.logwarn('No camera info')
         return
-    rects = bin_detection.findByContours(bridge.imgmsg_to_cv2(img))
+    cv_img = bridge.imgmsg_to_cv2(img)
+    rects = bin_detection.findByContours(cv_img)
+    
+    # Draw rects for debug
+    debug_img = cv_img.copy()
+    cv2.drawContours(debug_img, rects, -1, (0, 0, 255), 5)
+    debug_pub.publish(bridge.cv2_to_imgmsg(debug_img, 'bgr8'))
+
     if len(rects) == 0:
         return
     try:
+        img.header.stamp = rospy.Time(0)
         transform = listener.asMatrix('floating_horizon', img.header)
         # The camera pinhole, in the floating_horizon frame
         perspective_point = np.dot(transform, np.array([0., 0., 0., 1.]))
@@ -57,6 +66,7 @@ def bins_callback(img):
             target_msg.targets.append(polygon)
         pub.publish(target_msg)
         server.publish_feedback(SetCVTargetFeedback())
+        rospy.loginfo('Found {} bins'.format(len(rects)))
     # TODO: Use wait_for_transform?
     except tf.Exception:
         rospy.logerr('Could not get tf between frames {} and {}'
@@ -72,7 +82,9 @@ def camera_info_callback(msg):
 
 
 def register_target():
+    global debug_pub
     target_name = server.accept_new_goal().target_name
+    debug_pub = rospy.Publisher('cv/debug', Image, queue_size=10)
     if target_name == CVTarget.BINS:
         subscribers.append(rospy.Subscriber('camera_down/camera_info',
                                             CameraInfo, camera_info_callback))
