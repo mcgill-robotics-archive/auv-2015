@@ -10,20 +10,32 @@ catkin_package(
   DEPENDS auv_msgs
 )
 
+set(BACKUP_PROJECT_BINARY_DIR ${PROJECT_BINARY_DIR})
+set(PROJECT_WORKSPACE_DIR "${PROJECT_BINARY_DIR}/workspace")
+set(PROJECT_LIBRARY_DIR "${PROJECT_WORKSPACE_DIR}/libraries")
+# We want the files from rosserial generate to go in a slightly different folder.
+set(PROJECT_BINARY_DIR ${PROJECT_LIBRARY_DIR})
 rosserial_generate_ros_lib(
   PACKAGE rosserial_arduino
   SCRIPT make_libraries.py
 )
+set(PROJECT_BINARY_DIR ${BACKUP_PROJECT_BINARY_DIR})
 
 # The ros_lib has to be deleted before generating a new one.
 add_custom_target(
   delete_${PROJECT_NAME}_ros_lib
-  COMMAND rm -rf ${PROJECT_BINARY_DIR}/ros_lib
+  COMMAND rm -rf ${PROJECT_LIBRARY_DIR}
+)
+
+add_custom_target(
+  link_ino_files
+  COMMAND ln -sf ${PROJECT_SOURCE_DIR}/solenoid_test ${PROJECT_SOURCE_DIR}/teensy ${PROJECT_WORKSPACE_DIR}
 )
 
 add_dependencies(
   ${PROJECT_NAME}_ros_lib
   delete_${PROJECT_NAME}_ros_lib 
+  link_ino_files
   auv_msgs_genpy
 )
 

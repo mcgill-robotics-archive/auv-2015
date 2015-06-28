@@ -1,3 +1,12 @@
+[cameras]
+shortcut: c
+topics:	/camera_down/camera_info
+	/camera_down/image_rect_color
+	/camera_front_left/camera_info
+	/camera_front_left/image_rect_color
+	/camera_front_right/camera_info
+	/camera_front_right/image_rect_color
+
 [sonar]
 shortcut: s
 description: raw sonar data

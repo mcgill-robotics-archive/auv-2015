@@ -20,7 +20,7 @@ include_directories(
 	include/
 	${roscpp_INCLUDE_DIRS}
 	${Boost_INCLUDE_DIR}
-	${catkin_INCLUDE_DIRS} 
+	${catkin_INCLUDE_DIRS}
 	${GAZEBO_INCLUDE_DIRS})
 
 include(cmake/rospack.cmake)
