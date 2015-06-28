@@ -1,14 +1,19 @@
 <launch>
+<!-- Camera specific parameters are set here -->
     <arg name="CAMERA_YAML_FILE" />
     <arg name="CAMERA_NAME" />
     <arg name="CAMERA_ID" />
+
+<!-- Oh no its a merge conflict -->
+
+<!-- Launch camera -->
   <group ns="$(arg CAMERA_NAME)" >
-    <node pkg="camera1394" type="camera1394_node" name="camera1394_node" >
+    <node pkg="camera1394" type="camera1394_node" name="camera1394_node">
       <remap from="camera" to="/"/>
       <param name="camera_info_url" value="$(arg CAMERA_YAML_FILE)" />
-      <param name="guid" value="$(arg CAMERA_ID)"/>
-      <param name="video_mode" value="format7_mode0"/>
-      <param name="frame_id" value="$(arg CAMERA_NAME)"/>
+      <param name="guid" value="$(arg CAMERA_ID)" />
+      <param name="video_mode" value="format7_mode0" />
+      <param name="frame_id" value="$(arg CAMERA_NAME)" />
 
       <!-- The White Balance is set to manual here -->
       <param name="auto_white_balance" value="3" />
@@ -18,7 +23,9 @@
       <param name="format7_color_coding" value="raw8"/>
     </node>
 
-    <!-- Launches the node that will rectify the image based on the calibration .yaml file. -->
+<!-- Launches the calibration with the .yaml file. -->
+
     <node pkg="image_proc" type="image_proc" name="image_proc"/>
+
   </group>
 </launch>

@@ -1,0 +1,42 @@
+<launch>
+
+
+<!-- LAUNCH CAMERA ONE OF TWO WAYS -->
+  <arg name="OFFLINE" value="1" />
+
+
+
+<!-- Launches the recording playback-->
+  <group if="$(arg OFFLINE)">
+    <node pkg="rosbag" type="play" name="vivi_play" args="-l /home/vivi/bagfiles/diver_held_footage.bag /camera_front_right/image_rect:=/camera_front_right/camera/image_rect_color" />
+
+  </group>
+  
+  /camera_front_right/image_rect:=/camera_front_right/camera/image_rect_color
+
+<!-- Launches the cameras-->
+  <group unless="$(arg OFFLINE)">
+    <include file="$(find computer_vision)/launch/camera_all.launch"></include>
+  </group>
+
+
+
+    <!-- LAUNCH TESTING ONE OF TWO WAYS -->
+  <arg name="RAW" value="1" />   
+
+<!-- Launches a series of FILTERS and outputs the feed -->
+  <group unless="$(arg RAW)">
+    <node pkg="computer_vision" type="filters" name="filters_fr" args="/camera_front_right/camera/image_rect_color 1 2 3 4 5 6 7" output="screen"/>
+    <node pkg="computer_vision" type="filters" name="filters_fl" args="/camera_front_left/camera/image_rect_color 1 2 3 4 5 6 7" output="screen"/>
+    <node pkg="computer_vision" type="filters" name="filters_d" args="/camera_down/camera/image_rect_color 1 2 3 4 5 6 7" output="screen"/>
+  </group>
+
+<!-- Launches raw video feed -->
+  <group if="$(arg RAW)">   
+    <node pkg="computer_vision" type="imshow" name="imshow_fr" args="/camera_front_right/camera/image_rect_color" output="screen"/>   
+    <node pkg="computer_vision" type="imshow" name="imshow_fl" args="/camera_front_left/camera/image_rect_color" output="screen"/>   
+    <node pkg="computer_vision" type="imshow" name="imshow_d" args="/camera_down/camera/image_rect_color" output="screen"/>
+  </group>
+
+
+</launch>
