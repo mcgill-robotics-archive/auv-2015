@@ -170,8 +170,8 @@ void setup(){
   //Setup for T100, normal servo control
   myservo[0].attach(MOTOR_PIN_SW_BO);
   myservo[1].attach(MOTOR_PIN_SW_ST);
-  myservo[2].attach(MOTOR_PIN_HE_BO);
-  myservo[3].attach(MOTOR_PIN_HE_ST);
+  myservo[3].attach(MOTOR_PIN_HE_BO);
+  myservo[2].attach(MOTOR_PIN_HE_ST);
   myservo[4].attach(MOTOR_PIN_HE_PS);
   myservo[5].attach(MOTOR_PIN_HE_SS);
   

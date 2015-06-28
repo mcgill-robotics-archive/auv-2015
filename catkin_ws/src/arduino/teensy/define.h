@@ -2,8 +2,8 @@
 
 #define MOTOR_PIN_SW_BO 0 //T100_1 : bow_sway
 #define MOTOR_PIN_SW_ST 1 //T100_2 : stern_sway
-#define MOTOR_PIN_HE_BO 2 //T100_3 : port_bow_heave
-#define MOTOR_PIN_HE_ST 3 //T100_4 : starboard_bow_heave
+#define MOTOR_PIN_HE_BO 3 //T100_3 : port_bow_heave
+#define MOTOR_PIN_HE_ST 2 //T100_4 : starboard_bow_heave
 #define MOTOR_PIN_HE_PS 4 //T100_5 : port_stern_heave
 #define MOTOR_PIN_HE_SS 5 //T100_6 : starboard_stern_heave
 
