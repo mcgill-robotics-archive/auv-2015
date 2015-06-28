@@ -1,0 +1,7 @@
+<launch>
+  <include file="$(find computer_vision)/launch/computer_vision.launch"/>
+  <!-- For manual control of cv -->
+  <node pkg="actionlib" type="axclient.py" name="cv_client" args="/cv_server"/>
+  <!-- For this pool test we have no depth sensor -->
+  <node pkg="tf" type="static_transform_publisher" name="camera_link_broadcaster" args="0 0 0 0 0 0 robot floating_horizon 30"/>
+</launch>
