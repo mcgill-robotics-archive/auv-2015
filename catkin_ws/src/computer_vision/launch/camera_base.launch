@@ -3,7 +3,7 @@
     <arg name="CAMERA_YAML_FILE" />
     <arg name="CAMERA_NAME" />
     <arg name="CAMERA_ID" />
-
+<!-- Oh no its a merge conflict -->
 
 <!-- Launch camera -->
   <group ns="$(arg CAMERA_NAME)" >
