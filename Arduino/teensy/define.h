@@ -32,6 +32,7 @@
 #define SOLENOID_PIN_G_2 26
 #define SOLENOID_PIN_T_1 27
 #define SOLENOID_PIN_T_2 28
+#define SOLENOID_PIN_EXTRA 33
 
 //ANALOG
 #define VOLTAGE_PIN_1 A0
@@ -48,6 +49,7 @@
 
 //THRESHOLD for motor control
 #define THRESHOLD_MOTOR 50
-const double VOLT_RATIO = (3.3*30.9 * 24.12) / (3.9 * 1024.0 * 23.46); //(teensy voltage * total resistance / (single resisitance * mamotorCommandValue bit))
-
-
+const double COM_VOLT_RATIO = (3.3*30.9 * 24.12) / (3.9 * 1024.0 * 23.46); //(teensy voltage * total resistance / (single resisitance * mamotorCommandValue bit))
+const double MOT_VOLT_RATIO = 1.0;
+const double COM_CURR_RATIO = 1.0;
+const double MOT_CURR_RATIO = 1.0;

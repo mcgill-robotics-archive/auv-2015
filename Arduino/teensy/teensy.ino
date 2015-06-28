@@ -34,6 +34,8 @@ struct motor_t {
     String fullName;
     MotorStates state;
     MotorTypes type;
+    int lastCommand;
+    
     union motorHandle {
         struct motorPin_t {
             uint8_t motorPWMPin;  
@@ -41,13 +43,11 @@ struct motor_t {
         } motor;
         Servo servo;  
     };
-    int lastCommand;
 };
  
 unsigned long depthSensorSchedule = 0;
-unsigned long batteryVoltageSchedule = 0;
+unsigned long powerMonitorSchedule = 0;
 unsigned long timeLastMotorCommand = 0;
-unsigned long temperatureSechedule = 0;
 unsigned long lastSolenoidCommand = 0;
 unsigned long MotorStatusSchedule = 0;
 
@@ -134,6 +134,7 @@ void resetSolenoid(){
   digitalWrite(SOLENOID_PIN_G_2, LOW);
   digitalWrite(SOLENOID_PIN_D_1, LOW);
   digitalWrite(SOLENOID_PIN_D_2, LOW);
+  digitalWrite(SOLENOID_PIN_EXTRA,LOW);
 }
 
 void solenoidCb( const auv_msgs::Solenoid& msg){
@@ -193,6 +194,7 @@ void setup(){
   pinMode(SOLENOID_PIN_D_2,OUTPUT);
   pinMode(SOLENOID_PIN_G_1,OUTPUT);
   pinMode(SOLENOID_PIN_G_2,OUTPUT);
+  pinMode(SOLENOID_PIN_EXTRA,OUTPUT);
   resetSolenoid();
   
   //ros node initialization
@@ -216,7 +218,7 @@ void loop(){
 
   unsigned long currentTime = millis();
 
-
+  /*
   //Depth Sensing
   if(depthSensorSchedule < currentTime){
     depth_msg.data = analogRead(DEPTH_SENSOR_PIN);
@@ -234,7 +236,7 @@ void loop(){
 
     batteryVoltageSchedule += VOLTAGE_INTERVAL;
   }
-
+  */
   //Seabotix Motor status
   if(MotorStatusSchedule < currentTime){
     if(!digitalRead(STATUS_PIN_FAULT)){
@@ -249,8 +251,7 @@ void loop(){
   
   //Motor
   if(lastSolenoidCommand + MOTOR_TIMEOUT < currentTime){
-    
-    nh.logerror("Solenoid Command timeout!");
+    //nh.logerror("Solenoid Command timeout!");
     resetSolenoid();
     lastSolenoidCommand = currentTime;
   }
