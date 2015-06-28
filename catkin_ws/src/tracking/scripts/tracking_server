@@ -1,0 +1,70 @@
+#! /usr/bin/env python2.7
+
+import rospy
+import tf
+from tracking.tracker import Tracker
+from tracking.bins_model import BinsModel
+from auv_msgs.msg import CVTarget, SetCVTargetAction
+from actionlib import SimpleActionServer
+from math import atan2, pi, sin, cos
+
+sub = None
+transform_broadcaster = None
+num_bins = 4
+
+
+def target_callback(msg):
+    if msg.header.frame_id != 'floating_horizon':
+        rospy.logerr('Target frame transformation not implemented')
+    targets = []
+    height = None
+    for polygon in msg.targets:
+        target = []
+        for point in polygon.points:
+            if not height:
+                height = point.z
+            if abs(height - point.z) > 1e-10:
+                rospy.logerr('Points not in a plane')
+            target.append([point.x, point.y])
+        targets.append(target)
+    tracker.update(targets)
+    if len(tracker.configurations) == 1:
+        conf = tracker.configurations[0]
+        for i in range(conf.num_bins):
+            position = conf.position + i * conf.spacing * conf.direction
+            yaw = atan2(conf.direction[1], conf.direction[0]) + pi/2
+            transform_broadcaster.sendTransform(
+                (position[0], position[1], height),
+                (0, 0, sin(yaw/2), cos(yaw/2)),
+                rospy.Time.now(),
+                'Bin'+str(i),
+                'floating_horizon')
+    else:
+        rospy.logerr('Tracker has {} configurations'
+                       .format(len(tracker.configurations)))
+
+
+def set_target():
+    global sub
+    target_name = server.accept_new_goal().target_name
+    if target_name:
+        sub = rospy.Subscriber('cv/identified_targets', CVTarget, target_callback)
+    else:
+        rospy.logerr('Unknown Target')
+
+
+def cancel_target():
+    if sub:
+        sub.unregister()
+
+
+if __name__ == '__main__':
+    global tracker, server
+    rospy.init_node('tracking_server')
+    tracker = Tracker(lambda x: BinsModel.generate_configs(x, num_bins=num_bins), 3)
+    transform_broadcaster = tf.TransformBroadcaster()
+    server = SimpleActionServer('tracking', SetCVTargetAction, auto_start=False)
+    server.register_goal_callback(set_target)
+    server.register_preempt_callback(cancel_target)
+    server.start()
+    rospy.spin()

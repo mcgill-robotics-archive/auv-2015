@@ -1,0 +1,24 @@
+#! /usr/bin/env python2.7
+
+import rospy
+from auv_msgs.msg import CVTarget
+from geometry_msgs.msg import PolygonStamped
+
+
+def callback(cv_target):
+    for i in range(0, min(len(cv_target.targets), 4)):
+        msg = PolygonStamped()
+        msg.header = cv_target.header
+        msg.polygon = cv_target.targets[i]
+        pubs[i].publish(msg)
+
+
+if __name__ == '__main__':
+    global pubs
+    rospy.init_node('reroute_polygons')
+    rospy.Subscriber('/cv/identified_targets', CVTarget, callback)
+    pubs = [rospy.Publisher('visualize_polygons0', PolygonStamped, queue_size=100),
+        rospy.Publisher('visualize_polygons1', PolygonStamped, queue_size=100),
+        rospy.Publisher('visualize_polygons2', PolygonStamped, queue_size=100),
+        rospy.Publisher('visualize_polygons3', PolygonStamped, queue_size=100)]
+    rospy.spin()

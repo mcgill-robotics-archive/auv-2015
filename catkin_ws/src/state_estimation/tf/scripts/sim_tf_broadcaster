@@ -41,6 +41,8 @@ def broadcastIMU(modelStates):
     q_yaw = quaternion_from_euler(0, 0, euler_from_quaternion(q_imu)[2])
     broadcaster.sendTransform(zero, q_yaw, t, 
         '/horizon', '/initial_horizon')
+    broadcaster.sendTransform((0, 0, pose.position.z - 4.8768), (0, 0, 0, 1.0),
+            t, '/floating_horizon', '/horizon')
 
     q, x = invertTransform(positionToList(pose.position), 
         quaternionToList(pose.orientation))
