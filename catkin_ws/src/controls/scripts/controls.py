@@ -17,7 +17,7 @@ depth_desired = 0.0
 depth_estimated = 0.0
 angles_desired = np.zeros(3)
 proportional_error = np.zeros(4)
-integral_error = np.zeros(4)
+integral_error = np.array([2.58233408,-6.77174055,1.12110974,0.])
 
 # Position control
 target_frame_id = ''
@@ -193,6 +193,8 @@ def loop(event):
     output = (integral_error * integral_gains
               + proportional_error * proportional_gains
               + derivative_error * derivative_gains)
+
+    print "Integral Error {}".format(integral_error)
 
     wrenchMsg = Wrench()
     wrenchMsg.force.x = fx
