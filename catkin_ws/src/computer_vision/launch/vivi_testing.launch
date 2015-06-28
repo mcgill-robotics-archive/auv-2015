@@ -1,0 +1,24 @@
+<launch>
+
+
+<!-- LAUNCH CAMERA ONE OF TWO WAYS -->
+  <arg name="OFFLINE" value="1" />
+
+
+
+<!-- Launches the recording playback-->
+  <group if="$(arg OFFLINE)">
+    <node pkg="rosbag" type="play" name="vivi_play" args="/home/vivi/bagfiles/diver_held_footage.bag" />
+  </group>
+
+<!-- Launches the cameras-->
+  <group unless="$(arg OFFLINE)">
+    <include file="$(find computer_vision)/launch/vivi_camera_all.launch"></include>
+  </group>
+
+
+
+
+
+
+</launch>
