@@ -29,10 +29,14 @@ l_6y = 13.169*.0254
 l_7y = 6.331*.0254
 l_8y = 6.331*.0254
 
-T1234_to_Fx_Fy_Mz = matrix([[1,1,0,0],[0,0,1,-1],[-l_1z,l_2z,l_3z,l_4z]])
+T1234_to_Fx_Fy_Mz = matrix([[-1,-1,0,0],[0,0,1,1],[-l_1z,l_2z,l_3z,-l_4z]])
+print T1234_to_Fx_Fy_Mz
 Fx_Fy_Mz_to_T1234 = pinv(T1234_to_Fx_Fy_Mz, rcond = 1e-15)
-T5678_to_Fz_Mx_My = matrix([[1,1,1,1],[-l_5x,l_6x,l_7x,-l_8x],[-l_5y,-l_6y,l_7y,l_8y]])
+print Fx_Fy_Mz_to_T1234
+T5678_to_Fz_Mx_My = matrix([[-1,-1,-1,-1],[l_5x,-l_6x,-l_7x,l_8x],[l_5y,l_6y,-l_7y,-l_8y]])
+print T5678_to_Fz_Mx_My
 Fz_Mx_My_to_T5678 = pinv(T5678_to_Fz_Mx_My, rcond= 1e-15)
+print Fz_Mx_My_to_T5678
 
 def Wrench_to_thrust_callback(data):
     # Calculations are decoupled into those using the four in-plane thrusters
@@ -65,6 +69,7 @@ def Wrench_to_thrust_callback(data):
     thrust_pub.publish(cmds_msg)
 
 def pwm(thrust, data):
+    print thrust
     min_thrust = 0.01
     pwm = interp(thrust, data[:,0], data[:,1])
     pwm[abs(thrust) < min_thrust] = 0
