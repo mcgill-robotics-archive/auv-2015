@@ -4,7 +4,7 @@
   <world name='default'> <!-- Assuming pool is 5m deep -->
 
     <physics type='ode'>
-      <max_step_size>0.001</max_step_size>
+      <max_step_size>0.0001</max_step_size>
       <real_time_factor>1</real_time_factor>
       <real_time_update_rate>1000</real_time_update_rate>
       <gravity>0 0 0</gravity>
@@ -74,7 +74,13 @@
       <joint name='camera1' type='revolute'>
 		<parent>body</parent>
 		<child>camera1_link</child>
-		<axis>0 0 1</axis>
+		<axis>
+		    <xyz>0 0 1</xyz>
+		    <limit>
+			<lower>0</lower>
+			<upper>0</upper>
+		    </limit>
+		 </axis>
 		<pose>0 0 0 0 0 0</pose>
       </joint>
 
@@ -142,7 +148,13 @@
       <joint name='camera2' type='revolute'>
 		<parent>body</parent>
 		<child>camera2_link</child>
-		<axis>0 0 1</axis>
+		<axis>
+		    <xyz>0 0 1</xyz>
+		    <limit>
+			<lower>0</lower>
+			<upper>0</upper>
+		    </limit>
+		 </axis>
 		<pose>0 0 0 0 0 0</pose>
       </joint>
 
@@ -209,7 +221,13 @@
       <joint name='camera3' type='revolute'>
 		<parent>body</parent>
 		<child>camera3_link</child>
-		<axis>0 0 1</axis>
+		<axis>
+		    <xyz>0 0 1</xyz>
+		    <limit>
+			<lower>0</lower>
+			<upper>0</upper>
+		    </limit>
+		 </axis>
 		<pose>0 0 0 0 0 0</pose>
       </joint>
 

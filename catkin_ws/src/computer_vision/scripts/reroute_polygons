@@ -6,15 +6,19 @@ from geometry_msgs.msg import PolygonStamped
 
 
 def callback(cv_target):
-    msg = PolygonStamped()
-    msg.header = cv_target.header
-    msg.polygon = cv_target.targets[0]
-    pub.publish(msg)
+    for i in range(0, min(len(cv_target.targets), 4)):
+        msg = PolygonStamped()
+        msg.header = cv_target.header
+        msg.polygon = cv_target.targets[i]
+        pubs[i].publish(msg)
 
 
 if __name__ == '__main__':
-    global pub
+    global pubs
     rospy.init_node('reroute_polygons')
     rospy.Subscriber('/cv/identified_targets', CVTarget, callback)
-    pub = rospy.Publisher('visualize_polygons', PolygonStamped, queue_size=100)
+    pubs = [rospy.Publisher('visualize_polygons0', PolygonStamped, queue_size=100),
+        rospy.Publisher('visualize_polygons1', PolygonStamped, queue_size=100),
+        rospy.Publisher('visualize_polygons2', PolygonStamped, queue_size=100),
+        rospy.Publisher('visualize_polygons3', PolygonStamped, queue_size=100)]
     rospy.spin()

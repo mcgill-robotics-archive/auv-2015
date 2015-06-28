@@ -36,6 +36,7 @@ add_service_files(FILES
 add_action_files(
   DIRECTORY action
   FILES SetVelocity.action
+  SetPosition.action
   SetCVTarget.action
 )
 

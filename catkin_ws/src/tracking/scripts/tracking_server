@@ -6,6 +6,7 @@ from tracking.tracker import Tracker
 from tracking.bins_model import BinsModel
 from auv_msgs.msg import CVTarget, SetCVTargetAction
 from actionlib import SimpleActionServer
+from math import atan2, pi, sin, cos
 
 sub = None
 transform_broadcaster = None
@@ -31,9 +32,10 @@ def target_callback(msg):
         conf = tracker.configurations[0]
         for i in range(conf.num_bins):
             position = conf.position + i * conf.spacing * conf.direction
+            yaw = atan2(conf.direction[1], conf.direction[0]) + pi/2
             transform_broadcaster.sendTransform(
                 (position[0], position[1], height),
-                (0, 0, 0, 1),
+                (0, 0, sin(yaw/2), cos(yaw/2)),
                 rospy.Time.now(),
                 'Bin'+str(i),
                 'floating_horizon')

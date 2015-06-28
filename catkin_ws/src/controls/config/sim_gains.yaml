@@ -1,11 +1,11 @@
 #All gains
-kp_xPos: 0.0
+kp_xPos: 5.0
 ki_xPos: 0.0
-kd_xPos: 0.0
+kd_xPos: 1.0
 
-kp_yPos: 0.0
+kp_yPos: 5.0
 ki_yPos: 0.0
-kd_yPos: 0.0
+kd_yPos: 1.0
 
 kp_depth: 20
 ki_depth: 0.0
