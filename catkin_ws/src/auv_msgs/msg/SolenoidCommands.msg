@@ -1,0 +1,6 @@
+bool grabber_starboard
+bool grabber_port
+bool dropper_starboard
+bool dropper_port
+bool torpido_starboard
+bool torpido_port

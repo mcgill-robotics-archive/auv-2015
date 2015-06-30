@@ -10,14 +10,11 @@ find_package(catkin REQUIRED COMPONENTS
 
 add_message_files(
   FILES
-  #added by Elec Interface
-  Solenoid.msg
-  Motor.msg
-
   #added by Controls
   SetPosition.msg
   SetVelocity.msg
   MotorCommands.msg
+  SolenoidCommands.msg
 
   #added by State Estimation
   RangeBearingElevation.msg
