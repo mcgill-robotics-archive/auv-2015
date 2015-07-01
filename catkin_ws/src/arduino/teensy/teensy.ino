@@ -5,45 +5,13 @@
 #include <std_msgs/Float32.h>
 #include <std_msgs/Bool.h>
 #include <auv_msgs/MotorCommands.h>
-#include <auv_msgs/Solenoid.h>
+#include <auv_msgs/SolenoidCommands.h>
 
 #include "define.h"
 
 ros::NodeHandle nh;
 
 Servo myservo[6];
-
-enum MotorStates {
-    MOTOR_IDLE,
-    MOTOR_FORWARD,
-    MOTOR_REVERSE
-};
-enum MotorTypes {
-    MOTOR_T100,
-    MOTOR_SEABOTICS
-};
-
-enum SolenoidStates {
-    SOLENOID_IDLE,
-    SOLENOID_ACTIVE
-} ;
-
-SolenoidStates solenoidState = SOLENOID_IDLE;
-
-struct motor_t {
-    String fullName;
-    MotorStates state;
-    MotorTypes type;
-    int lastCommand;
-    
-    union motorHandle {
-        struct motorPin_t {
-            uint8_t motorPWMPin;  
-            uint8_t motorEnablePin;
-        } motor;
-        Servo servo;  
-    };
-};
  
 unsigned long depthSensorSchedule = 0;
 unsigned long powerMonitorSchedule = 0;
@@ -66,15 +34,33 @@ int boundCheck(int motorCommandValue){
 void motorCb( const auv_msgs::MotorCommands& msg){
   timeLastMotorCommand = millis();
   
-  writeMotorT100(MOTOR_PIN_SW_BO, msg.bow_sway);
-  writeMotorT100(MOTOR_PIN_SW_ST, msg.stern_sway);
-  writeMotorT100(MOTOR_PIN_HE_BO, msg.port_bow_heave);
-  writeMotorT100(MOTOR_PIN_HE_ST, msg.starboard_bow_heave);
-  writeMotorT100(MOTOR_PIN_HE_PS, msg.port_stern_heave);
-  writeMotorT100(MOTOR_PIN_HE_SS, msg.starboard_stern_heave);
   
-  writeMotorSeabotix(MOTOR_PIN_SU_ST,MOTOR_EN_PIN_SU_ST, msg.port_surge);
-  writeMotorSeabotix(MOTOR_PIN_SU_PO,MOTOR_EN_PIN_SU_PO, msg.starboard_surge);
+  writeMotorT100(MOTOR_PIN_PORT_SURGE, 
+                 msg.bow_sway);
+                 
+  writeMotorT100(MOTOR_PIN_STARBOARD_SURGE, 
+                 msg.stern_sway);
+                 
+  writeMotorT100(MOTOR_PIN_PORT_BOW_HEAVE, 
+                 msg.port_bow_heave);
+                 
+  writeMotorT100(MOTOR_PIN_STARBOARD_BOW_HEAVE, 
+                 msg.starboard_bow_heave);
+                 
+  writeMotorT100(MOTOR_PIN_PORT_STERN_HEAVE, 
+                 msg.port_stern_heave);
+                 
+  writeMotorT100(MOTOR_PIN_STARBOARD_STERN_HEAVE, 
+                 msg.starboard_stern_heave);
+  
+  writeMotorSeabotix(MOTOR_PIN_STARBOARD_SWAY,
+                     MOTOR_ENABLE_PIN_STARBOARD_SWAY, 
+                     msg.port_surge);
+                     
+  writeMotorSeabotix(MOTOR_PIN_PORT_SWAY,
+                     MOTOR_ENABLE_PIN_PORT_SWAY,
+                     msg.starboard_surge);
+                     
   nh.loginfo("Motor Command");
 }
 
@@ -91,23 +77,23 @@ void writeMotorT100 (uint8_t motorNumber, int motorCommandValue)
   myservo[motorNumber].writeMicroseconds(MOTOR_T100_RST_VALUE + lastMotorCommands[motorNumber]);
 }
 
-void writeMotorSeabotix (uint8_t motorNumber, uint8_t motorEnablePin, int motorCommandValue)
+void writeMotorSeabotix (uint8_t motorPin, uint8_t enablePin, int motorCommandValue)
 {
-  int difference = motorCommandValue-lastMotorCommands[motorNumber-3];
+  int difference = motorCommandValue-lastMotorCommands[enablePin];
   if(abs(difference) < THRESHOLD_MOTOR)
-    lastMotorCommands[motorNumber-3] = boundCheck(motorCommandValue);
+    lastMotorCommands[enablePin] = boundCheck(motorCommandValue);
   
   else if (difference > 0)
-    lastMotorCommands[motorNumber-3] = boundCheck(lastMotorCommands[motorNumber-3] + THRESHOLD_MOTOR);
+    lastMotorCommands[enablePin] = boundCheck(lastMotorCommands[enablePin] + THRESHOLD_MOTOR);
   else
-    lastMotorCommands[motorNumber-3] = boundCheck(lastMotorCommands[motorNumber-3] - THRESHOLD_MOTOR);   
+    lastMotorCommands[enablePin] = boundCheck(lastMotorCommands[enablePin] - THRESHOLD_MOTOR);   
   
-  if(abs(lastMotorCommands[motorNumber-3]) > MOTOR_SEABOTICX_DEADBAND)
-    digitalWrite(motorNumber-3,HIGH);
+  if(abs(lastMotorCommands[enablePin]) > MOTOR_SEABOTICX_DEADBAND)
+    digitalWrite(enablePin,HIGH);
   else 
-    digitalWrite(motorNumber-3,LOW);
+    digitalWrite(enablePin,LOW);
  
-  analogWrite(motorNumber, MOTOR_SEABOTIX_RST_VALUE + lastMotorCommands[motorNumber-3]);
+  analogWrite(motorPin, MOTOR_SEABOTIX_RST_VALUE + lastMotorCommands[enablePin]);
 }
 
 void resetMotor(){
@@ -117,10 +103,10 @@ void resetMotor(){
   myservo[3].writeMicroseconds(MOTOR_T100_RST_VALUE);
   myservo[4].writeMicroseconds(MOTOR_T100_RST_VALUE);
   myservo[5].writeMicroseconds(MOTOR_T100_RST_VALUE);
-  analogWrite(MOTOR_PIN_SU_ST, MOTOR_SEABOTIX_RST_VALUE);
-  analogWrite(MOTOR_PIN_SU_PO, MOTOR_SEABOTIX_RST_VALUE);
-  digitalWrite(MOTOR_EN_PIN_SU_ST, LOW);
-  digitalWrite(MOTOR_EN_PIN_SU_PO, LOW);
+  analogWrite(MOTOR_PIN_STARBOARD_SWAY, MOTOR_SEABOTIX_RST_VALUE);
+  analogWrite(MOTOR_PIN_PORT_SWAY, MOTOR_SEABOTIX_RST_VALUE);
+  digitalWrite(MOTOR_ENABLE_PIN_STARBOARD_SWAY, LOW);
+  digitalWrite(MOTOR_ENABLE_PIN_PORT_SWAY, LOW);
   for(int i = 0; i < 8; i++){
   lastMotorCommands[i] = 0;
   }
@@ -128,23 +114,24 @@ void resetMotor(){
 }
 
 void resetSolenoid(){
-  digitalWrite(SOLENOID_PIN_T_1, LOW);
-  digitalWrite(SOLENOID_PIN_T_2, LOW);
-  digitalWrite(SOLENOID_PIN_G_1, LOW);
-  digitalWrite(SOLENOID_PIN_G_2, LOW);
-  digitalWrite(SOLENOID_PIN_D_1, LOW);
-  digitalWrite(SOLENOID_PIN_D_2, LOW);
+  digitalWrite(SOLENOID_PIN_PORT_DROPPER, LOW);
+  digitalWrite(SOLENOID_PIN_STARBOARD_DROPPER, LOW);
+  digitalWrite(SOLENOID_PIN_PORT_GRABBER, LOW);
+  digitalWrite(SOLENOID_PIN_STARBOARD_GRABBER, LOW);
+  digitalWrite(SOLENOID_PIN_PORT_TORPEDO, LOW);
+  digitalWrite(SOLENOID_PIN_STARBOARD_TORPEDO, LOW);
   digitalWrite(SOLENOID_PIN_EXTRA,LOW);
 }
 
-void solenoidCb( const auv_msgs::Solenoid& msg){
+void solenoidCb( const auv_msgs::SolenoidCommands& msg){
   lastSolenoidCommand= millis();
-  digitalWrite(SOLENOID_PIN_T_1,msg.solenoid1);
-  digitalWrite(SOLENOID_PIN_T_2,msg.solenoid2);
-  digitalWrite(SOLENOID_PIN_G_1,msg.solenoid3);
-  digitalWrite(SOLENOID_PIN_G_2,msg.solenoid4);
-  digitalWrite(SOLENOID_PIN_D_1,msg.solenoid5);
-  digitalWrite(SOLENOID_PIN_D_2,msg.solenoid6);
+  digitalWrite(SOLENOID_PIN_PORT_DROPPER,msg.port_dropper);
+  digitalWrite(SOLENOID_PIN_STARBOARD_DROPPER,msg.starboard_dropper);
+  digitalWrite(SOLENOID_PIN_PORT_GRABBER,msg.port_grabber);
+  digitalWrite(SOLENOID_PIN_STARBOARD_GRABBER,msg.starboard_grabber);
+  digitalWrite(SOLENOID_PIN_PORT_TORPEDO,msg.port_torpedo);
+  digitalWrite(SOLENOID_PIN_STARBOARD_TORPEDO,msg.starboard_torpedo);
+  digitalWrite(SOLENOID_PIN_EXTRA,msg.extra);
   nh.loginfo("Solenoid Command");
 }
 
@@ -161,40 +148,40 @@ ros::Publisher ComputerCurrentPub("/electrical_interface/computerCurrent", &comp
 ros::Publisher motorVoltagePub("/electrical_interface/motorVoltage", &motorVoltage_m);
 ros::Publisher motorCurrentPub("/electrical_interface/motorCurrent", &motorCurrent_m);
 
-ros::Subscriber<auv_msgs::Solenoid> solenoidSub("/electrical_interface/solenoid", &solenoidCb );
+ros::Subscriber<auv_msgs::SolenoidCommands> solenoidSub("/electrical_interface/solenoid", &solenoidCb );
 ros::Subscriber<auv_msgs::MotorCommands> motorSub("/electrical_interface/motor", &motorCb );
 
 
 void setup(){
   
   //Setup for T100, normal servo control
-  myservo[0].attach(MOTOR_PIN_SW_BO);
-  myservo[1].attach(MOTOR_PIN_SW_ST);
-  myservo[3].attach(MOTOR_PIN_HE_BO);
-  myservo[2].attach(MOTOR_PIN_HE_ST);
-  myservo[4].attach(MOTOR_PIN_HE_PS);
-  myservo[5].attach(MOTOR_PIN_HE_SS);
+  myservo[MOTOR_PIN_PORT_SURGE].attach(MOTOR_PIN_PORT_SURGE);
+  myservo[MOTOR_PIN_STARBOARD_SURGE].attach(MOTOR_PIN_STARBOARD_SURGE);
+  myservo[MOTOR_PIN_PORT_BOW_HEAVE].attach(MOTOR_PIN_PORT_BOW_HEAVE);
+  myservo[MOTOR_PIN_STARBOARD_BOW_HEAVE].attach(MOTOR_PIN_STARBOARD_BOW_HEAVE);
+  myservo[MOTOR_PIN_PORT_STERN_HEAVE].attach(MOTOR_PIN_PORT_STERN_HEAVE);
+  myservo[MOTOR_PIN_STARBOARD_STERN_HEAVE].attach(MOTOR_PIN_STARBOARD_STERN_HEAVE);
   
   //Setup for Seabotix, PWM with highier frequency
   //Calling frequency change will affect both pin
-  analogWriteFrequency(MOTOR_PIN_SU_ST,PWM_FREQUENCY); 
+  analogWriteFrequency(MOTOR_PIN_STARBOARD_SWAY,PWM_FREQUENCY); 
   
   // Change the resolution to 0 - 1023
   analogWriteResolution(10); 
-  pinMode(MOTOR_EN_PIN_SU_ST,OUTPUT);
-  pinMode(MOTOR_EN_PIN_SU_PO,OUTPUT); 
+  pinMode(MOTOR_ENABLE_PIN_STARBOARD_SWAY, OUTPUT);
+  pinMode(MOTOR_ENABLE_PIN_PORT_SWAY, OUTPUT); 
 
   resetMotor();
-  pinMode(STATUS_PIN_FAULT,INPUT);
-  pinMode(STATUS_PIN_OTW,INPUT);
+  pinMode(STATUS_PIN_FAULT, INPUT);
+  pinMode(STATUS_PIN_OTW, INPUT);
   
-  pinMode(SOLENOID_PIN_T_1,OUTPUT);
-  pinMode(SOLENOID_PIN_T_2,OUTPUT);
-  pinMode(SOLENOID_PIN_D_1,OUTPUT);
-  pinMode(SOLENOID_PIN_D_2,OUTPUT);
-  pinMode(SOLENOID_PIN_G_1,OUTPUT);
-  pinMode(SOLENOID_PIN_G_2,OUTPUT);
-  pinMode(SOLENOID_PIN_EXTRA,OUTPUT);
+  pinMode(SOLENOID_PIN_PORT_DROPPER, OUTPUT);
+  pinMode(SOLENOID_PIN_STARBOARD_DROPPER, OUTPUT);
+  pinMode(SOLENOID_PIN_PORT_GRABBER, OUTPUT);
+  pinMode(SOLENOID_PIN_STARBOARD_GRABBER, OUTPUT);
+  pinMode(SOLENOID_PIN_PORT_TORPEDO, OUTPUT);
+  pinMode(SOLENOID_PIN_STARBOARD_TORPEDO, OUTPUT);
+  pinMode(SOLENOID_PIN_EXTRA, OUTPUT);
   resetSolenoid();
   
   //ros node initialization
