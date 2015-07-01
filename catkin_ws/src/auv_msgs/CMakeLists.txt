@@ -22,6 +22,9 @@ add_message_files(
 
   #added by CV
   CVTarget.msg
+
+  #added by IO
+  RadioCommands.msg
 )
 
 add_service_files(FILES
