@@ -37,8 +37,15 @@
 
 #include <Arduino.h>
 
-#include <HardwareSerial.h>
-#define SERIAL_CLASS HardwareSerial
+#ifdef USE_USB_SERIAL
+  #include <usb_serial.h> 
+  #define SERIAL_CLASS usb_serial_class
+  #warning "Using USB serial for ROSSerial!"
+#else
+  #include <HardwareSerial.h>
+  #define SERIAL_CLASS HardwareSerial
+  #warning "Using Hardware Serial for ROSSerial!"
+#endif
 
 class ArduinoHardware {
   public:
@@ -48,7 +55,11 @@ class ArduinoHardware {
     }
 
     ArduinoHardware() {
-      iostream = &Serial2; // Specify which teensy serial to use
+#ifdef USE_USB_SERIAL  
+      iostream = &Serial;
+#else  
+      iostream = &Serial2;
+#endif
       baud_ = 230400;
     }
 
