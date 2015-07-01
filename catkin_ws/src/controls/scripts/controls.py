@@ -6,7 +6,7 @@ from geometry_msgs.msg import Wrench
 from auv_msgs.msg import (SetVelocityAction, SetVelocityFeedback,
                           SetPositionAction, SetPositionFeedback)
 import tf
-from tf.transformations import euler_from_quaternion
+from tf.transformations import euler_from_quaternion, euler_matrix
 from actionlib import SimpleActionServer
 
 # flake8 wants these declared up here
@@ -17,7 +17,7 @@ depth_desired = 0.0
 depth_estimated = 0.0
 angles_desired = np.zeros(3)
 proportional_error = np.zeros(4)
-integral_error = np.array([2.58233408,-6.77174055,1.12110974,0.])
+integral_error = np.array([2.58233408, -6.77174055, 1.12110974, 0.])
 
 # Position control
 target_frame_id = ''
@@ -194,12 +194,17 @@ def loop(event):
               + proportional_error * proportional_gains
               + derivative_error * derivative_gains)
 
-    print "Integral Error {}".format(integral_error)
+    rospy.loginfo("Integral Error {}".format(integral_error))
+
+    # Need to transform the desired force into the body frame for thrustmapper.
+    matrix = euler_matrix(angles_estimated[0], angles_estimated[1], 0).T
+    #force = np.dot(matrix, [fx, fy, output[3], 1])[:3]
+    force = np.dot(matrix, [fx, fy, 3, 1])[:3]
 
     wrenchMsg = Wrench()
-    wrenchMsg.force.x = fx
-    wrenchMsg.force.y = fy
-    wrenchMsg.force.z = output[3]
+    wrenchMsg.force.x = force[0]
+    wrenchMsg.force.y = force[1]
+    wrenchMsg.force.z = force[2]
     wrenchMsg.torque.x = output[0]
     wrenchMsg.torque.y = output[1]
     wrenchMsg.torque.z = output[2]
