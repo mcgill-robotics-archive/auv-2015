@@ -11,9 +11,12 @@ from math import atan2, pi, sin, cos
 sub = None
 transform_broadcaster = None
 num_bins = 4
+target_name = ''
 
 
 def target_callback(msg):
+    if msg.type != target_name:
+        return
     if msg.header.frame_id != 'floating_horizon':
         rospy.logerr('Target frame transformation not implemented')
     targets = []
@@ -45,15 +48,17 @@ def target_callback(msg):
 
 
 def set_target():
-    global sub
+    global sub, target_name
     target_name = server.accept_new_goal().target_name
-    if target_name:
+    if target_name == CVTarget.BINS or CVTarget.LANE:
         sub = rospy.Subscriber('cv/identified_targets', CVTarget, target_callback)
     else:
         rospy.logerr('Unknown Target')
 
 
 def cancel_target():
+    global target_name
+    target_name = ''
     if sub:
         sub.unregister()
 

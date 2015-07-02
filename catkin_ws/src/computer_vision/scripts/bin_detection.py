@@ -1,7 +1,6 @@
 #! /usr/bin/env python2.7
 
 import cv2
-import math
 import numpy as np
 import glob
 from cv_backbone import CvBackbone, filters
@@ -40,14 +39,9 @@ def suppressNonRectangles(contours, tol):
     return valid
 
 
-def dist(p1, p2):
-    # Distance between two points
-    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
-
-
 def sideLengths(rect):
     # Returns the lengths of the sides of the rectangle
-    return map(lambda i: dist(rect[i-1], rect[i]), range(4))
+    return map(lambda i: filters.dist(rect[i-1], rect[i]), range(4))
 
 
 def filterAspectRatio(rects, desired_aspect_ratio, aspect_ratio_tol):
@@ -81,23 +75,24 @@ def suppressSkewed(contours, cos_thresh):
     return valid
 
 
-def validate(contours, img):
+def validate(contours, img, debug):
+    filter_list = []
     # Minimum perimeter of target
     min_length = 4*20
     # Minimum area of target
     min_area = 20*20
-    validContours = filters.filterSize(contours, min_length, min_area)
+    filter_list.append(lambda x: filters.filterSize(x, min_length, min_area))
     # Tolerance for polygon fitting. Increasing means things get fit
     # with fewer vertices.
     polygon_approx_tolerance = 0.05
-    validContours = filters.filterRectangles(validContours,
-                                             polygon_approx_tolerance)
+    filter_list.append(
+        lambda x: suppressNonRectangles(x, polygon_approx_tolerance))
     # The ratio of size in one dimension to the other.
     aspect_ratio = 2
     # Allowed variance in aspect ratio
     aspect_ratio_tol = 0.5
-    validContours = \
-        filterAspectRatio(validContours, aspect_ratio, aspect_ratio_tol)
+    filter_list.append(
+        lambda x: filterAspectRatio(x, aspect_ratio, aspect_ratio_tol))
     # Flag for how the intensity changes from the inside of the border to the
     # outside of the border. 1 means that the outside is more intense than the
     # inside. 0 means there isn't a difference. -1 means the inside is more
@@ -105,14 +100,14 @@ def validate(contours, img):
     intensity_change_flag = 1
     # Minimum average increase in intensity
     intensity_change = 10
-    validContours = filters.filterIntensities(validContours, img,
-                                              intensity_change_flag,
-                                              intensity_change)
-    validContours = filters.suppressConcentric(validContours)
+    filter_list.append(
+        lambda x: filters.filter_intensities(x, img, intensity_change_flag,
+                                            intensity_change))
+    filter_list.append(lambda x: filters.suppress_concentric(x))
     # Max cosine of any internal angle of the rectangle
     max_cos = 0.15
-    validContours = suppressSkewed(validContours, max_cos)
-    return validContours
+    filter_list.append(lambda x: suppressSkewed(x, max_cos))
+    return filters.validate_contours(contours, filter_list, debug)
 
 
 def matchShapes(img1, img2):
@@ -183,19 +178,19 @@ def matchSilhouettes(img, rects, orig):
 
 def findByContours(orig):
     img = orig.copy()
-    gray = filters.grayScale(img)
-    gray = filters.medianBlur(gray)
+    debug = orig.copy()
+    gray = cv2.split(img)[2]
+    #gray = filters.grayScale(img)
+    #gray = filters.medianBlur(gray)
     img = cv2.Canny(gray, 0, 100, apertureSize=5)
     contours, _ = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    rects = validate(contours, gray)
-    return rects
+    return validate(contours, gray, debug)
 
 
 def debug_callback(orig):
-    rects = findByContours(orig)
-    matchSilhouettes(cv2.split(orig)[2], rects, orig)
-    cv2.drawContours(orig, rects, -1, (0, 0, 255), 1)
-    cb.publishImage(orig)
+    rects, debug = findByContours(orig)
+    matchSilhouettes(cv2.split(orig)[2], rects, debug)
+    cb.publishImage(debug)
 
 
 def loadSilhouettes():
@@ -213,6 +208,6 @@ def loadSilhouettes():
 if __name__ == '__main__':
     global cb
     cb = CvBackbone.CvBackbone('bin_detection')
-    cb.addImageCallback(findByContours)
+    cb.addImageCallback(debug_callback)
     cb.onStart(loadSilhouettes)
     cb.start()

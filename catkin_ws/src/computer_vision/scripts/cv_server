@@ -7,40 +7,56 @@ from std_msgs.msg import Header
 from auv_msgs.msg import CVTarget, SetCVTargetAction, SetCVTargetFeedback
 from geometry_msgs.msg import Polygon, Point32
 import bin_detection
+import lane_detection
 from actionlib import SimpleActionServer
 from image_geometry import PinholeCameraModel
 from cv_bridge import CvBridge
 from sensor_msgs.msg import Image, CameraInfo
 
 bins_depth = 4.7268  # 16 ft - 15 cm
-subscribers = []
 down_camera_model = None
 bridge = CvBridge()
+subscribers = []
 
 
 def bins_callback(img):
+    project_bottom_callback(bin_detection.findByContours, img)
+
+
+def lane_callback(img):
+    project_bottom_callback(lane_detection.findByContours, img)
+
+
+def project_bottom_callback(findByContours, img):
     if not down_camera_model:
         rospy.logwarn('No camera info')
         return
-    rects = bin_detection.findByContours(bridge.imgmsg_to_cv2(img))
-    if len(rects) == 0:
-        return
+    rects, debug_img = findByContours(bridge.imgmsg_to_cv2(img))
+    debug_pub.publish(debug_img)
+    target_msg = CVTarget()
+    header = Header()
+    header.frame_id = 'floating_horizon'
+    target_msg.header = header
+    target_msg.type = CVTarget.BINS
+    target_msg.targets = project_targets_to_bottom(rects, img.header)
+    if len(target_msg.targets) > 0:
+        pub.publish(target_msg)
+        server.publish_feedback(SetCVTargetFeedback())
+
+
+def project_targets_to_bottom(targets, header):
     try:
-        transform = listener.asMatrix('floating_horizon', img.header)
+        transform = listener.asMatrix('floating_horizon', header)
         # The camera pinhole, in the floating_horizon frame
         perspective_point = np.dot(transform, np.array([0., 0., 0., 1.]))
         perspective_transform = tf.transformations.projection_matrix(
             np.array([0., 0., bins_depth]),
             np.array([0., 0., 1.]),
             perspective=perspective_point)
-        target_msg = CVTarget()
-        header = Header()
-        header.frame_id = 'floating_horizon'
-        target_msg.header = header
-        target_msg.targets = []
-        for rect in rects:
+        transformed_targets = []
+        for target in targets:
             polygon = Polygon()
-            for xy in rect:
+            for xy in target:
                 camera_ray = down_camera_model.projectPixelTo3dRay(xy)
                 # Convert to homogeneous vector
                 camera_ray = [camera_ray[0], camera_ray[1], camera_ray[2], 1.0]
@@ -54,13 +70,13 @@ def bins_callback(img):
                 point_msg.y = point[1]/point[3]
                 point_msg.z = point[2]/point[3]
                 polygon.points.append(point_msg)
-            target_msg.targets.append(polygon)
-        pub.publish(target_msg)
-        server.publish_feedback(SetCVTargetFeedback())
+            transformed_targets.append(polygon)
+        return transformed_targets
     # TODO: Use wait_for_transform?
     except tf.Exception:
         rospy.logerr('Could not get tf between frames {} and {}'
-                     .format('floating_horizon', img.header.frame_id))
+                     .format('floating_horizon', header.frame_id))
+        return []
 
 
 def camera_info_callback(msg):
@@ -78,6 +94,11 @@ def register_target():
                                             CameraInfo, camera_info_callback))
         subscribers.append(rospy.Subscriber('camera_down/image_rect_color',
                                             Image, bins_callback))
+    elif target_name == CVTarget.LANE:
+        subscribers.append(rospy.Subscriber('camera_down/camera_info',
+                                            CameraInfo, camera_info_callback))
+        subscribers.append(rospy.Subscriber('camera_down/image_rect_color',
+                                            Image, lane_callback))
     else:
         rospy.logerr('Unknown Target')
 
@@ -90,7 +111,7 @@ def cancel_target():
 target_map = {CVTarget.BINS: bins_callback}
 
 if __name__ == '__main__':
-    global listener, pub
+    global listener, pub, debug_pub
     rospy.init_node('cv_server')
     server = SimpleActionServer('cv_server', SetCVTargetAction,
                                 auto_start=False)
@@ -99,4 +120,5 @@ if __name__ == '__main__':
     server.start()
     listener = tf.TransformListener()
     pub = rospy.Publisher('cv/identified_targets', CVTarget, queue_size=100)
+    debug_pub = rospy.Publisher('cv/debug_image', Image, queue_size=100)
     rospy.spin()

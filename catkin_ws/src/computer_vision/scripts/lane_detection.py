@@ -1,7 +1,6 @@
 #! /usr/bin/env python2.7
 
 import cv2
-import math
 import numpy as np
 from numpy import linalg as LA
 from cv_backbone import CvBackbone, filters
@@ -14,49 +13,14 @@ candidates based on size and shape.
 '''
 
 
-def suppressBadShapes(contours):
+def suppress_bad_shapes(contours):
     # Here we try to find something that looks like a lane, including the legs
     lane = np.array([[[5, 0]], [[5, 14]], [[0, 14]], [[0, 16]],
                     [[5, 16]], [[5, 70]], [[0, 70]], [[0, 72]],
                     [[5, 72]], [[5, 86]], [[15, 86]], [[15, 72]],
                     [[20, 72]], [[20, 70]], [[15, 70]], [[15, 16]],
                     [[20, 16]], [[20, 14]], [[15, 14]], [[15, 0]]])
-    return filters.suppressBadShapes(contours, lane, 1.25)
-
-
-def dist(p1, p2):
-    # Distance between two points
-    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
-
-
-def sideLengths(rect):
-    # Returns the lengths of the sides of the rectangle
-    return map(lambda i: dist(rect[i-1], rect[i]), range(4))
-
-
-def filterIntensities(contours, img, flag, intensity_change):
-    # Tests for rectangles where the area just outside the border
-    # is lighter than just inside. This is useful to suppress the
-    # outside of the bins.
-    if flag == 0:
-        return contours
-
-    valid = []
-    border = 0.1
-    for c in contours:
-        # Scale contour up and down
-        outer_border = np.int32((1+border)*c - border*np.average(c, axis=0))
-        inner_border = np.int32((1-border)*c + border*np.average(c, axis=0))
-        # Calculate average inner and outer border intensities
-        outer_avg = filters.contourIntensityAverage(img, outer_border, c)
-        inner_avg = filters.contourIntensityAverage(img, c, inner_border)
-        if flag == 1:
-            if outer_avg > inner_avg + intensity_change:
-                valid.append(c)
-        elif flag == -1:
-            if inner_avg > outer_avg + intensity_change:
-                valid.append(c)
-    return valid
+    return filters.suppress_bad_shapes(contours, lane, 1.25)
 
 
 def angle_cos(p0, p1, p2):
@@ -86,17 +50,18 @@ def filterEccentricity(contours, eccentricity_thresh):
     return valid
 
 
-def validate(contours, img):
+def validate(contours, img, debug):
+    filter_list = []
     # Minimum perimeter of target
     min_length = 20*4
     # Minimum area of target
     min_area = 35  # Increasing to 40 suppresses target
-    validContours = filters.filterSize(contours, min_length, min_area)  # Use
+    filter_list.append(lambda x: filters.filterSize(x, min_length, min_area))
     # Tolerance for polygon fitting. Increasing means things get fit
     # with fewer vertices.
-    eccentricity_threshold = 17
-    validContours = filterEccentricity(contours, eccentricity_threshold)  # Use
-    validContours = suppressBadShapes(validContours)
+    # eccentricity_threshold = 17
+    # filter_list.append(filterEccentricity(contours, eccentricity_threshold))
+    filter_list.append(lambda x: suppress_bad_shapes(x))
 
     # Flag for how the intensity changes from the inside of the border to the
     # outside of the border. 1 means that the outside is more intense than the
@@ -107,25 +72,33 @@ def validate(contours, img):
     # For Lanes, inside is more intense in the Red channel by about
     # 115 (= 175 - 60) Using greyscale for now, inside more intense by 70
     intensity_change = 20
-    validContours = filterIntensities(validContours, img,
-                                      intensity_change_flag, intensity_change)
-    validContours = filters.suppressConcentric(validContours)  # use
+    filter_list.append(lambda x: filters.filter_intensities(x, img,
+                       intensity_change_flag, intensity_change))
+    filter_list.append(lambda x: filters.suppress_concentric(x))
 
-    return validContours
+    return filters.validate_contours(contours, filter_list, debug)
 
 
 def findByContours(orig):
     img = orig.copy()
-    gray = cb.filters.grayScale(img)
-    gray = cb.filters.medianBlur(gray)
+    debug = orig.copy()
+    gray = cv2.split(img)[2]  # cb.filters.grayScale(img)
+    gray = cb.filters.gaussianBlur(gray)
     img = cv2.Canny(gray, 0, 100, apertureSize=5)
     contours, _ = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    contours = validate(contours, cv2.split(orig)[2])
-    cv2.drawContours(orig, contours, -1, (0, 0, 255), 1)
-    cb.publishImage(orig)
+    return validate(contours, cv2.split(orig)[2], debug)
+
+
+def debug_callback(orig):
+    #gray = cb.filters.grayScale(orig)
+    #gray = cv2.split(orig)[2]
+    #gray = cb.filters.medianBlur(gray)
+    #img = cv2.Canny(gray, 0, 100, apertureSize=5)
+    _, debug = findByContours(orig)
+    cb.publishImage(debug)
 
 if __name__ == '__main__':
     global cb
     cb = CvBackbone.CvBackbone('lane_detection')
-    cb.addImageCallback(findByContours)
+    cb.addImageCallback(debug_callback)
     cb.start()
