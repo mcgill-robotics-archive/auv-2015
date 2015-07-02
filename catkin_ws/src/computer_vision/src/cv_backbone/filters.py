@@ -20,3 +20,13 @@ def gaussianBlur(img, size=5):
 
 def smoothGray(img):
     return grayScale(medianBlur(img))
+    
+def filterSize(contours, min_length, min_area):
+    # Removes small contours
+    return [c for c in contours
+            if cv2.arcLength(c, closed=True) > min_length
+            and cv2.contourArea(c) > min_area]
+            
+def suppressBadShapes(contours, shape, threshold):
+    return [c for c in contours 
+            if cv2.matchShapes(c, shape, 3, 0.0) < threshold]

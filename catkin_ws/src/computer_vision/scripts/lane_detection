@@ -3,87 +3,36 @@
 import cv2
 import math
 import numpy as np
-from numpy import linalg as LA 
-import glob
-from cv_backbone import CvBackbone
-import sys
+from numpy import linalg as LA
+from cv_backbone import CvBackbone, filters
 
 '''
-Author: Max Krogius
+Author: Wei-Di Chang
 
 The approach used here is to use findContours, and then filter out bad
-candidates based on size and shape. We are searching here for the inner
-edge of the bin, as the outer edges may be touching and so may not be 
-identified. 
+candidates based on size and shape.
 '''
 
-def filterSize(contours, min_length, min_area):
-    # Removes small contours
-    return [c for c in contours
-            if cv2.arcLength(c, closed=True) > min_length
-            and cv2.contourArea(c) > min_area]
 
 def suppressBadShapes(contours):
-    # This works well without skew, but with skew it doesn't work so well. 
-    # It allows things that look like rectanges but with more vertices.
-    # In theory that is good, but in the end we do need rectangles for 
-    # perspective transform.
-    # This also applies the constraint that the rectangle we want is about 
-    # twice as long in one direction
-    valid = []
-    #lane = np.array([[[2.5, 0]], [[2.5, 7]], [[0,7]], [[0, 8]], [[2.5, 8]], [[2.5, 35]], [[0, 35]], [[0,36]], [[2.5, 36]], [[2.5, 43]], [[7.5, 43]], [[7.5, 36]],[[10, 36]], [[10, 35]], [[7.5, 35]], [[7.5, 8]], [[10, 8]], [[10, 7]], [[7.5, 7]], [[7.5, 0]]])
-    lane = np.array([[[5, 0]], [[5, 14]], [[0,14]], [[0, 16]], 
-            [[5, 16]], [[5, 70]], [[0, 70]], [[0,72]], 
-            [[5, 72]], [[5, 86]], [[15, 86]], [[15, 72]], 
-            [[20, 72]], [[20, 70]], [[15, 70]], [[15, 16]], 
-            [[20, 16]], [[20, 14]], [[15, 14]], [[15, 0]]])
+    # Here we try to find something that looks like a lane, including the legs
+    lane = np.array([[[5, 0]], [[5, 14]], [[0, 14]], [[0, 16]],
+                    [[5, 16]], [[5, 70]], [[0, 70]], [[0, 72]],
+                    [[5, 72]], [[5, 86]], [[15, 86]], [[15, 72]],
+                    [[20, 72]], [[20, 70]], [[15, 70]], [[15, 16]],
+                    [[20, 16]], [[20, 14]], [[15, 14]], [[15, 0]]])
+    return filters.suppressBadShapes(contours, lane, 1.25)
 
-    for c in contours : 
-        if (cv2.matchShapes(c, lane, 3, 0.0) < 1.25) :
-            valid.append(c)
-    return valid
-    
-def filterRectangles(contours, tol):
-    # This suppresses some good shapes, why? Because they have extra vertices.
-    # Increasing the tolerance causes more stuff to be fit as quadrilaterals.
-    valid = []
-    for c in contours:
-        poly = cv2.approxPolyDP(c, tol*cv2.arcLength(c, True), True)
-        if len(poly) == 4 and cv2.isContourConvex(poly):
-            valid.append(poly)
-    return valid
 
 def dist(p1, p2):
     # Distance between two points
     return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
 
+
 def sideLengths(rect):
     # Returns the lengths of the sides of the rectangle
     return map(lambda i: dist(rect[i-1], rect[i]), range(4))
 
-def filterAspectRatio(rects, desired_aspect_ratio, aspect_ratio_tol):
-    # Test that the aspect ratio of the rectangle i.e is it x times
-    # as long in one direction as the other.
-    desired_aspect_ratio = desired_aspect_ratio if desired_aspect_ratio > 1 \
-            else 1/desired_aspect_ratio
-    valid = []
-    for r in rects:
-        r = r.reshape(-1, 2)
-        lengths = sideLengths(r)
-        aspect_ratio = (lengths[0] + lengths[2])/(lengths[1] + lengths[3])
-        aspect_ratio = aspect_ratio if aspect_ratio > 1 else 1/aspect_ratio
-        if abs(aspect_ratio - desired_aspect_ratio) < aspect_ratio_tol:
-            valid.append(r)
-    return valid
-
-def contourIntensityAverage(img, outerContour, innerContour=None):
-    # Calculates the average intensity inside outerContour and outside
-    # innerContour (if provided)
-    mask = np.zeros(img.shape, np.uint8)
-    cv2.drawContours(mask, [outerContour],0,255,-1)
-    if innerContour is not None:
-        cv2.drawContours(mask,[innerContour],0,0,-1)
-    return cv2.mean(img, mask=mask)[0]
 
 def filterIntensities(contours, img, flag, intensity_change):
     # Tests for rectangles where the area just outside the border
@@ -99,8 +48,8 @@ def filterIntensities(contours, img, flag, intensity_change):
         outer_border = np.int32((1+border)*c - border*np.average(c, axis=0))
         inner_border = np.int32((1-border)*c + border*np.average(c, axis=0))
         # Calculate average inner and outer border intensities
-        outer_avg = contourIntensityAverage(img, outer_border, c)
-        inner_avg = contourIntensityAverage(img, c, inner_border)
+        outer_avg = filters.contourIntensityAverage(img, outer_border, c)
+        inner_avg = filters.contourIntensityAverage(img, c, inner_border)
         if flag == 1:
             if outer_avg > inner_avg + intensity_change:
                 valid.append(c)
@@ -109,48 +58,29 @@ def filterIntensities(contours, img, flag, intensity_change):
                 valid.append(c)
     return valid
 
-def suppressConcentric(contours):
-    # Suppresses concentric contours by looking at their enclosing circle
-    valid = []
-    for x in contours:
-        x_center, x_rad = cv2.minEnclosingCircle(x)
-        for y in contours:
-            y_center, y_rad = cv2.minEnclosingCircle(y)
-            if y_rad > x_rad and dist(x_center, y_center) < y_rad:
-                break
-        else:
-            valid.append(x)
-    return valid
 
 def angle_cos(p0, p1, p2):
     d1, d2 = (p0-p1).astype('float'), (p2-p1).astype('float')
-    return abs( np.dot(d1, d2) / np.sqrt( np.dot(d1, d1)*np.dot(d2, d2) ) )
+    return abs(np.dot(d1, d2) / np.sqrt(np.dot(d1, d1)*np.dot(d2, d2)))
 
-def suppressSkewed(contours, cos_thresh):
-    valid = []
-    for c in contours:
-        coses = [angle_cos(c[i-2], c[i-1], c[i]) for i in range(4)]
-        max_cos = np.max(coses)
-        if max_cos < cos_thresh:
-            valid.append(c)
-    return valid
 
 def filterEccentricity(contours, eccentricity_thresh):
-    #Filters out contours based on ratio of major-axis/minor-axis - not exactly "eccentricity" by definition
+    # Filters out contours based on ratio of major-axis/minor-axis - not
+    # exactly "eccentricity" by definition
     valid = []
     for cnt in contours:
         moment = cv2.moments(cnt)
         if(moment['m00'] != 0):
             covariance = np.matrix([[moment['m20']/moment['m00'],
-                moment['m11']/moment['m00']], 
-                [moment['m11']/moment['m00'], 
-                moment['m02']/moment['m00']]])
+                                   moment['m11']/moment['m00']],
+                                   [moment['m11']/moment['m00'],
+                                   moment['m02']/moment['m00']]])
         else:
             continue
         eigenValues = LA.eigvals(covariance)
         eigenValues.sort()
         eccentricity = np.sqrt(eigenValues[1]/eigenValues[0])
-        #print eccentricity
+        # print eccentricity
         if(eccentricity < eccentricity_thresh):
             valid.append(cnt)
     return valid
@@ -160,12 +90,12 @@ def validate(contours, img):
     # Minimum perimeter of target
     min_length = 20*4
     # Minimum area of target
-    min_area = 35	#Increasing to 40 suppresses target
-    validContours = filterSize(contours, min_length, min_area)	#Use
+    min_area = 35  # Increasing to 40 suppresses target
+    validContours = filters.filterSize(contours, min_length, min_area)  # Use
     # Tolerance for polygon fitting. Increasing means things get fit
     # with fewer vertices.
     eccentricity_threshold = 17
-    validContours = filterEccentricity(contours, eccentricity_threshold) #Use
+    validContours = filterEccentricity(contours, eccentricity_threshold)  # Use
     validContours = suppressBadShapes(validContours)
 
     # Flag for how the intensity changes from the inside of the border to the
@@ -174,14 +104,15 @@ def validate(contours, img):
     # intense than the outside.
     intensity_change_flag = -1
     # Minimum average increase in intensity
-    # For Lanes, inside is more intense in the Red channel by about 115 (= 175 - 60)
-    # Using greyscale for now, inside more intense by 70
+    # For Lanes, inside is more intense in the Red channel by about
+    # 115 (= 175 - 60) Using greyscale for now, inside more intense by 70
     intensity_change = 20
-    validContours = filterIntensities(validContours, img,#Use
-            intensity_change_flag, intensity_change)
-    validContours = suppressConcentric(validContours)	#use
+    validContours = filterIntensities(validContours, img,
+                                      intensity_change_flag, intensity_change)
+    validContours = filters.suppressConcentric(validContours)  # use
 
-    return validContours;
+    return validContours
+
 
 def findByContours(orig):
     img = orig.copy()
@@ -190,7 +121,7 @@ def findByContours(orig):
     img = cv2.Canny(gray, 0, 100, apertureSize=5)
     contours, _ = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     contours = validate(contours, cv2.split(orig)[2])
-    cv2.drawContours(orig, contours, -1, (0, 0, 255), 1) 
+    cv2.drawContours(orig, contours, -1, (0, 0, 255), 1)
     cb.publishImage(orig)
 
 if __name__ == '__main__':
