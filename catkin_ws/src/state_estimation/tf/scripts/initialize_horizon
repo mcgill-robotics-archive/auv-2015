@@ -61,9 +61,6 @@ class RPY(object):
             self.yaw)
 
 
-# Transform listener.
-_listener = None
-
 # Cumulative RPY data.
 _lay_of_the_land = []
 
@@ -71,29 +68,15 @@ _lay_of_the_land = []
 horizon = RPY(0, 0, 0)
 
 
-def imu_callback(pose):
+def imu_callback(pose_stamped):
     """Callback on state estimation pose.
 
     Args:
-        pose: State estimation pose.
+        pose_stamped: State estimation PoseStamped message.
     """
-    # Disregard message, look at TF instead.
-    # This is a nice little hack to get notified of TF changes in real-time.
-    try:
-        (trans, rot) = _listener.lookupTransform(
-            # From
-            "/raw_horizon",
-            # To
-            "/robot",
-            # Now.
-            rospy.Time(0))
-    except (tf.LookupException, tf.ConnectivityException,
-            tf.ExtrapolationException):
-        # Give up.
-        return
-
     # Convert quaternion rotation to RPY.
-    rpy = RPY.from_quaternion(rot)
+    rot = pose_stamped.pose.orientation
+    rpy = RPY.from_quaternion((rot.x, rot.y, rot.z, rot.w))
 
     # Add data.
     _lay_of_the_land.append(rpy)
@@ -105,13 +88,15 @@ def wait(countdown):
     Args:
         countdown: Integer number of seconds to wait.
     """
+    # Force positive integer countdown.
     countdown = max(0, int(countdown))
 
-    rospy.loginfo("Countdown: %d s", countdown)
+    # Wait until complete.
     while countdown:
+        rospy.loginfo("Countdown: %d s left...", countdown)
         countdown -= 1
         time.sleep(1)
-        rospy.loginfo("Countdown: %d s left...", countdown)
+
     rospy.loginfo("Countdown: complete")
 
 
@@ -128,10 +113,6 @@ def reinitialize_horizon(countdown):
     global _lay_of_the_land
     _lay_of_the_land = []
 
-    # Setup TF listener.
-    global _listener
-    _listener = tf.TransformListener()
-
     # Subscribe to pose.
     imu = rospy.Subscriber("/state_estimation/pose", PoseStamped, imu_callback)
 
@@ -141,7 +122,7 @@ def reinitialize_horizon(countdown):
     # Unsubscribe.
     imu.unregister()
 
-    # Verify any data was accumulated.
+    # Verify sufficient data was accumulated.
     rospy.loginfo("Filtered %d data points", len(_lay_of_the_land))
     if not _lay_of_the_land:
         raise InsufficientDataError()
@@ -153,10 +134,11 @@ def reinitialize_horizon(countdown):
     ]
     median = RPY(*np.median(rotations, axis=0))
 
-    # Log new initialized RPY.
+    # Log median RPY.
     rospy.loginfo("Median roll:  %f", median.roll)
     rospy.loginfo("Median pitch: %f", median.pitch)
     rospy.loginfo("Median yaw:   %f", median.yaw)
+    rospy.loginfo("Median rot:   %r", median.to_quaternion().tolist())
 
     # Only initialize horizon.
     global horizon
@@ -169,7 +151,7 @@ def handle_reinitialization_request(req):
     Args:
         request: Service request.
     """
-    rospy.logwarn("Reinitializating horizon...")
+    rospy.logwarn("Reinitializing horizon...")
 
     try:
         reinitialize_horizon(req.countdown)
