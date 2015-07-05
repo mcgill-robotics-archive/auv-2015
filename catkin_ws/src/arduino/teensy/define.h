@@ -36,12 +36,15 @@
 #define SOLENOID_PIN_PORT_TORPEDO           28
 #define SOLENOID_PIN_EXTRA                  33
 
+//ON BOARD LED PIN
+#define LED_PIN                             13
+
 //Mission Control
 #define MISSION_PIN                         A3
 
 //Depth Sensor
 #define MS5803_I2C_ADDR                     0x76
-#
+
 
 //TIME INTERVAL(unit microsecond)
 #define SOLENOID_TIMEOUT                    200
@@ -62,14 +65,14 @@
 #define MOTOR_CURRENT_PIN                   A6
 
 //
-const double kCOM_VOLT_SLOPE = 1.0; //(teensy voltage * total resistance / (single resisitance * mamotorCommandValue bit))
-const double kCOM_VOLT_OFFSET = 0.0;
+const double kCOM_VOLT_SLOPE = 0.113390131; //(teensy voltage * total resistance / (single resisitance * mamotorCommandValue bit))
+const double kCOM_VOLT_OFFSET = -48.180;
 
 const double kCOM_CURR_SLOPE = 1.0;
 const double kCOM_CURR_OFFSET = 0.0;
 
-const double kMOT_VOLT_SLOPE = 1.0;
-const double kMOT_VOLT_OFFSET = 0.0;
+const double kMOT_VOLT_SLOPE = 0.051530;
+const double kMOT_VOLT_OFFSET = -20.015;
 
 const double kMOT_CURR_SLOPE = 1.0;
 const double kMOT_CURR_OFFSET = 0.0;
