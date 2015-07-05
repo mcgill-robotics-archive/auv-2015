@@ -9,7 +9,6 @@ from gazebo_msgs.msg import ModelStates
 FREQUENCY = 500  # Hz
 
 time = None
-zero = (0, 0, 0)
 
 
 def positionToList(pos):
@@ -71,22 +70,13 @@ def broadcastIMU(modelStates):
         quaternionToList(pose.orientation))
     t = rospy.get_rostime()
     broadcaster.sendTransform(
-        zero, q_imu, t,
-        "/robot", "/raw_horizon")
-
-    try:
-        initial_rot = get_initialization_transform()
-    except tf.LookupException:
-        initial_rot = (0, 0, 0, 1.0)
-    broadcaster.sendTransform(
-        zero, initial_rot, t,
-        "/raw_horizon", "/initial_horizon")
-
+        (0, 0, 0), q_imu, t,
+        "/robot", "/initial_horizon")
     q_yaw = transform.quaternion_from_euler(
         0, 0, transform.euler_from_quaternion(q_imu)[2])
     broadcaster.sendTransform(
-        zero, q_yaw, t,
-        "/horizon", "/initial_horizon")
+        (0, 0, 0), q_yaw, t,
+        "/horizon", "/raw_horizon")
     broadcaster.sendTransform(
         (0, 0, pose.position.z - 4.8768), (0, 0, 0, 1.0),
         t, "/floating_horizon", "/horizon")
@@ -138,39 +128,11 @@ def callback(modelStates):
         time = rospy.get_time()
 
 
-def set_initialization_transform():
-    """Setup initialization transform."""
-    t = rospy.get_rostime()
-    broadcaster.sendTransform(
-        zero, (0, 0, 0, 1.0),
-        t, "/raw_horizon", "/initial_horizon")
-
-
-def get_initialization_transform():
-    """Gets initialization transform.
-
-    Returns:
-        Quaternion.
-
-    Raises:
-        tf.LookupException: Lookup failed.
-    """
-    try:
-        trans, rot = listener.lookupTransform(
-            "/raw_horizon", "/initial_horizon",
-            rospy.Time(0))
-        return rot
-    except (tf.LookupException, tf.ConnectivityException,
-            tf.ExtrapolationException) as e:
-        raise tf.LookupException(e)
-
-
 if __name__ == "__main__":
     try:
         rospy.init_node("sim_depth")
         broadcaster = tf.TransformBroadcaster()
         listener = tf.TransformListener()
-        set_initialization_transform()
         rospy.Subscriber("/gazebo/model_states", ModelStates, callback)
         rospy.spin()
     except rospy.ROSInterruptException:

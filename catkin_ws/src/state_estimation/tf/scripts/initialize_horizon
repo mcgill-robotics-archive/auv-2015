@@ -1,0 +1,205 @@
+#!/usr/bin/env python2.7
+# -*- coding: utf-8 -*-
+
+"""Reinitialize IMU orientation."""
+
+import tf
+import time
+import rospy
+import numpy as np
+from geometry_msgs.msg import PoseStamped
+from auv_msgs.srv import ReinitializeHorizon, ReinitializeHorizonResponse
+
+
+class InsufficientDataError(RuntimeError):
+    """Data collected was not sufficient."""
+    pass
+
+
+class RPY(object):
+
+    """Roll, Pitch and Yaw class."""
+
+    def __init__(self, roll, pitch, yaw):
+        """Construct RPY instance.
+
+        Args:
+            roll: Roll in radians.
+            pitch: Pitch in radians.
+            yaw: Yaw in radians.
+        """
+        self.roll = float(roll)
+        self.pitch = float(pitch)
+        self.yaw = float(yaw)
+
+    def __repr__(self):
+        """Constructs string representation of RPY instance."""
+        return "<{rpy.roll}, {rpy.pitch}, {rpy.yaw}>".format(rpy=self)
+
+    @classmethod
+    def from_quaternion(cls, rot):
+        """Constructs RPY instance from quaternion rotation.
+
+        Args:
+            rot: Quaternion rotation.
+
+        Returns:
+            RPY instance.
+        """
+        (roll, pitch, yaw) = tf.transformations.euler_from_quaternion(rot)
+        return cls(roll, pitch, yaw)
+
+    def to_quaternion(self):
+        """Converts RPY instance to quaternion rotation.
+
+        Returns:
+            Quaternion rotation.
+        """
+        return tf.transformations.quaternion_from_euler(
+            self.roll,
+            self.pitch,
+            self.yaw)
+
+
+# Transform listener.
+_listener = None
+
+# Cumulative RPY data.
+_lay_of_the_land = []
+
+# Initial horizon.
+horizon = RPY(0, 0, 0)
+
+
+def imu_callback(pose):
+    """Callback on state estimation pose.
+
+    Args:
+        pose: State estimation pose.
+    """
+    # Disregard message, look at TF instead.
+    # This is a nice little hack to get notified of TF changes in real-time.
+    try:
+        (trans, rot) = _listener.lookupTransform(
+            # From
+            "/raw_horizon",
+            # To
+            "/robot",
+            # Now.
+            rospy.Time(0))
+    except (tf.LookupException, tf.ConnectivityException,
+            tf.ExtrapolationException):
+        # Give up.
+        return
+
+    # Convert quaternion rotation to RPY.
+    rpy = RPY.from_quaternion(rot)
+
+    # Add data.
+    _lay_of_the_land.append(rpy)
+
+
+def wait(countdown):
+    """Holds thread for specified time and prints progress.
+
+    Args:
+        countdown: Integer number of seconds to wait.
+    """
+    countdown = max(0, int(countdown))
+
+    rospy.loginfo("Countdown: %d s", countdown)
+    while countdown:
+        countdown -= 1
+        time.sleep(1)
+        rospy.loginfo("Countdown: %d s left...", countdown)
+    rospy.loginfo("Countdown: complete")
+
+
+def reinitialize_horizon(countdown):
+    """Reinitializes horizon.
+
+    Args:
+        countdown: Integer number of seconds to wait for data gathering.
+
+    Raises:
+        InsufficientDataError: Data collected was not sufficient.
+    """
+    # Reset accumulated data.
+    global _lay_of_the_land
+    _lay_of_the_land = []
+
+    # Setup TF listener.
+    global _listener
+    _listener = tf.TransformListener()
+
+    # Subscribe to pose.
+    imu = rospy.Subscriber("/state_estimation/pose", PoseStamped, imu_callback)
+
+    # Wait until countdown is over.
+    wait(countdown)
+
+    # Unsubscribe.
+    imu.unregister()
+
+    # Verify any data was accumulated.
+    rospy.loginfo("Filtered %d data points", len(_lay_of_the_land))
+    if not _lay_of_the_land:
+        raise InsufficientDataError()
+
+    # Compute median.
+    rotations = [
+        (rpy.roll, rpy.pitch, rpy.yaw)
+        for rpy in _lay_of_the_land
+    ]
+    median = RPY(*np.median(rotations, axis=0))
+
+    # Log new initialized RPY.
+    rospy.loginfo("Median roll:  %f", median.roll)
+    rospy.loginfo("Median pitch: %f", median.pitch)
+    rospy.loginfo("Median yaw:   %f", median.yaw)
+
+    # Only initialize horizon.
+    global horizon
+    horizon = RPY(0, 0, median.yaw)
+
+
+def handle_reinitialization_request(req):
+    """Handles reinitialization service request.
+
+    Args:
+        request: Service request.
+    """
+    rospy.logwarn("Reinitializating horizon...")
+
+    try:
+        reinitialize_horizon(req.countdown)
+        rospy.logwarn("Reinitialization complete")
+        return ReinitializeHorizonResponse(True)
+    except InsufficientDataError:
+        rospy.logerr("Collected data was insufficient")
+        return ReinitializeHorizonResponse(False)
+
+
+def broadcast_horizon():
+    """Continuously broadcast raw_pose to initial_horizon transform."""
+    broadcaster = tf.TransformBroadcaster()
+    rate = rospy.Rate(256)  # Hz.
+    while not rospy.is_shutdown():
+        broadcaster.sendTransform(
+            (0, 0, 0), horizon.to_quaternion(),
+            # Now
+            rospy.get_rostime(),
+            # From
+            "/initial_horizon",
+            # To
+            "/raw_horizon")
+        rate.sleep()
+
+
+if __name__ == "__main__":
+    rospy.init_node("horizon")
+    service = rospy.Service(
+        "reinitialize_horizon",
+        ReinitializeHorizon,
+        handle_reinitialization_request)
+    broadcast_horizon()
