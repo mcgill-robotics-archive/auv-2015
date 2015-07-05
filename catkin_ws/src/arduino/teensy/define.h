@@ -22,6 +22,8 @@
 #define STATUS_PIN_FAULT                    8
 #define STATUS_PIN_OTW                      11
 
+//THRESHOLD for motor control
+#define THRESHOLD_MOTOR                     50
 
 #define PWM_FREQUENCY 93750 //One of the Ideal Frequency of teensy3.1
 
@@ -34,25 +36,42 @@
 #define SOLENOID_PIN_PORT_TORPEDO           28
 #define SOLENOID_PIN_EXTRA                  33
 
-//ANALOG
-#define VOLTAGE_PIN_1                       A0
-#define VOLTAGE_PIN_2                       A1
+//Mission Control
+#define MISSION_PIN                         A3
+
+//Depth Sensor
+#define MS5803_I2C_ADDR                     0x76
+#
 
 //TIME INTERVAL(unit microsecond)
 #define SOLENOID_TIMEOUT                    200
 #define MOTOR_TIMEOUT                       500   //amount of no signal required to start to reset motors
 #define TEMPERATURE_INTERVAL                1000  //amount of delay between each temperatures read
-#define POWER_MONITOR_INTERVAL              500   //amount of delay between each power monitor read
-#define DEPTH_INTERVAL                      20    //amount of delay between each depth read
+#define POWER_MONITOR_INTERVAL              100   //amount of delay between each power monitor read
+#define DEPTH_INTERVAL                      25    //amount of delay between each depth read
+#define DEPTH_DISCONNECT_INTERVAL           5000
+#define EXTERNAL_TEMP_INTERVAL              1000
 #define MOTOR_STATUS_INTERVAL               500
+#define MISSION_INTERVAL                    100
 
 
-//THRESHOLD for motor control
-#define THRESHOLD_MOTOR                     50
+//ANALOG
+#define COMPUTER_VOLTAGE_PIN                A9
+#define COMPUTER_CURRENT_PIN                A8
+#define MOTOR_VOLTAGE_PIN                   A7
+#define MOTOR_CURRENT_PIN                   A6
+
+//
+const double kCOM_VOLT_SLOPE = 1.0; //(teensy voltage * total resistance / (single resisitance * mamotorCommandValue bit))
+const double kCOM_VOLT_OFFSET = 0.0;
+
+const double kCOM_CURR_SLOPE = 1.0;
+const double kCOM_CURR_OFFSET = 0.0;
+
+const double kMOT_VOLT_SLOPE = 1.0;
+const double kMOT_VOLT_OFFSET = 0.0;
+
+const double kMOT_CURR_SLOPE = 1.0;
+const double kMOT_CURR_OFFSET = 0.0;
 
 
-
-const double COM_VOLT_RATIO = (3.3*30.9 * 24.12) / (3.9 * 1024.0 * 23.46); //(teensy voltage * total resistance / (single resisitance * mamotorCommandValue bit))
-const double MOT_VOLT_RATIO = 1.0;
-const double COM_CURR_RATIO = 1.0;
-const double MOT_CURR_RATIO = 1.0;
