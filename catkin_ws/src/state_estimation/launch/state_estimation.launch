@@ -16,4 +16,10 @@
 		type="initialize_horizon"
 		pkg="state_estimation"
 	/>
+
+    <node
+        name="depth"
+        type="depth"
+        pkg="state_estimation"
+    />
 </launch>
