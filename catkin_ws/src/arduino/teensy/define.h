@@ -39,14 +39,21 @@
 //Mission Control
 #define MISSION_PIN                         A3
 
+//Depth Sensor
+#define MS5803_I2C_ADDR                     0x76
+#
+
 //TIME INTERVAL(unit microsecond)
 #define SOLENOID_TIMEOUT                    200
 #define MOTOR_TIMEOUT                       500   //amount of no signal required to start to reset motors
 #define TEMPERATURE_INTERVAL                1000  //amount of delay between each temperatures read
 #define POWER_MONITOR_INTERVAL              100   //amount of delay between each power monitor read
-#define DEPTH_INTERVAL                      20    //amount of delay between each depth read
+#define DEPTH_INTERVAL                      25    //amount of delay between each depth read
+#define DEPTH_DISCONNECT_INTERVAL           5000
+#define EXTERNAL_TEMP_INTERVAL              1000
 #define MOTOR_STATUS_INTERVAL               500
-#define MISSION_INTERVAL                    50
+#define MISSION_INTERVAL                    100
+
 
 //ANALOG
 #define COMPUTER_VOLTAGE_PIN                A9

@@ -1,6 +1,8 @@
+#include <i2c_t3.h>
 #include <Servo.h>
 #include <ros.h>
 #include <std_msgs/Int16.h>
+#include <std_msgs/Int32.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Float32.h>
 #include <std_msgs/Bool.h>
@@ -8,12 +10,18 @@
 #include <auv_msgs/SolenoidCommands.h>
 
 #include "define.h"
+#include "MS5803_I2C.h"
 
+MS5803 depthSensor(ADDRESS_HIGH);
 ros::NodeHandle nh;
 
 Servo myservo[6];
- 
+
+
+bool depthSensorConnected = false;
+
 unsigned long depthSensorSchedule = 0;
+unsigned long externalTempSchedule = 0;
 unsigned long powerMonitorSchedule = 0;
 unsigned long timeLastMotorCommand = 0;
 unsigned long lastSolenoidCommand = 0;
@@ -22,15 +30,16 @@ unsigned long MissionSchedule = 0;
 
 int lastMotorCommands[8] = {0,0,0,0,0,0,0,0};
 
-std_msgs::Float32 depth_m;
+std_msgs::Float32 pressure_m;
+std_msgs::Float32 external_temperature_m;
 std_msgs::Float32 computerVoltage_m;
 std_msgs::Float32 computerCurrent_m;
 std_msgs::Float32 motorVoltage_m;
 std_msgs::Float32 motorCurrent_m;
 std_msgs::Bool mission_m;
 
-ros::Publisher depthPub("~depth", &depth_m);  // Publish the depth topic
-
+ros::Publisher pressurePub("~pressure", &pressure_m);  // Publish the depth topic
+ros::Publisher externalTemperaturePub("~external_temperature", &external_temperature_m);
 ros::Publisher computerVoltagePub("~computerVoltage", &computerVoltage_m);
 ros::Publisher ComputerCurrentPub("~computerCurrent", &computerCurrent_m);
 ros::Publisher motorVoltagePub("~motorVoltage", &motorVoltage_m);
@@ -192,14 +201,24 @@ void setup(){
   pinMode(MOTOR_CURRENT_PIN,INPUT);
   pinMode(MISSION_PIN,INPUT);
   
-  
-  
+  Wire1.begin(I2C_MASTER, 0x00, I2C_PINS_29_30, I2C_PULLUP_EXT, I2C_RATE_400);
+  Wire1.setDefaultTimeout(10);
+  Wire1.beginTransmission(MS5803_I2C_ADDR);       // slave addr
+  if(Wire1.endTransmission()){
+    delay(10);
+  } else {
+    depthSensorConnected = true;
+    depthSensor.reset();
+    depthSensor.begin();
+  }
+
   //ros node initialization
   nh.initNode();
 
   
   //ros publisher initialization
-  nh.advertise(depthPub);        //depth sensor
+  nh.advertise(pressurePub);        //depth sensor
+  nh.advertise(externalTemperaturePub);
   nh.advertise(computerVoltagePub);     //battery level
   nh.advertise(ComputerCurrentPub);
   nh.advertise(motorVoltagePub);
@@ -217,14 +236,32 @@ void loop(){
   unsigned long currentTime = millis();
   mission_m.data = digitalRead(MISSION_PIN);
 
-  /*
+  
   //Depth Sensing
   if(depthSensorSchedule < currentTime){
-    depth_msg.data = analogRead(DEPTH_SENSOR_PIN);
-    depthPub.publish(&depth_msg);
-    depthSensorSchedule += DEPTH_INTERVAL;
+    if(depthSensorConnected){
+      depthSensor.getMeasurements(ADC_4096);
+      pressure_m.data = depthSensor.getPressure();
+      pressurePub.publish(&pressure_m);
+      depthSensorSchedule += DEPTH_INTERVAL;
+    } else {
+      nh.logfatal("Depth Sensor is NOT CONNECTED!!");
+      depthSensorSchedule += DEPTH_DISCONNECT_INTERVAL;
+    }
   }
-  */
+  
+  //external Temperature
+  if(externalTempSchedule < currentTime){
+    if(depthSensorConnected){
+      external_temperature_m.data = depthSensor.getTemperature(CELSIUS);
+      externalTemperaturePub.publish(&external_temperature_m);
+      externalTempSchedule += EXTERNAL_TEMP_INTERVAL;
+    }
+  } else{
+      externalTempSchedule += EXTERNAL_TEMP_INTERVAL;
+  }
+  
+  
   
   if(powerMonitorSchedule < currentTime){
     computerVoltage_m.data = analogRead(COMPUTER_VOLTAGE_PIN) * kCOM_VOLT_SLOPE + kCOM_VOLT_OFFSET;
