@@ -35,18 +35,6 @@ void imuCallBack(const geometry_msgs::PoseStamped::ConstPtr& msg) {
       "/robot"
     )
   );
-
-  double roll,pitch,yaw;
-  tf::Matrix3x3(initialHorizonToRobot).getRPY(roll,pitch,yaw);
-
-  tf::Quaternion yawQuat;
-  yawQuat.setRPY(0,0,yaw);
-  broadcaster.sendTransform(tf::StampedTransform(
-    tf::Transform(yawQuat, zero),
-    time,
-    "/raw_horizon",
-    "/horizon"
-  ));
 }
 
 int main(int argc, char** argv) {

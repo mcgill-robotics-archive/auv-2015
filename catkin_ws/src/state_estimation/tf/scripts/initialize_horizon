@@ -163,7 +163,7 @@ def handle_reinitialization_request(req):
 
 
 def broadcast_horizon():
-    """Continuously broadcast raw_pose to initial_horizon transform."""
+    """Continuously broadcast initial_horizon to horizon transform."""
     broadcaster = tf.TransformBroadcaster()
     rate = rospy.Rate(256)  # Hz.
     while not rospy.is_shutdown():
@@ -174,7 +174,7 @@ def broadcast_horizon():
             # From
             "/initial_horizon",
             # To
-            "/raw_horizon")
+            "/horizon")
         rate.sleep()
 
 
