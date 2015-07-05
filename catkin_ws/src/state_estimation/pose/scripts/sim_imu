@@ -5,8 +5,6 @@ from geometry_msgs.msg import PoseStamped
 from gazebo_msgs.msg import ModelStates
 from tf import transformations
 import numpy
-import roslib; roslib.load_manifest('state_estimation')
-from state_estimation.srv import *
 
 time = None
 resetInitialPoseFlag = True
@@ -14,7 +12,7 @@ initialPose = None
 
 def inverseQuaternion(quat):
     inverse = transformations.quaternion_inverse(numpy.array((quat.pose.orientation.x, quat.pose.orientation.y, quat.pose.orientation.z, quat.pose.orientation.w), dtype=numpy.float64))
-    
+
     result = PoseStamped()
     result.header = quat.header
     result.pose.orientation.x = inverse[0]
@@ -52,14 +50,14 @@ def callback(modelStates):
             poseStamped.pose.position.x = 0
             poseStamped.pose.position.y = 0
             poseStamped.pose.position.z = 0
-            
+
 	    # Reset the initial pose
             if resetInitialPoseFlag == True:
                 initialPose = PoseStamped()
                 initialPose.header = poseStamped.header
                 initialPose.pose = poseStamped.pose
                 resetInitialPoseFlag = False
-	    
+
             # Relative orientation relative to the initial pose
             relativePose = multQuaternion(initialPose, inverseQuaternion(poseStamped))
             relativePose.pose.orientation.z = relativePose.pose.orientation.z * -1.0
@@ -76,15 +74,13 @@ def init():
     global pub
     rospy.init_node('sim_imu')
 
-    # Service that resets initial pose whenever the service is called
-    srv = rospy.Service('/state_estimation/set_initial_pose', setInitialPose, handle_set_initial_pose)
     # Subscribe to different inputing topics
     rospy.Subscriber('/gazebo/model_states', ModelStates, callback)
 
     # Publish the filtered data to a topic
     pub = rospy.Publisher('state_estimation/pose', PoseStamped)
     rospy.spin()
-    
+
 if __name__ == '__main__':
     try:
         init()
