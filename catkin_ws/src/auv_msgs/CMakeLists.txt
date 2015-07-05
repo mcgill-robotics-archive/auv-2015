@@ -31,6 +31,7 @@ add_service_files(FILES
   ConfidenceRadius.srv
   XYConfidenceRadius.srv
   Covariance.srv
+  ReinitializeHorizon.srv
 )
 
 add_action_files(
@@ -43,4 +44,3 @@ add_action_files(
 
 generate_messages(DEPENDENCIES actionlib_msgs std_msgs geometry_msgs)
 catkin_package(CATKIN_DEPENDS message_runtime actionlib_msgs)
-
