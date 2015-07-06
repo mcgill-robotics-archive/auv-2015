@@ -163,18 +163,21 @@ def handle_reinitialization_request(req):
 
 
 def broadcast_horizon():
-    """Continuously broadcast initial_horizon to horizon transform."""
+    """Continuously broadcast raw_horizon to initial_horizon transform.
+
+    Note: This is a blocking function.
+    """
     broadcaster = tf.TransformBroadcaster()
-    rate = rospy.Rate(256)  # Hz.
+    rate = rospy.Rate(256)  # Same frequency as IMU in Hz.
     while not rospy.is_shutdown():
         broadcaster.sendTransform(
             (0, 0, 0), horizon.to_quaternion(),
             # Now
             rospy.get_rostime(),
             # From
-            "/initial_horizon",
+            "/raw_horizon",
             # To
-            "/horizon")
+            "/initial_horizon")
         rate.sleep()
 
 

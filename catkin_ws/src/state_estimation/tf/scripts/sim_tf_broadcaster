@@ -71,7 +71,7 @@ def broadcastIMU(modelStates):
     t = rospy.get_rostime()
     broadcaster.sendTransform(
         (0, 0, 0), q_imu, t,
-        "/robot", "/initial_horizon")
+        "/robot", "/raw_horizon")
     q_yaw = transform.quaternion_from_euler(
         0, 0, transform.euler_from_quaternion(q_imu)[2])
     broadcaster.sendTransform(
