@@ -32,7 +32,6 @@ sway_speed = 0.0
 server = None
 listener = None
 wrenchPublisher = None
-last_heading = 0.0
 
 
 def normalize_angle(angle, max_angle=pi):
@@ -71,21 +70,12 @@ def set_position_callback():
 
 def set_velocity_preempt():
     global surge_speed, sway_speed, mode
-    surge_speed = 0.0
-    sway_speed = 0.0
-    angles_desired[0] = 0.0
-    angles_desired[1] = 0.0
     if vel_server.is_active():
         vel_server.set_preempted()
 
 
 def set_position_preempt():
     global surge_speed, sway_speed, mode
-    surge_speed = 0.0
-    sway_speed = 0.0
-    angles_desired[0] = 0.0
-    angles_desired[1] = 0.0
-    angles_desired[2] = last_heading
     if pos_server.is_active():
         pos_server.set_preempted()
 
@@ -141,6 +131,11 @@ def rosInit():
 def loop(event):
     global pos_proportional_error, pos_integral_error, proportional_error
     global integral_error
+
+    if not (vel_server.is_active() or pos_server.is_active()):
+        wrenchPublisher.publish(Wrench())
+        return
+        
     # Velocity control is open-loop
     fx = surge_coeff*surge_speed
     fy = sway_coeff*sway_speed
@@ -153,7 +148,6 @@ def loop(event):
         (x_err, y_err, _), quaternion = \
             get_transform(target_frame_id, '/horizon')
         yaw_err = euler_from_quaternion(quaternion)[2]
-        print yaw_err
         pos_proportional_error_prev = pos_proportional_error
         pos_proportional_error = pos_desired - np.array([x_err, y_err])
         pos_integral_error = pos_proportional_error * dt
@@ -162,7 +156,6 @@ def loop(event):
         fx, fy = (pos_integral_error * pos_integral_gains
                   + pos_proportional_error * pos_proportional_gains
                   + pos_derivative_error * pos_derivative_gains)
-        print (fx, fy)
         angles_estimated[2] = yaw_err
 
     proportional_error_prev = proportional_error.copy()
@@ -193,8 +186,6 @@ def loop(event):
     output = (integral_error * integral_gains
               + proportional_error * proportional_gains
               + derivative_error * derivative_gains)
-
-    rospy.loginfo("Integral Error {}".format(integral_error))
 
     # Need to transform the desired force into the body frame for thrustmapper.
     matrix = euler_matrix(angles_estimated[0], angles_estimated[1], 0).T

@@ -31,6 +31,7 @@ add_service_files(FILES
   ConfidenceRadius.srv
   XYConfidenceRadius.srv
   Covariance.srv
+  RcMode.srv
 )
 
 add_action_files(

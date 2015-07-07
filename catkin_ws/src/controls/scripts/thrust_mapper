@@ -69,7 +69,6 @@ def Wrench_to_thrust_callback(data):
     thrust_pub.publish(cmds_msg)
 
 def pwm(thrust, data):
-    print thrust
     min_thrust = 0.01
     pwm = interp(thrust, data[:,0], data[:,1])
     pwm[abs(thrust) < min_thrust] = 0

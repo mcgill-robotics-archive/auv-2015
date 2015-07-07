@@ -1,38 +1,36 @@
 #! /usr/bin/env python2.7
 
 import rospy
-from std_msgs.msg import String
+from auv_msgs.srv import RcMode, RcModeResponse
 from geometry_msgs.msg import Wrench
 
-modes = ['off', 'rc', 'controls']
-mode = 'off'
+rc_mode = False
 
 
 def mode_callback(msg):
-    global mode
-    if msg.data in modes:
-        mode = msg.data
-    else:
-        rospy.logerr('Invalid mode specified.')
+    global rc_mode
+    rc_mode = msg.rc_mode
+    return RcModeResponse()
 
 
 def rc_callback(msg):
-    if mode == 'rc':
+    if rc_mode:
         thruster_pub.publish(msg)
 
 
 def controls_callback(msg):
-    if mode == 'controls':
+    if not rc_mode:
         thruster_pub.publish(msg)
 
 
 if __name__ == '__main__':
     global controls_sub, rc_sub, thruster_pub, mode_srv
+    rospy.init_node('thruster_switch')
     controls_sub = rospy.Subscriber('/controls/wrench',
                                     Wrench, controls_callback)
     rc_callback = rospy.Subscriber('/rc/wrench',
                                    Wrench, rc_callback)
     thruster_pub = rospy.Publisher('/thrust_mapper/wrench',
                                    Wrench, queue_size=100)
-    mode_srv = rospy.Service('thruster_mode', String, mode_callback)
+    mode_srv = rospy.Service('thruster_mode', RcMode, mode_callback)
     rospy.spin()
