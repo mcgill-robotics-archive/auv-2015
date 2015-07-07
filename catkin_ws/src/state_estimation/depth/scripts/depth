@@ -3,6 +3,7 @@
 
 """Depth sensor filter."""
 
+import tf
 import rospy
 import numpy as np
 from std_msgs.msg import Float32, Float64
@@ -20,6 +21,9 @@ window_size = None
 # Depth offset in meters.
 depth_offset = None
 
+# TF broadcaster.
+_broadcaster = None
+
 
 def mbar_to_depth(pressure):
     """Converts millibars of pressure to depth in meters.
@@ -33,8 +37,8 @@ def mbar_to_depth(pressure):
     return (pressure - MBAR_AT_SURFACE) * METERS_PER_MBAR + depth_offset
 
 
-def get_median_depth(current_depth):
-    """Gets the median depth from the past window.
+def get_mean_depth(current_depth):
+    """Gets the mean depth from the past window.
 
     Args:
         current_depth: Latest depth reading in meters.
@@ -49,7 +53,23 @@ def get_median_depth(current_depth):
     # Add latest reading.
     window.append(current_depth)
 
-    return np.median(window)
+    return np.mean(window)
+
+
+def broadcast_transform(depth):
+    """Broadcast horizon to floating_horizon transform.
+
+    Args:
+        depth: Depth in meters.
+    """
+    _broadcaster.sendTransform(
+        (0, 0, depth), (0, 0, 0, 1.0),
+        # Now
+        rospy.get_rostime(),
+        # From
+        "/horizon",
+        # To
+        "/floating_horizon")
 
 
 def update_parameters():
@@ -84,12 +104,16 @@ def pressure_callback(msg):
     raw_pub.publish(raw_depth)
 
     # Publish filtered depth.
-    filtered_depth = get_median_depth(raw_depth)
+    filtered_depth = get_mean_depth(raw_depth)
     filtered_pub.publish(filtered_depth)
+
+    # Broadcast filtered transform.
+    broadcast_transform(filtered_depth)
 
 
 if __name__ == "__main__":
     rospy.init_node("depth")
+    _broadcaster = tf.TransformBroadcaster()
     raw_pub = rospy.Publisher(
         "/state_estimation/raw_depth",
         Float64, queue_size=10)

@@ -161,7 +161,7 @@ void solenoidCb( const auv_msgs::SolenoidCommands& msg){
 
 ros::Subscriber<auv_msgs::SolenoidCommands> solenoidSub("~solenoid", &solenoidCb );
 ros::Subscriber<auv_msgs::MotorCommands> motorSub("~motor", &motorCb );
-
+int test;
 void setup(){
   
   //Setup for T100, normal servo control
@@ -201,17 +201,19 @@ void setup(){
   pinMode(MOTOR_CURRENT_PIN,INPUT);
   pinMode(MISSION_PIN,INPUT);
   
+  pinMode(13,OUTPUT);
   Wire1.begin(I2C_MASTER, 0x00, I2C_PINS_29_30, I2C_PULLUP_EXT, I2C_RATE_400);
-  Wire1.setDefaultTimeout(10);
+  Wire1.resetBus();
+  Wire1.setDefaultTimeout(100);
+  depthSensor.reset();
   Wire1.beginTransmission(MS5803_I2C_ADDR);       // slave addr
-  if(Wire1.endTransmission()){
-    delay(10);
-  } else {
+  if(Wire1.endTransmission() == 0){
     depthSensorConnected = true;
-    depthSensor.reset();
     depthSensor.begin();
+  } else {
+    delay(10);
   }
-
+  digitalWrite(13,depthSensorConnected);
   //ros node initialization
   nh.initNode();
 
@@ -230,13 +232,15 @@ void setup(){
   nh.subscribe(solenoidSub);
   
 }
+  
+void toggleLed(){
+  digitalWrite(LED_PIN,!digitalRead(LED_PIN));
+}
 
 void loop(){
 
   unsigned long currentTime = millis();
   mission_m.data = digitalRead(MISSION_PIN);
-
-  
   //Depth Sensing
   if(depthSensorSchedule < currentTime){
     if(depthSensorConnected){
@@ -244,24 +248,27 @@ void loop(){
       pressure_m.data = depthSensor.getPressure();
       pressurePub.publish(&pressure_m);
       depthSensorSchedule += DEPTH_INTERVAL;
+      toggleLed();
     } else {
       nh.logfatal("Depth Sensor is NOT CONNECTED!!");
       depthSensorSchedule += DEPTH_DISCONNECT_INTERVAL;
+      toggleLed();
     }
   }
   
   //external Temperature
   if(externalTempSchedule < currentTime){
     if(depthSensorConnected){
+      depthSensor.getMeasurements(ADC_512);
       external_temperature_m.data = depthSensor.getTemperature(CELSIUS);
       externalTemperaturePub.publish(&external_temperature_m);
-      externalTempSchedule += EXTERNAL_TEMP_INTERVAL;
+      externalTempSchedule += TEMPERATURE_INTERVAL;
+      toggleLed();
+    } else{
+      externalTempSchedule += TEMPERATURE_INTERVAL;
+      toggleLed();
     }
-  } else{
-      externalTempSchedule += EXTERNAL_TEMP_INTERVAL;
   }
-  
-  
   
   if(powerMonitorSchedule < currentTime){
     computerVoltage_m.data = analogRead(COMPUTER_VOLTAGE_PIN) * kCOM_VOLT_SLOPE + kCOM_VOLT_OFFSET;
@@ -272,14 +279,15 @@ void loop(){
     ComputerCurrentPub.publish(&computerCurrent_m);
     motorVoltagePub.publish(&motorVoltage_m);
     motorCurrentPub.publish(&motorCurrent_m);
-  
     powerMonitorSchedule += POWER_MONITOR_INTERVAL;
+    toggleLed();
   }
   
   //Seabotix Motor status
   if(MissionSchedule < currentTime){
     missionPub.publish(&mission_m);
     MissionSchedule += MISSION_INTERVAL;
+    toggleLed();
   }
   
   
@@ -293,6 +301,7 @@ void loop(){
       }
     }
     MotorStatusSchedule += MOTOR_STATUS_INTERVAL;
+    toggleLed();
   }
   
   //Motor
@@ -300,14 +309,17 @@ void loop(){
     //nh.logerror("Solenoid Command timeout!");
     resetSolenoid();
     lastSolenoidCommand = currentTime;
+    toggleLed();
   }
   
   if(timeLastMotorCommand + MOTOR_TIMEOUT < currentTime){
     if(mission_m.data){
       nh.logwarn("Motor Commands timeout!");
       timeLastMotorCommand = currentTime;
+      toggleLed();
     } else {
       timeLastMotorCommand = currentTime + 500;
+      toggleLed();
     }
     resetMotor();
   }
