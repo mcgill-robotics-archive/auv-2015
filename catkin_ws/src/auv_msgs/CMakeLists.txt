@@ -31,7 +31,6 @@ add_service_files(FILES
   ConfidenceRadius.srv
   XYConfidenceRadius.srv
   Covariance.srv
-  ReinitializeHorizon.srv
 )
 
 add_action_files(
@@ -39,6 +38,7 @@ add_action_files(
   FILES SetVelocity.action
   SetPosition.action
   SetCVTarget.action
+  InitializeHorizon.action
 )
 
 

@@ -1,19 +1,17 @@
 #!/usr/bin/env python2.7
 # -*- coding: utf-8 -*-
 
-"""Reinitialize IMU orientation."""
+"""Initialize horizon orientation."""
 
 import tf
 import time
 import rospy
 import numpy as np
-from geometry_msgs.msg import PoseStamped
-from auv_msgs.srv import ReinitializeHorizon, ReinitializeHorizonResponse
+import auv_msgs.msg
+from actionlib import SimpleActionServer
+from geometry_msgs.msg import PoseStamped, Quaternion
 
-
-class InsufficientDataError(RuntimeError):
-    """Data collected was not sufficient."""
-    pass
+__author__ = "Anass Al-Wohoush"
 
 
 class RPY(object):
@@ -61,109 +59,117 @@ class RPY(object):
             self.yaw)
 
 
-# Cumulative RPY data.
-_lay_of_the_land = []
+class InitializeHorizonActionServer(SimpleActionServer):
 
-# Initial horizon.
+    """Horizon initialization action server."""
+
+    def __init__(self):
+        """Constructs InitializeHorizonActionServer."""
+        self.lay_of_the_land = []
+        self.feedback = auv_msgs.msg.InitializeHorizonFeedback()
+        self._server = SimpleActionServer(
+            "initialize_horizon",
+            auv_msgs.msg.InitializeHorizonAction,
+            execute_cb=self.initialize_horizon,
+            auto_start=False)
+
+    def start(self):
+        """Starts action server."""
+        self._server.start()
+
+    def imu_callback(self, pose_stamped):
+        """Callback on state estimation pose.
+
+        Args:
+            pose_stamped: State estimation PoseStamped message.
+        """
+        # Convert quaternion rotation to RPY.
+        rot = pose_stamped.pose.orientation
+        rpy = RPY.from_quaternion((rot.x, rot.y, rot.z, rot.w))
+
+        # Add data.
+        self.lay_of_the_land.append(rpy)
+
+    def initialize_horizon(self, goal):
+        """Initializes horizon.
+
+        Args:
+            goal: InitializeHorizonGoal.
+        """
+        rospy.logwarn("Initializing horizon...")
+
+        # Reset accumulated data.
+        self.lay_of_the_land = []
+
+        # Subscribe to pose.
+        imu = rospy.Subscriber(
+            "/state_estimation/pose",
+            PoseStamped, self.imu_callback)
+
+        # Hold until countdown is over.
+        # Force positive integer countdown.
+        self.feedback.time_left = max(0, int(goal.countdown))
+        while self.feedback.time_left:
+            # Verify if initialization was preempted.
+            if self._server.is_preempt_requested() or rospy.is_shutdown():
+                rospy.logerr("Initialization preempted")
+                self._server.set_preempted()
+                return
+            # Publish time left as feedback.
+            rospy.loginfo("Countdown: %d s left...", self.feedback.time_left)
+            self._server.publish_feedback(self.feedback)
+            time.sleep(1)
+            self.feedback.time_left -= 1
+
+        self._server.publish_feedback(self.feedback)
+        rospy.loginfo("Countdown: complete")
+
+        # Unsubscribe.
+        imu.unregister()
+
+        # Verify sufficient data was accumulated.
+        rospy.loginfo("Received %d data points", len(self.lay_of_the_land))
+        if not self.lay_of_the_land:
+            rospy.logerr("Collected insufficient data")
+            self._server.set_preempted()
+            return
+
+        # Compute median.
+        rotations = [
+            (rpy.roll, rpy.pitch, rpy.yaw)
+            for rpy in self.lay_of_the_land
+        ]
+        median = RPY(*np.median(rotations, axis=0))
+
+        # Log median RPY.
+        rospy.loginfo("Median roll:  %f", median.roll)
+        rospy.loginfo("Median pitch: %f", median.pitch)
+        rospy.loginfo("Median yaw:   %f", median.yaw)
+        rospy.logdebug("Median rot:   %r", median.to_quaternion().tolist())
+
+        # Only initialize horizon's yaw.
+        global horizon
+        horizon = RPY(0, 0, median.yaw)
+
+        # Construct result.
+        result = auv_msgs.msg.InitializeHorizonResult()
+        offset = PoseStamped()
+        offset.header.frame_id = "raw_horizon"
+        offset.header.stamp = rospy.get_rostime()
+        offset.pose.orientation = Quaternion(*horizon.to_quaternion())
+        result.offset = offset
+
+        # Success.
+        rospy.logwarn("Initialization complete")
+        self._server.set_succeeded(result)
+
+
+# Initial horizon is set to be the same as the raw horizon.
 horizon = RPY(0, 0, 0)
 
 
-def imu_callback(pose_stamped):
-    """Callback on state estimation pose.
-
-    Args:
-        pose_stamped: State estimation PoseStamped message.
-    """
-    # Convert quaternion rotation to RPY.
-    rot = pose_stamped.pose.orientation
-    rpy = RPY.from_quaternion((rot.x, rot.y, rot.z, rot.w))
-
-    # Add data.
-    _lay_of_the_land.append(rpy)
-
-
-def wait(countdown):
-    """Holds thread for specified time and prints progress.
-
-    Args:
-        countdown: Integer number of seconds to wait.
-    """
-    # Force positive integer countdown.
-    countdown = max(0, int(countdown))
-
-    # Wait until complete.
-    while countdown:
-        rospy.loginfo("Countdown: %d s left...", countdown)
-        countdown -= 1
-        time.sleep(1)
-
-    rospy.loginfo("Countdown: complete")
-
-
-def reinitialize_horizon(countdown):
-    """Reinitializes horizon.
-
-    Args:
-        countdown: Integer number of seconds to wait for data gathering.
-
-    Raises:
-        InsufficientDataError: Data collected was not sufficient.
-    """
-    # Reset accumulated data.
-    global _lay_of_the_land
-    _lay_of_the_land = []
-
-    # Subscribe to pose.
-    imu = rospy.Subscriber("/state_estimation/pose", PoseStamped, imu_callback)
-
-    # Wait until countdown is over.
-    wait(countdown)
-
-    # Unsubscribe.
-    imu.unregister()
-
-    # Verify sufficient data was accumulated.
-    rospy.loginfo("Filtered %d data points", len(_lay_of_the_land))
-    if not _lay_of_the_land:
-        raise InsufficientDataError()
-
-    # Compute median.
-    rotations = [
-        (rpy.roll, rpy.pitch, rpy.yaw)
-        for rpy in _lay_of_the_land
-    ]
-    median = RPY(*np.median(rotations, axis=0))
-
-    # Log median RPY.
-    rospy.loginfo("Median roll:  %f", median.roll)
-    rospy.loginfo("Median pitch: %f", median.pitch)
-    rospy.loginfo("Median yaw:   %f", median.yaw)
-    rospy.loginfo("Median rot:   %r", median.to_quaternion().tolist())
-
-    # Only initialize horizon.
-    global horizon
-    horizon = RPY(0, 0, median.yaw)
-
-
-def handle_reinitialization_request(req):
-    """Handles reinitialization service request.
-
-    Args:
-        request: Service request.
-    """
-    rospy.logwarn("Reinitializing horizon...")
-
-    try:
-        reinitialize_horizon(req.countdown)
-        rospy.logwarn("Reinitialization complete")
-        return ReinitializeHorizonResponse(True)
-    except InsufficientDataError:
-        rospy.logerr("Collected data was insufficient")
-        return ReinitializeHorizonResponse(False)
-
-
 def broadcast_horizon():
-    """Continuously broadcast raw_horizon to initial_horizon transform.
+    """Continuously broadcasts raw_horizon to initial_horizon transform.
 
     Note: This is a blocking function.
     """
@@ -183,8 +189,6 @@ def broadcast_horizon():
 
 if __name__ == "__main__":
     rospy.init_node("horizon")
-    service = rospy.Service(
-        "reinitialize_horizon",
-        ReinitializeHorizon,
-        handle_reinitialization_request)
+    server = InitializeHorizonActionServer()
+    server.start()
     broadcast_horizon()
