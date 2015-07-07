@@ -4,7 +4,6 @@
 """Initialize horizon orientation."""
 
 import tf
-import time
 import rospy
 import numpy as np
 import auv_msgs.msg
@@ -106,21 +105,29 @@ class InitializeHorizonActionServer(SimpleActionServer):
             "/state_estimation/pose",
             PoseStamped, self.imu_callback)
 
+        # Determine end time.
+        self.feedback.time_left = goal.countdown
+        rospy.loginfo("Starting %f s countdown", goal.countdown.to_sec())
+        end_time = rospy.get_rostime() + goal.countdown
+
         # Hold until countdown is over.
-        # Force positive integer countdown.
-        self.feedback.time_left = max(0, int(goal.countdown))
-        while self.feedback.time_left:
-            # Verify if initialization was preempted.
+        while self.feedback.time_left.to_sec() > 0:
+            # Publish time left as feedback.
+            self._server.publish_feedback(self.feedback)
+            rospy.logdebug(
+                "Countdown: %f s left...",
+                self.feedback.time_left.to_sec())
+
+            # Stop if initialization was preempted.
             if self._server.is_preempt_requested() or rospy.is_shutdown():
                 rospy.logerr("Initialization preempted")
                 self._server.set_preempted()
                 return
-            # Publish time left as feedback.
-            rospy.loginfo("Countdown: %d s left...", self.feedback.time_left)
-            self._server.publish_feedback(self.feedback)
-            time.sleep(1)
-            self.feedback.time_left -= 1
 
+            # Compute time left.
+            self.feedback.time_left = end_time - rospy.get_rostime()
+
+        self.feedback.time_left = rospy.Duration.from_sec(0)
         self._server.publish_feedback(self.feedback)
         rospy.loginfo("Countdown: complete")
 
