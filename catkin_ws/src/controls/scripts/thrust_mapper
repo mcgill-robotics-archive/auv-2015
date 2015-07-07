@@ -98,6 +98,6 @@ if __name__ == '__main__':
     t100_pwm = loadCharacterization(filename)
     rospy.init_node('thrust_mapper')
     thrust_pub = rospy.Publisher('thrust_cmds', MotorCommands, queue_size = 5)
-    sub = rospy.Subscriber('controls/wrench', Wrench, Wrench_to_thrust_callback)
+    sub = rospy.Subscriber('thrust_mapper/wrench', Wrench, Wrench_to_thrust_callback)
     rospy.spin()
 
