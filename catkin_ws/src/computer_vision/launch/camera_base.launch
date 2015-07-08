@@ -4,8 +4,6 @@
     <arg name="CAMERA_NAME" />
     <arg name="CAMERA_ID" />
 
-<!-- Oh no its a merge conflict -->
-
 <!-- Launch camera -->
   <group ns="$(arg CAMERA_NAME)" >
     <node pkg="camera1394" type="camera1394_node" name="camera1394_node">
