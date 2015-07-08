@@ -58,7 +58,7 @@ class RPY(object):
             self.yaw)
 
 
-class InitializeHorizonActionServer(SimpleActionServer):
+class InitializeHorizonActionServer(object):
 
     """Horizon initialization action server."""
 
@@ -201,7 +201,7 @@ class InitializeHorizonActionServer(SimpleActionServer):
         # Construct result.
         result = auv_msgs.msg.InitializeHorizonResult()
         offset = PoseStamped()
-        offset.header.frame_id = "raw_horizon"
+        offset.header.frame_id = "initial_horizon"
         offset.header.stamp = rospy.get_rostime()
         offset.pose.orientation = Quaternion(*horizon.to_quaternion())
         result.offset = offset
@@ -227,9 +227,9 @@ def broadcast_horizon():
             (0, 0, 0), horizon.to_quaternion(),
             # Now
             rospy.get_rostime(),
-            # From
-            "/raw_horizon",
             # To
+            "/raw_horizon",
+            # From
             "/initial_horizon")
         rate.sleep()
 
