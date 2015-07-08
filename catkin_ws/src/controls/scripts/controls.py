@@ -141,6 +141,10 @@ def rosInit():
 def loop(event):
     global pos_proportional_error, pos_integral_error, proportional_error
     global integral_error
+
+    if not (vel_server.is_active() or pos_server.is_active()):
+        return
+
     # Velocity control is open-loop
     fx = surge_coeff*surge_speed
     fy = sway_coeff*sway_speed
@@ -149,7 +153,7 @@ def loop(event):
     (trans, rot) = get_transform("/initial_horizon", "/robot")
     angles_estimated = list(euler_from_quaternion(rot))
     (trans, rot) = get_transform('/floating_horizon', '/robot')
-    depth_estimated = trans.z
+    depth_estimated = trans[2]
 
     if pos_server.is_active():
         (x_err, y_err, _), quaternion = \

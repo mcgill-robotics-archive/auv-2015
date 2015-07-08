@@ -56,7 +56,7 @@ class SetVelocityState(SimpleActionState):
         self.feedback_cb = feedback_cb
         self.success_cb = success_cb
         super(SetVelocityState, self).__init__(
-            'controls',
+            'controls_velocity',
             auv_msgs.msg.SetVelocityAction,
             goal_cb=self._goal_cb,
             result_cb=self.result_cb,
