@@ -234,7 +234,7 @@ void setup(){
 }
   
 void toggleLed(){
-  digitalWrite(LED_PIN,!digitalRead(LED_PIN));
+  //digitalWrite(LED_PIN,!digitalRead(LED_PIN));
 }
 
 void loop(){
