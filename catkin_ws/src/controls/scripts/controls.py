@@ -145,9 +145,11 @@ def loop(event):
     fx = surge_coeff*surge_speed
     fy = sway_coeff*sway_speed
 
-    # TODO: Error handling
+    # TODO: Use one get_transform
     (trans, rot) = get_transform("/initial_horizon", "/robot")
     angles_estimated = list(euler_from_quaternion(rot))
+    (trans, rot) = get_transform('/floating_horizon', '/robot')
+    depth_estimated = trans.z
 
     if pos_server.is_active():
         (x_err, y_err, _), quaternion = \
@@ -198,8 +200,7 @@ def loop(event):
 
     # Need to transform the desired force into the body frame for thrustmapper.
     matrix = euler_matrix(angles_estimated[0], angles_estimated[1], 0).T
-    #force = np.dot(matrix, [fx, fy, output[3], 1])[:3]
-    force = np.dot(matrix, [fx, fy, 3, 1])[:3]
+    force = np.dot(matrix, [fx, fy, output[3], 1])[:3]
 
     wrenchMsg = Wrench()
     wrenchMsg.force.x = force[0]

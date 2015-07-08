@@ -27,6 +27,12 @@ def create_state_machine():
         smach.StateMachine.add(
             'Initialization',
             InitializationState(countdown),
+            transitions={'succeeded': 'Submerge'})
+
+        # Add submerge
+        smach.StateMachine.add(
+            'Submerge',
+            SetVelocityState.create_set_depth_state(),
             transitions={'succeeded': 'Yaw 0'})
 
         # Add dead reckoning.
