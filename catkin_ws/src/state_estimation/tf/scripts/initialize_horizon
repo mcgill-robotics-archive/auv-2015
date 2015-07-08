@@ -58,7 +58,7 @@ class RPY(object):
             self.yaw)
 
 
-class InitializeHorizonActionServer(SimpleActionServer):
+class InitializeHorizonActionServer(object):
 
     """Horizon initialization action server."""
 
