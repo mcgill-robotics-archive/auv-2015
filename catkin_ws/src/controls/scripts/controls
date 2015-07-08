@@ -32,7 +32,6 @@ sway_speed = 0.0
 server = None
 listener = None
 wrenchPublisher = None
-last_heading = 0.0
 
 
 def normalize_angle(angle, max_angle=pi):
@@ -70,22 +69,11 @@ def set_position_callback():
 
 
 def set_velocity_preempt():
-    global surge_speed, sway_speed, mode
-    surge_speed = 0.0
-    sway_speed = 0.0
-    angles_desired[0] = 0.0
-    angles_desired[1] = 0.0
     if vel_server.is_active():
         vel_server.set_preempted()
 
 
 def set_position_preempt():
-    global surge_speed, sway_speed, mode
-    surge_speed = 0.0
-    sway_speed = 0.0
-    angles_desired[0] = 0.0
-    angles_desired[1] = 0.0
-    angles_desired[2] = last_heading
     if pos_server.is_active():
         pos_server.set_preempted()
 
@@ -142,7 +130,7 @@ def loop(event):
     global pos_proportional_error, pos_integral_error, proportional_error
     global integral_error
 
-    if not (vel_server.is_active() or pos_server.is_active()):
+    if not (pos_server.is_active() or vel_server.is_active()):
         return
 
     # Velocity control is open-loop
