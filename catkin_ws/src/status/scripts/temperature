@@ -71,7 +71,7 @@ def publish():
     filtered_temperatures = get_mean_temperatures(raw_temperatures)
 
     # Publish temperature.
-    temperature_msg = auv_msgs.msg.CPUTemperature(cores=filtered_temperatures)
+    temperature_msg = CPUTemperature(cores=filtered_temperatures)
     temperature_topic.publish(temperature_msg)
 
     # Publish whether overheating or not.
