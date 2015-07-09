@@ -11,6 +11,12 @@
 		pkg="state_estimation"
 	/>
 
+	<node
+		name="initialize_horizon"
+		type="initialize_horizon"
+		pkg="state_estimation"
+	/>
+
     <node name="depth" type="depth" pkg="state_estimation">
         <param name="offset" value="0.00" />
         <param name="window" value="10" />

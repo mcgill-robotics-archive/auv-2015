@@ -38,9 +38,9 @@ add_action_files(
   FILES SetVelocity.action
   SetPosition.action
   SetCVTarget.action
+  InitializeHorizon.action
 )
 
 
 generate_messages(DEPENDENCIES actionlib_msgs std_msgs geometry_msgs)
 catkin_package(CATKIN_DEPENDS message_runtime actionlib_msgs)
-
