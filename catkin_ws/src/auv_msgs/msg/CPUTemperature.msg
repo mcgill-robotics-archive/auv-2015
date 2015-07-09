@@ -1,1 +1,1 @@
-float64[] cores
+sensor_msgs/Temperature[] cores

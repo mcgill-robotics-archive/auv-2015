@@ -8,6 +8,7 @@ import sensors
 import numpy as np
 from std_msgs.msg import Bool
 from auv_msgs.msg import CPUTemperature
+from sensor_msgs.msg import Temperature
 
 __author__ = "Anass Al-Wohoush"
 
@@ -84,8 +85,14 @@ def publish():
     filtered_temperatures = get_mean_temperatures(raw_temperatures)
 
     # Publish temperature.
-    temperature_msg = CPUTemperature(cores=filtered_temperatures)
-    temperature_topic.publish(temperature_msg)
+    filtered_temperature_msgs = []
+    for t in filtered_temperatures:
+        temp_msg = Temperature()
+        temp_msg.header.frame_id = "robot"
+        temp_msg.temperature = t
+        filtered_temperature_msgs.append(temp_msg)
+    cpu_temperature_msg = CPUTemperature(cores=filtered_temperature_msgs)
+    temperature_topic.publish(cpu_temperature_msg)
 
     # Publish whether overheating or not.
     max_temp = rospy.get_param("~max")
