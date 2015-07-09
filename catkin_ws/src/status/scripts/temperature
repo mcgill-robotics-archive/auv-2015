@@ -24,19 +24,19 @@ def get_temperatures():
     temperatures = []
     features = set()
     for chip in sensors.iter_detected_chips():
+        # Verify this is a CPU sensor.
         if not "coretemp" in str(chip):
             continue
 
         for feature in chip:
-            name = feature.name
-
             # Make sure this is indeed a CPU core temperature reading.
-            if name.startswith("temp") and name != "temp1":
+            if feature.name.startswith("temp") and feature.name != "temp1":
                 # Make sure this is not a duplicate feature.
-                if name in features:
+                if feature.name in features:
                     continue
 
-                features.add(name)
+                # It's good.
+                features.add(feature.name)
                 temperatures.append(feature.get_value())
 
     return temperatures
