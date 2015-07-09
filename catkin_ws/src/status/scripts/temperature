@@ -85,8 +85,8 @@ if __name__ == "__main__":
 
     rospy.init_node("temperature")
     rate = rospy.Rate(1)  # Hz.
-    temperature_topic = rospy.Publisher("~/cpu", CPUTemperature, queue_size=10)
-    overheating_topic = rospy.Publisher("~/overheating", Bool, queue_size=10)
+    temperature_topic = rospy.Publisher("~cpu", CPUTemperature, queue_size=10)
+    overheating_topic = rospy.Publisher("~overheating", Bool, queue_size=10)
 
     try:
         while not rospy.is_shutdown():
