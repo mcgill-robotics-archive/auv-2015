@@ -26,13 +26,13 @@ def get_temperatures():
 
         for feature in chip:
             name = feature.name
-            if name.startswith("temp") and name != "temp1":
+            if name.startswith("temp") and name != "temp1git s":
                 temperatures.append(feature.get_value())
 
     return temperatures
 
 
-def is_overheating(temperatures, threshold=70):
+def is_overheating(temperatures, threshold):
     """Verify if any temperatures are above threshold.
 
     Args:
@@ -78,7 +78,8 @@ def publish():
     temperature_topic.publish(temperature_msg)
 
     # Publish whether overheating or not.
-    overheating = is_overheating(filtered_temperatures)
+    max_temp = rospy.get_param("~max")
+    overheating = is_overheating(filtered_temperatures, max_temp)
     overheating_topic.publish(overheating)
 
 
