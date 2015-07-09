@@ -95,23 +95,23 @@ void motorCb( const auv_msgs::MotorCommands& msg){
   if(mission_m.data){
     timeLastMotorCommand = millis();
     writeMotorT100(MOTOR_PIN_PORT_SURGE, 
-                   msg.bow_sway);              
+                   msg.port_surge);              
     writeMotorT100(MOTOR_PIN_STARBOARD_SURGE, 
-                   msg.stern_sway);
+                   msg.starboard_surge);
     writeMotorT100(MOTOR_PIN_PORT_BOW_HEAVE, 
-                   msg.port_bow_heave);
+                   msg.starboard_bow_heave);
     writeMotorT100(MOTOR_PIN_STARBOARD_BOW_HEAVE, 
-                   msg.starboard_bow_heave);               
+                   msg.port_bow_heave);               
     writeMotorT100(MOTOR_PIN_PORT_STERN_HEAVE, 
                    msg.port_stern_heave);            
     writeMotorT100(MOTOR_PIN_STARBOARD_STERN_HEAVE, 
                    msg.starboard_stern_heave);
     writeMotorSeabotix(MOTOR_PIN_STARBOARD_SWAY,
                        MOTOR_ENABLE_PIN_STARBOARD_SWAY, 
-                       msg.port_surge);
+                       msg.stern_sway);
     writeMotorSeabotix(MOTOR_PIN_PORT_SWAY,
                        MOTOR_ENABLE_PIN_PORT_SWAY,
-                       msg.starboard_surge);
+                       msg.bow_sway);
   } else {
     nh.logwarn("Motor Commands Received while Mission Off!! Commands IGNORED!!");
   }
@@ -234,7 +234,7 @@ void setup(){
 }
   
 void toggleLed(){
-  digitalWrite(LED_PIN,!digitalRead(LED_PIN));
+  //digitalWrite(LED_PIN,!digitalRead(LED_PIN));
 }
 
 void loop(){
