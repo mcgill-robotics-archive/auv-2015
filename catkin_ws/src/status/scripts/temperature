@@ -1,0 +1,98 @@
+#!/usr/bin/env python
+
+import rospy
+import sensors
+import numpy as np
+from std_msgs.msg import Bool
+from auv_msgs.msg import CPUTemperature
+
+# Set up sensors.
+sensors.init()
+
+# Filter window.
+window = []
+
+
+def get_temperatures():
+    """Gets latest temperature values in degrees Celsius.
+
+    Returns:
+        List of CPU core temperatures.
+    """
+    temperatures = []
+    for chip in sensors.iter_detected_chips():
+        for feature in chip:
+            name = feature.name
+            if name.startswith("temp"):
+                temperatures.append(feature.get_value())
+
+    return temperatures
+
+
+def is_overheating(temperatures, threshold=70):
+    """Verify if any temperatures are above threshold.
+
+    Args:
+        temperatures: List of CPU core temperatures.
+        threshold: Temperature threshold in degrees Celsius.
+
+    Returns:
+        True if at least one core is too hot, False otherwise.
+    """
+    for core in temperatures:
+        if core > threshold:
+            return True
+    return False
+
+
+def get_mean_temperatures(temperatures, window_size=10):
+    """Filters CPU temperatures over window size.
+
+    Args:
+        temperatures: List of CPU core temperatures.
+        window_size: Window size.
+
+    Returns:
+        List of mean CPU core temperatures.
+    """
+    while len(window) >= window_size:
+        window.pop(0)
+
+    window.append(temperatures)
+    mean = np.mean(temperatures, axis=0)
+
+    return mean.tolist()
+
+
+def publish():
+    """Publishes temperatures."""
+    # Get data.
+    raw_temperatures = get_temperatures()
+    filtered_temperatures = get_mean_temperatures(raw_temperatures)
+
+    # Publish temperature.
+    temperature_msg = auv_msgs.msg.CPUTemperature(cores=filtered_temperatures)
+    temperature_topic.publish(temperature_msg)
+
+    # Publish whether overheating or not.
+    overheating = is_overheating(filtered_temperatures)
+    overheating_topic.publish(overheating)
+
+
+if __name__ == "__main__":
+    # Initialize sensors.
+    sensors.init()
+
+    rospy.init_node("temperature")
+    rate = rospy.Rate(1)  # Hz.
+    temperature_topic = rospy.Publisher("~/cpu", CPUTemperature, queue_size=10)
+    overheating_topic = rospy.Publisher("~/overheating", Bool, queue_size=10)
+
+    try:
+        while not rospy.is_shutdown():
+            publish()
+            rate.sleep()
+    except Exception:
+        # Clean up sensors.
+        sensors.cleanup()
+        raise
