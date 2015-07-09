@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+"""Temperature monitor."""
 
 import rospy
 import sensors
@@ -6,8 +9,7 @@ import numpy as np
 from std_msgs.msg import Bool
 from auv_msgs.msg import CPUTemperature
 
-# Set up sensors.
-sensors.init()
+__author__ = "Anass Al-Wohoush"
 
 # Filter window.
 window = []
