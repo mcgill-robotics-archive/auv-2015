@@ -7,11 +7,11 @@ kp_yPos: 0.0
 ki_yPos: 0.0
 kd_yPos: 0.0
 
-kp_depth: 20
+kp_depth: 20.0
 ki_depth: 0.0
-kd_depth: 0.0
+kd_depth: 85.0
 
-kp_pitch: 1
+kp_pitch: 1.0
 ki_pitch: 0.1
 kd_pitch: 1.0
 
