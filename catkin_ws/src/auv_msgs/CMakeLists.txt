@@ -25,6 +25,7 @@ add_message_files(
 
   #added by IO
   RadioCommands.msg
+  CPUTemperature.msg
 )
 
 add_service_files(FILES
@@ -43,4 +44,3 @@ add_action_files(
 
 generate_messages(DEPENDENCIES actionlib_msgs std_msgs geometry_msgs)
 catkin_package(CATKIN_DEPENDS message_runtime actionlib_msgs)
-
