@@ -21,9 +21,12 @@ def get_temperatures():
     """
     temperatures = []
     for chip in sensors.iter_detected_chips():
+        if not "coretemp" in str(chip):
+            continue
+
         for feature in chip:
             name = feature.name
-            if name.startswith("temp"):
+            if name.startswith("temp") and name != "temp1":
                 temperatures.append(feature.get_value())
 
     return temperatures
