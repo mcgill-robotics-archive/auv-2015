@@ -39,6 +39,7 @@ add_action_files(
   FILES SetVelocity.action
   SetPosition.action
   SetCVTarget.action
+  InitializeHorizon.action
 )
 
 

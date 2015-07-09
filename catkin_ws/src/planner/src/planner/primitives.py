@@ -1,14 +1,37 @@
 # -*- coding: utf-8 -*-
 
-from smach_ros import SimpleActionState
-from auv_msgs.msg import SetVelocityAction
-from actionlib.simple_action_client import GoalStatus
 import rospy
+import auv_msgs.msg
+from smach_ros import SimpleActionState
+from actionlib.simple_action_client import GoalStatus
 
-__author__ = 'Max Krogius'
+__author__ = 'Max Krogius, Anass Al-Wohoush'
+
+
+class InitializationState(SimpleActionState):
+
+    '''Initializes horizon to current heading.'''
+
+    def __init__(self, countdown):
+        '''
+        Args:
+            countdown: ROS Duration of initialization process.
+        '''
+        if not isinstance(countdown, rospy.Duration):
+            countdown = rospy.Duration(countdown)
+
+        # Set up goal.
+        goal = auv_msgs.msg.InitializeHorizonGoal()
+        goal.countdown = countdown
+
+        super(InitializationState, self).__init__(
+            'initialize_horizon',
+            auv_msgs.msg.InitializeHorizonAction,
+            goal=goal)
 
 
 class SetVelocityState(SimpleActionState):
+
     '''
     A state to send open loop velocity commands to controls. Sends a
     SetVelocity command and exits after a given duration has passed,
@@ -33,8 +56,8 @@ class SetVelocityState(SimpleActionState):
         self.feedback_cb = feedback_cb
         self.success_cb = success_cb
         super(SetVelocityState, self).__init__(
-            'controls',
-            SetVelocityAction,
+            'controls_velocity',
+            auv_msgs.msg.SetVelocityAction,
             goal_cb=self._goal_cb,
             result_cb=self.result_cb,
             input_keys=input_keys,
@@ -52,8 +75,8 @@ class SetVelocityState(SimpleActionState):
         super(SetVelocityState, self)._goal_feedback_cb(feedback)
 
         # Exit if we timed out.
-        if (self.duration is not None
-                and rospy.Time.now() - self.initial_time > self.duration):
+        if (self.duration is not None and
+                rospy.Time.now() - self.initial_time > self.duration):
             self.exit_success()
         elif self.feedback_cb is not None:
             self.feedback_cb(self, feedback)
