@@ -84,18 +84,21 @@ def publish():
     raw_temperatures = get_temperatures()
     filtered_temperatures = get_mean_temperatures(raw_temperatures)
 
-    # Publish temperature.
+    # Construct CPUTemperature message.
     filtered_temperature_msgs = []
     for t in filtered_temperatures:
         temp_msg = Temperature()
+        temp_msg.header.stamp = rospy.get_rostime()
         temp_msg.header.frame_id = "robot"
         temp_msg.temperature = t
         filtered_temperature_msgs.append(temp_msg)
+
+    # Publish temperature.
     cpu_temperature_msg = CPUTemperature(cores=filtered_temperature_msgs)
     temperature_topic.publish(cpu_temperature_msg)
 
-    # Publish whether overheating or not.
-    max_temp = rospy.get_param("~max")
+    # Determine and publish whether overheating or not.
+    max_temp = float(rospy.get_param("~max"))
     overheating = is_overheating(filtered_temperatures, max_temp)
     overheating_topic.publish(overheating)
 
