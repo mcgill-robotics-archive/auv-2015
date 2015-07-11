@@ -201,12 +201,16 @@ uint32_t MS5803::getADCconversion(measurement _measurement, precision _precision
 	return result;
 
 }
+int8_t MS5803::getSensorStatus()
+{
+        return _sensor_status;
+}
 
 void MS5803::sendCommand(uint8_t command)
 {	
 	Wire1.beginTransmission( _address);
 	Wire1.write(command);
-	Wire1.endTransmission();
+	_sensor_status = Wire1.endTransmission();
 	
 }
 
