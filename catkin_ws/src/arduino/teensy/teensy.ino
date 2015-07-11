@@ -159,99 +159,25 @@ void solenoidCb( const auv_msgs::SolenoidCommands& msg){
   }
 }
 
-ros::Subscriber<auv_msgs::SolenoidCommands> solenoidSub("~solenoid", &solenoidCb );
-ros::Subscriber<auv_msgs::MotorCommands> motorSub("~motor", &motorCb );
-int test;
-void setup(){
-  
-  //Setup for T100, normal servo control
-  myservo[MOTOR_PIN_PORT_SURGE].attach(MOTOR_PIN_PORT_SURGE);
-  myservo[MOTOR_PIN_STARBOARD_SURGE].attach(MOTOR_PIN_STARBOARD_SURGE);
-  myservo[MOTOR_PIN_PORT_BOW_HEAVE].attach(MOTOR_PIN_PORT_BOW_HEAVE);
-  myservo[MOTOR_PIN_STARBOARD_BOW_HEAVE].attach(MOTOR_PIN_STARBOARD_BOW_HEAVE);
-  myservo[MOTOR_PIN_PORT_STERN_HEAVE].attach(MOTOR_PIN_PORT_STERN_HEAVE);
-  myservo[MOTOR_PIN_STARBOARD_STERN_HEAVE].attach(MOTOR_PIN_STARBOARD_STERN_HEAVE);
-  
-  //Setup for Seabotix, PWM with highier frequency
-  //Calling frequency change will affect both pin
-  analogWriteFrequency(MOTOR_PIN_STARBOARD_SWAY,PWM_FREQUENCY); 
-  
-  // Change the resolution to 0 - 1023
-  analogWriteResolution(10); 
-  pinMode(MOTOR_ENABLE_PIN_STARBOARD_SWAY, OUTPUT);
-  pinMode(MOTOR_ENABLE_PIN_PORT_SWAY, OUTPUT); 
-
-  resetMotor();
-  pinMode(STATUS_PIN_FAULT, INPUT);
-  pinMode(STATUS_PIN_OTW, INPUT);
-  
-  pinMode(SOLENOID_PIN_PORT_DROPPER, OUTPUT);
-  pinMode(SOLENOID_PIN_STARBOARD_DROPPER, OUTPUT);
-  pinMode(SOLENOID_PIN_PORT_GRABBER, OUTPUT);
-  pinMode(SOLENOID_PIN_STARBOARD_GRABBER, OUTPUT);
-  pinMode(SOLENOID_PIN_PORT_TORPEDO, OUTPUT);
-  pinMode(SOLENOID_PIN_STARBOARD_TORPEDO, OUTPUT);
-  pinMode(SOLENOID_PIN_EXTRA, OUTPUT);
-  resetSolenoid();
-  
-  //Analog Setup
-  pinMode(COMPUTER_VOLTAGE_PIN,INPUT);
-  pinMode(COMPUTER_CURRENT_PIN,INPUT);
-  pinMode(MOTOR_VOLTAGE_PIN,INPUT);
-  pinMode(MOTOR_CURRENT_PIN,INPUT);
-  pinMode(MISSION_PIN,INPUT);
-  
-  pinMode(13,OUTPUT);
-  Wire1.begin(I2C_MASTER, 0x00, I2C_PINS_29_30, I2C_PULLUP_EXT, I2C_RATE_400);
-  depthSensor.reset();
-  Wire1.setDefaultTimeout(50);
-  for(int i = 0; i< 5 ; i++){
-          Wire1.resetBus();
-          Wire1.beginTransmission(MS5803_I2C_ADDR);
-          if(Wire1.endTransmission() == 0){
-            depthSensorConnected = true;
-            depthSensor.reset();
-            depthSensor.begin();
-            break;
-          } else {
-          delay(5);
-          }
-  }
-  digitalWrite(13,depthSensorConnected);
-  //ros node initialization
-  nh.initNode();
-
-  
-  //ros publisher initialization
-  nh.advertise(pressurePub);        //depth sensor
-  nh.advertise(externalTemperaturePub);
-  nh.advertise(computerVoltagePub);     //battery level
-  nh.advertise(ComputerCurrentPub);
-  nh.advertise(motorVoltagePub);
-  nh.advertise(motorCurrentPub);
-  nh.advertise(missionPub);
-
-  //ros subscribe initialization
-  nh.subscribe(motorSub);
-  nh.subscribe(solenoidSub);
-  
-}
-  
 void inline toggleLed(){
   digitalWrite(LED_PIN,!digitalRead(LED_PIN));
 }
 
+ros::Subscriber<auv_msgs::SolenoidCommands> solenoidSub("~solenoid", &solenoidCb );
+ros::Subscriber<auv_msgs::MotorCommands> motorSub("~motor", &motorCb );
+
 void resetDepthSensor(){
   for(int i = 0; i< 5 ; i++){
-  Wire1.resetBus();
-  Wire1.beginTransmission(MS5803_I2C_ADDR);
-  if(Wire1.endTransmission() == 0){
-    depthSensorConnected = true;
-    depthSensor.reset();
-    depthSensor.begin();
-    break;
-  } else {
-    nh.logwarn("Depth Sensor Unresponsive....");
+    Wire1.resetBus();
+    Wire1.beginTransmission(MS5803_I2C_ADDR);
+    if(Wire1.endTransmission() == 0){
+      depthSensorConnected = true;
+      depthSensor.reset();
+      depthSensor.begin();
+      break;
+    } else {
+      nh.logwarn("Depth Sensor Unresponsive....");
+    }
   }
 }
 
@@ -266,7 +192,97 @@ void reconnectDepthSensor(){
    }
 }
 
+void motorInit(){
 
+  //Setup for T100, normal servo control
+  myservo[MOTOR_PIN_PORT_SURGE].attach(MOTOR_PIN_PORT_SURGE);
+  myservo[MOTOR_PIN_STARBOARD_SURGE].attach(MOTOR_PIN_STARBOARD_SURGE);
+  myservo[MOTOR_PIN_PORT_BOW_HEAVE].attach(MOTOR_PIN_PORT_BOW_HEAVE);
+  myservo[MOTOR_PIN_STARBOARD_BOW_HEAVE].attach(MOTOR_PIN_STARBOARD_BOW_HEAVE);
+  myservo[MOTOR_PIN_PORT_STERN_HEAVE].attach(MOTOR_PIN_PORT_STERN_HEAVE);
+  myservo[MOTOR_PIN_STARBOARD_STERN_HEAVE].attach(MOTOR_PIN_STARBOARD_STERN_HEAVE);
+  
+  //Setup for Seabotix, PWM with highier frequency
+  //Calling frequency change will affect both pin
+  analogWriteFrequency(MOTOR_PIN_STARBOARD_SWAY,PWM_FREQUENCY); 
+   
+  // Change the resolution to 0 - 1023
+  analogWriteResolution(10); 
+  
+  //Enable status pins
+  pinMode(STATUS_PIN_FAULT, INPUT);
+  pinMode(STATUS_PIN_OTW, INPUT);
+  
+  //Enable enable pins 
+  pinMode(MOTOR_ENABLE_PIN_STARBOARD_SWAY, OUTPUT);
+  pinMode(MOTOR_ENABLE_PIN_PORT_SWAY, OUTPUT); 
+
+  resetMotor();
+}
+
+void solenoidInit(){
+  
+  pinMode(SOLENOID_PIN_PORT_DROPPER, OUTPUT);
+  pinMode(SOLENOID_PIN_STARBOARD_DROPPER, OUTPUT);
+  pinMode(SOLENOID_PIN_PORT_GRABBER, OUTPUT);
+  pinMode(SOLENOID_PIN_STARBOARD_GRABBER, OUTPUT);
+  pinMode(SOLENOID_PIN_PORT_TORPEDO, OUTPUT);
+  pinMode(SOLENOID_PIN_STARBOARD_TORPEDO, OUTPUT);
+  pinMode(SOLENOID_PIN_EXTRA, OUTPUT);
+  resetSolenoid();
+
+}
+
+void gpioInit(){
+  
+  //Analog Setup
+  pinMode(COMPUTER_VOLTAGE_PIN,INPUT);
+  pinMode(COMPUTER_CURRENT_PIN,INPUT);
+  pinMode(MOTOR_VOLTAGE_PIN,INPUT);
+  pinMode(MOTOR_CURRENT_PIN,INPUT);
+  pinMode(MISSION_PIN,INPUT);
+  
+  //Onboard LED setup
+  pinMode(LED_PIN,OUTPUT);
+  
+}
+
+void depthSensorInit(){
+  
+  Wire1.begin(I2C_MASTER, 0x00, I2C_PINS_29_30, I2C_PULLUP_EXT, I2C_RATE_400);
+  resetDepthSensor();
+  
+}
+
+void rosInit(){
+  //ros node initialization
+  nh.initNode();  
+  //ros publisher initialization
+  nh.advertise(pressurePub);        //depth sensor
+  nh.advertise(externalTemperaturePub);
+  nh.advertise(computerVoltagePub);     //battery level
+  nh.advertise(ComputerCurrentPub);
+  nh.advertise(motorVoltagePub);
+  nh.advertise(motorCurrentPub);
+  nh.advertise(missionPub);
+
+  //ros subscribe initialization
+  nh.subscribe(motorSub);
+  nh.subscribe(solenoidSub);
+}
+
+void setup(){
+  
+  motorInit();
+  solenoidInit();
+  gpioInit();
+  depthSensorInit();
+  
+  digitalWrite(LED_PIN, depthSensorConnected);
+
+  rosInit();
+}
+  
 void loop(){
   unsigned long currentTime = millis();
   mission_m.data = digitalRead(MISSION_PIN);
@@ -277,16 +293,16 @@ void loop(){
       //Get Readings
       depthSensor.getMeasurements(ADC_4096);
       
-      //check Status
+      //check status, reconnect if needed
       if(!depthSensor.getSensorStatus()){
-        
+   
         nh.logerror("Depth Sensor Communication Error, Attemping Reset...");
         depthSensorConnected = false;
         
         reconnectDepthSensor();
         
       } else {
-  
+        // passed connection test, putting data to ros
         pressure_m.data = depthSensor.getPressure();
         pressurePub.publish(&pressure_m);
         depthSensorSchedule += DEPTH_INTERVAL;
@@ -361,7 +377,7 @@ void loop(){
       timeLastMotorCommand = currentTime;
       toggleLed();
     } else {
-      timeLastMotorCommand = currentTime + 500;
+      timeLastMotorCommand = currentTime + MOTOR_TIMEOUT;
       toggleLed();
     }
     resetMotor();
