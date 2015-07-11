@@ -7,11 +7,13 @@ import smach_ros
 from threading import Thread
 from smach.user_data import UserData
 from planner.primitives import InitializationState, SetVelocityState
+from std_msgs.msg import Bool
 
 __author__ = 'Max Krogius, Anass Al-Wohoush'
 
 
 def create_state_machine():
+    pause = rospy.get_param('~pause')
     countdown = rospy.get_param('~countdown')
     depth = rospy.get_param('~depth')
     speed = rospy.get_param('~speed')
@@ -24,19 +26,36 @@ def create_state_machine():
         outcomes=['succeeded', 'aborted', 'preempted'],
         input_keys=['yaw_setpoint', 'depth_setpoint'])
     with sm:
-        # Add horizon initialization.
+        # Wait for mission switch
+        smach.StateMachine.add(
+            'Mission Switch',
+            smach_ros.MonitorState('/mission', Bool, lambda x, y: not y.data),
+            # This state should return invalid once mission is true
+            transitions={'valid': 'aborted', 'invalid': 'Pause'})
+
+        # Pause
+        poll_rate = 0.1
+        smach.StateMachine.add(
+            'Pause',
+            smach_ros.ConditionState(lambda x: False,
+                                     poll_rate=rospy.Duration(0.1),
+                                     max_checks=pause/poll_rate),
+            # This state returns false after the period times out
+            transitions={'true': 'aborted', 'false': 'Initialization'})
+
+        # Horizon initialization.
         smach.StateMachine.add(
             'Initialization',
             InitializationState(countdown),
             transitions={'succeeded': 'Submerge'})
 
-        # Add submerge
+        # Submerge
         smach.StateMachine.add(
             'Submerge',
-            SetVelocityState.create_set_depth_state(depth),
+            SetVelocityState.create_set_depth_state(depth, tolerance=0.1),
             transitions={'succeeded': 'Yaw 0'})
 
-        # Add dead reckoning.
+        # Dead reckoning.
         for i in range(len(yaws)):
             smach.StateMachine.add(
                 'Yaw {}'.format(yaws[i]),

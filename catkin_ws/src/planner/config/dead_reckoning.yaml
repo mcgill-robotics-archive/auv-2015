@@ -1,4 +1,5 @@
-countdown: 1
+pause: 3
+countdown: 5
 depth: 1
 speed: 1
 yaws: [0, 1.57]
