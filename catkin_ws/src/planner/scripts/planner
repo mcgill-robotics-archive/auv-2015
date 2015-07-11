@@ -13,6 +13,7 @@ __author__ = 'Max Krogius, Anass Al-Wohoush'
 
 def create_state_machine():
     countdown = rospy.get_param('~countdown')
+    depth = rospy.get_param('~depth')
     speed = rospy.get_param('~speed')
     yaws = rospy.get_param('~yaws')
     times = rospy.get_param('~times')
@@ -27,6 +28,12 @@ def create_state_machine():
         smach.StateMachine.add(
             'Initialization',
             InitializationState(countdown),
+            transitions={'succeeded': 'Submerge'})
+
+        # Add submerge
+        smach.StateMachine.add(
+            'Submerge',
+            SetVelocityState.create_set_depth_state(depth),
             transitions={'succeeded': 'Yaw 0'})
 
         # Add dead reckoning.

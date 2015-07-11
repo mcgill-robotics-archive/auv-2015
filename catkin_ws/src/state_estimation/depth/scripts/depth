@@ -63,13 +63,13 @@ def broadcast_transform(depth):
         depth: Depth in meters.
     """
     _broadcaster.sendTransform(
-        (0, 0, depth), (0, 0, 0, 1.0),
+        (0, 0, -1 * depth), (0, 0, 0, 1.0),
         # Now
         rospy.get_rostime(),
         # From
-        "/horizon",
+        "/floating_horizon",
         # To
-        "/floating_horizon")
+        "/horizon")
 
 
 def update_parameters():

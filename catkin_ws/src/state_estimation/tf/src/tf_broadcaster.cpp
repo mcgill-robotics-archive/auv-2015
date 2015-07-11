@@ -53,7 +53,7 @@ void imuCallBack(const geometry_msgs::PoseStamped::ConstPtr& msg) {
 int main(int argc, char** argv) {
   ros::init(argc, argv, "tf_broadcaster");
   ros::NodeHandle node;
-  imuMountToRobotFrame.setRPY(0, 0, PI/2);
+  imuMountToRobotFrame.setRPY(0, 0, 0);
   imuInternalHorizonToMountPoint.setRPY(PI, 0, 0);
 
   // TODO: Figure out why nothing gets broadcast without this line
