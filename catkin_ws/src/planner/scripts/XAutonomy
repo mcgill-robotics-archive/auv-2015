@@ -78,9 +78,9 @@ def create_state_machine():
 
 
 if __name__ == '__main__':
-    rospy.init_node('yaw_test')
+    rospy.init_node('planner')
     sm = create_state_machine()
-    sis = smach_ros.IntrospectionServer('yaw_test', sm, '/SM_ROOT')
+    sis = smach_ros.IntrospectionServer('planner', sm, '/SM_ROOT')
     sis.start()
 
     # Create the user data with the initial yaw and depth setpoints.
