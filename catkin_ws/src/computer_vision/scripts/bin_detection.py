@@ -28,53 +28,6 @@ def suppressBadShapes(contours):
     return filters.suppressBadShapes(contours, rect, 0.1)
 
 
-def suppressNonRectangles(contours, tol):
-    # This suppresses some good shapes, why? Because they have extra vertices.
-    # Increasing the tolerance causes more stuff to be fit as quadrilaterals.
-    valid = []
-    for c in contours:
-        poly = cv2.approxPolyDP(c, tol*cv2.arcLength(c, True), True)
-        if len(poly) == 4 and cv2.isContourConvex(poly):
-            valid.append(poly)
-    return valid
-
-
-def sideLengths(rect):
-    # Returns the lengths of the sides of the rectangle
-    return map(lambda i: filters.dist(rect[i-1], rect[i]), range(4))
-
-
-def filterAspectRatio(rects, desired_aspect_ratio, aspect_ratio_tol):
-    # Test that the aspect ratio of the rectangle i.e is it x times
-    # as long in one direction as the other.
-    desired_aspect_ratio = desired_aspect_ratio if desired_aspect_ratio > 1 \
-        else 1/desired_aspect_ratio
-    valid = []
-    for r in rects:
-        r = r.reshape(-1, 2)
-        lengths = sideLengths(r)
-        aspect_ratio = (lengths[0] + lengths[2])/(lengths[1] + lengths[3])
-        aspect_ratio = aspect_ratio if aspect_ratio > 1 else 1/aspect_ratio
-        if abs(aspect_ratio - desired_aspect_ratio) < aspect_ratio_tol:
-            valid.append(r)
-    return valid
-
-
-def angle_cos(p0, p1, p2):
-    d1, d2 = (p0-p1).astype('float'), (p2-p1).astype('float')
-    return abs(np.dot(d1, d2) / np.sqrt(np.dot(d1, d1)*np.dot(d2, d2)))
-
-
-def suppressSkewed(contours, cos_thresh):
-    valid = []
-    for c in contours:
-        coses = [angle_cos(c[i-2], c[i-1], c[i]) for i in range(4)]
-        max_cos = np.max(coses)
-        if max_cos < cos_thresh:
-            valid.append(c)
-    return valid
-
-
 def validate(contours, img, debug):
     filter_list = []
     # Minimum perimeter of target
@@ -86,13 +39,15 @@ def validate(contours, img, debug):
     # with fewer vertices.
     polygon_approx_tolerance = 0.05
     filter_list.append(
-        lambda x: suppressNonRectangles(x, polygon_approx_tolerance))
+        lambda x: filters.suppress_non_rectangles(x, polygon_approx_tolerance))
     # The ratio of size in one dimension to the other.
     aspect_ratio = 2
     # Allowed variance in aspect ratio
     aspect_ratio_tol = 0.5
     filter_list.append(
-        lambda x: filterAspectRatio(x, aspect_ratio, aspect_ratio_tol))
+        lambda x: filters.filterRectAspectRatio(x,
+                                                aspect_ratio,
+                                                aspect_ratio_tol))
     # Flag for how the intensity changes from the inside of the border to the
     # outside of the border. 1 means that the outside is more intense than the
     # inside. 0 means there isn't a difference. -1 means the inside is more
@@ -102,11 +57,11 @@ def validate(contours, img, debug):
     intensity_change = 10
     filter_list.append(
         lambda x: filters.filter_intensities(x, img, intensity_change_flag,
-                                            intensity_change))
+                                             intensity_change))
     filter_list.append(lambda x: filters.suppress_concentric(x))
     # Max cosine of any internal angle of the rectangle
     max_cos = 0.15
-    filter_list.append(lambda x: suppressSkewed(x, max_cos))
+    filter_list.append(lambda x: filters.suppress_skewed(x, max_cos))
     return filters.validate_contours(contours, filter_list, debug)
 
 
@@ -154,7 +109,7 @@ def matchSilhouettes(img, rects, orig):
     for rect in rects:
         # Ensure that the rectangle has the long side matched with
         # the long side of src_rect
-        lengths = sideLengths(rect)
+        lengths = filters.sideLengths(rect)
         aspect_ratio = (lengths[0] + lengths[2])/(lengths[1] + lengths[3])
         if aspect_ratio < 1:
             rect = np.roll(rect, 1, axis=0)
@@ -179,9 +134,8 @@ def matchSilhouettes(img, rects, orig):
 def findByContours(orig):
     img = orig.copy()
     debug = orig.copy()
-    gray = cv2.split(img)[2]
-    #gray = filters.grayScale(img)
-    #gray = filters.medianBlur(gray)
+    gray = filters.grayScale(img)
+    gray = filters.medianBlur(gray)
     img = cv2.Canny(gray, 0, 100, apertureSize=5)
     contours, _ = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
     return validate(contours, gray, debug)

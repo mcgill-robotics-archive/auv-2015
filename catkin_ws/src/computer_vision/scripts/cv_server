@@ -32,7 +32,7 @@ def project_bottom_callback(findByContours, img):
         rospy.logwarn('No camera info')
         return
     rects, debug_img = findByContours(bridge.imgmsg_to_cv2(img))
-    debug_pub.publish(debug_img)
+    debug_pub.publish(bridge.cv2_to_imgmsg(debug_img))
     target_msg = CVTarget()
     header = Header()
     header.frame_id = 'floating_horizon'

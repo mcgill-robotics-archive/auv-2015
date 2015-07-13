@@ -55,6 +55,53 @@ def contourIntensityAverage(img, outerContour, innerContour=None):
     return cv2.mean(img, mask=mask)[0]
 
 
+def suppress_non_rectangles(contours, tol):
+    # This suppresses some good shapes, why? Because they have extra vertices.
+    # Increasing the tolerance causes more stuff to be fit as quadrilaterals.
+    valid = []
+    for c in contours:
+        poly = cv2.approxPolyDP(c, tol*cv2.arcLength(c, True), True)
+        if len(poly) == 4 and cv2.isContourConvex(poly):
+            valid.append(poly)
+    return valid
+
+
+def angle_cos(p0, p1, p2):
+    d1, d2 = (p0-p1).astype('float'), (p2-p1).astype('float')
+    return abs(np.dot(d1, d2) / np.sqrt(np.dot(d1, d1)*np.dot(d2, d2)))
+
+
+def suppress_skewed(contours, cos_thresh):
+    valid = []
+    for c in contours:
+        coses = [angle_cos(c[i-2], c[i-1], c[i]) for i in range(4)]
+        max_cos = np.max(coses)
+        if max_cos < cos_thresh:
+            valid.append(c)
+    return valid
+
+
+def sideLengths(rect):
+    # Returns the lengths of the sides of the rectangle
+    return map(lambda i: dist(rect[i-1], rect[i]), range(4))
+
+
+def filterRectAspectRatio(rects, desired_aspect_ratio, aspect_ratio_tol):
+    # Test that the aspect ratio of the rectangle i.e is it x times
+    # as long in one direction as the other.
+    desired_aspect_ratio = desired_aspect_ratio if desired_aspect_ratio > 1 \
+        else 1/desired_aspect_ratio
+    valid = []
+    for r in rects:
+        r = r.reshape(-1, 2)
+        lengths = sideLengths(r)
+        aspect_ratio = (lengths[0] + lengths[2])/(lengths[1] + lengths[3])
+        aspect_ratio = aspect_ratio if aspect_ratio > 1 else 1/aspect_ratio
+        if abs(aspect_ratio - desired_aspect_ratio) < aspect_ratio_tol:
+            valid.append(r)
+    return valid
+
+
 def filter_intensities(contours, img, flag, intensity_change):
     # Tests for rectangles where the area just outside the border
     # is lighter than just inside. This is useful to suppress the
