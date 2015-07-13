@@ -34,12 +34,11 @@ def create_state_machine():
             transitions={'valid': 'aborted', 'invalid': 'Pause'})
 
         # Pause
-        poll_rate = 0.1
         smach.StateMachine.add(
             'Pause',
             smach_ros.ConditionState(lambda x: False,
-                                     poll_rate=rospy.Duration(0.1),
-                                     max_checks=pause/poll_rate),
+                                     timeout=rospy.Duration(pause),
+                                     max_checks=-1),
             # This state returns false after the period times out
             transitions={'true': 'aborted', 'false': 'Initialization'})
 
