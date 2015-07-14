@@ -1,30 +1,50 @@
 #include <FastLED.h>
+#include "sin_table.h"
 
-#define LED_COUNT       150
-#define LED_OUT         13
-#define LED_BRIGHTNESS  100
-#define TIMEOUT_PERIOD  1000
+#define NUM_LED_PER_STRIP   25
+#define NUM_LED_STRIP       6
+#define LED_COUNT           NUM_LED_PER_STRIP * NUM_LED_STRIP
+#define LED_OUT_PIN         13
+#define LED_BRIGHTNESS      100
+#define TIMEOUT_PERIOD      1000
 
 struct CRGB leds[LED_COUNT];
+uint16_t segmentPhase[NUM_LED_PER_STRIP];
 
 // For fading in a new sketch
 long lastTime;
 
-float fadeIndex;
-#define FADE_STEPS 50
-
 void setup()
 {  
   Serial.begin(57600);
-  
-  LEDS.addLeds<WS2812B, LED_OUT, GRB>(leds, LED_COUNT);
+  LEDS.addLeds<WS2812B, LED_OUT_PIN, GRB>(leds, LED_COUNT);
   LEDS.setBrightness(LED_BRIGHTNESS);
   LEDS.show();
 }
 
 
 void colorLoop() {  
-// TODO Prismata Animation
+
+  for(uint16_t i =0; i < LED_COUNT; i++){
+    leds[i] = CRGB::Black;
+  }
+  
+  for(uint8_t i = 0; i < NUM_LED_PER_STRIP; i++){
+    
+    segmentPhase[i] = (segmentPhase[i] + i) & 511;
+    
+    uint32_t amplitude = NUM_LED_STRIP * SIN_TABLE_512[segmentPhase[i]];
+    uint8_t pixelIndex = (uint8_t) (amplitude >> 16);
+    
+    CRGB color =  CRGB((255 * (0xFFFF & amplitude)) >> 16,0,0);
+    
+    if(pixelIndex % 2){
+      leds[NUM_LED_PER_STRIP * (pixelIndex + 1) - i -1] = color;
+    } else {
+      leds[NUM_LED_PER_STRIP * pixelIndex] = color;
+    }
+  } 
+
 }
 
 void serialLoop() {
