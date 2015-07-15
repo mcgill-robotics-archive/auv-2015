@@ -29,12 +29,27 @@ int main(void)
   // Configure the ADC peripherals.
   log_debug("Configuring ADCs");
   ADC_Config(&hadc1, ADC1, ADC_CHANNEL_14);
+  ADC_Config(&hadc2, ADC2, ADC_CHANNEL_12);
+  ADC_Config(&hadc3, ADC3, ADC_CHANNEL_15);
+  ADC_Config(&hadc4, ADC4, ADC_CHANNEL_13);
 
   // Calibrate ADCs.
   log_debug("Calibrating ADCs");
   if (HAL_ADCEx_Calibration_Start(&hadc1, ADC_SINGLE_ENDED) != HAL_OK)
   {
     Error_Handler("Could not calibrate ADC1");
+  }
+  if (HAL_ADCEx_Calibration_Start(&hadc2, ADC_SINGLE_ENDED) != HAL_OK)
+  {
+    Error_Handler("Could not calibrate ADC2");
+  }
+  if (HAL_ADCEx_Calibration_Start(&hadc3, ADC_SINGLE_ENDED) != HAL_OK)
+  {
+    Error_Handler("Could not calibrate ADC3");
+  }
+  if (HAL_ADCEx_Calibration_Start(&hadc4, ADC_SINGLE_ENDED) != HAL_OK)
+  {
+    Error_Handler("Could not calibrate ADC4");
   }
 
   // Start ADC conversion by DMA.
@@ -45,6 +60,24 @@ int main(void)
                         BUFFERSIZE) != HAL_OK)
   {
     Error_Handler("Could not start ADC1");
+  }
+  if (HAL_ADC_Start_DMA(&hadc2,
+                        (uint32_t *)signals.data_1,
+                        BUFFERSIZE) != HAL_OK)
+  {
+    Error_Handler("Could not start ADC2");
+  }
+  if (HAL_ADC_Start_DMA(&hadc3,
+                        (uint32_t *)signals.data_2,
+                        BUFFERSIZE) != HAL_OK)
+  {
+    Error_Handler("Could not start ADC3");
+  }
+  if (HAL_ADC_Start_DMA(&hadc4,
+                        (uint32_t *)signals.data_3,
+                        BUFFERSIZE) != HAL_OK)
+  {
+    Error_Handler("Could not start ADC4");
   }
 
   while (1)
