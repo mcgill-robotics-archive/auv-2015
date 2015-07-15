@@ -175,7 +175,7 @@ void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc, uint32_t channel)
 
   sConfig.Channel = channel;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_19CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -199,8 +199,8 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   if (completion_count[instance] > 1000) {
     Stop_ADC(hadc);
     char header[8];
-    sprintf(header, "[DATA%d]\n", instance);
-    write_buffer(header, 8);
+    sprintf(header, "[DATA %d]\n", instance);
+    write_buffer(header, 9);
     switch (instance) {
       case 0:
         write_buffer((uint8_t*) data_0, 2 * BUFFERSIZE);

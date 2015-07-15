@@ -6,7 +6,7 @@
 void UART_Init(void)
 {
   uart.Instance = USART2;
-  uart.Init.BaudRate = BAUD_RATE;
+  uart.Init.BaudRate = 230400;
   uart.Init.WordLength = UART_WORDLENGTH_8B;
   uart.Init.StopBits = UART_STOPBITS_1;
   uart.Init.Parity = UART_PARITY_NONE;

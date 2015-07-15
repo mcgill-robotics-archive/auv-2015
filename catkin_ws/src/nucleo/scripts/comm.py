@@ -3,26 +3,29 @@
 
 """Read from Nucleo serial."""
 
+import time
 import bitstring
 from serial import Serial
 
 __author__ = "Anass Al-Wohoush"
 
 
-BUFFERSIZE = 1024
+BUFFERSIZE = 4096
 
 headers = (
-    "[DATA0]",
-    "[DATA1]",
-    "[DATA2]",
-    "[DATA3]",
+    "[DATA 0]",
+    "[DATA 1]",
+    "[DATA 2]",
+    "[DATA 3]",
     "[DEBUG]",
     "[FATAL]"
 )
 
 
 if __name__ == "__main__":
-    with Serial("/dev/tty.usbmodem1413", baudrate=115200) as ser:
+    starts = [0, 0, 0, 0]
+
+    with Serial("/dev/tty.usbmodem1413", baudrate=230400) as ser:
         print("Initializing...")
         while not ser.readable():
             pass
@@ -53,6 +56,13 @@ if __name__ == "__main__":
             print(header)
             if "DATA" in header:
                 raw = ser.read(2 * BUFFERSIZE)
+                end = time.time()
+                _, i = header.strip("]").split()
+                instance = int(i)
+                if starts[instance]:
+                    dt = (end - starts[instance]) / 1000.0 / BUFFERSIZE
+                    print("dt: {}".format(dt))
+                starts[instance] = end
                 stream = bitstring.BitStream(bytes=raw)
                 data = list(stream.read(16).uintle for i in range(BUFFERSIZE))
                 print(sum(data) / len(data))
