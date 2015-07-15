@@ -16,22 +16,22 @@ int main(void)
   log_debug("Initialized UART");
 
   // Initialize GPIO.
-  log_debug("Initializing GPIO");
+  log_debug("Initializing GPIO...");
   GPIO_Init();
 
   // Initialize DMA.
-  log_debug("Initializing DMA");
+  log_debug("Initializing DMA...");
   DMA_Init();
 
   // Configure the ADC peripherals.
-  log_debug("Configuring ADCs");
+  log_debug("Configuring ADCs...");
   ADC_Config(&hadc1, ADC1, ADC_CHANNEL_14);
   ADC_Config(&hadc2, ADC2, ADC_CHANNEL_12);
   ADC_Config(&hadc3, ADC3, ADC_CHANNEL_15);
   ADC_Config(&hadc4, ADC4, ADC_CHANNEL_13);
 
   // Calibrate ADCs.
-  log_debug("Calibrating ADCs");
+  log_debug("Calibrating ADCs...");
   Calibrate_ADC(&hadc1);
   Calibrate_ADC(&hadc2);
   Calibrate_ADC(&hadc3);
@@ -39,7 +39,7 @@ int main(void)
 
   // Start ADC conversion by DMA.
   SignalData signals;
-  log_debug("Starting ADCs");
+  log_debug("Starting ADCs...");
   Start_ADC(&hadc1, (uint32_t*)signals.data_0);
   Start_ADC(&hadc2, (uint32_t*)signals.data_1);
   Start_ADC(&hadc3, (uint32_t*)signals.data_2);
@@ -47,7 +47,7 @@ int main(void)
 
   while (1)
   {
-    write_buffer("ALIVE\r\n", 7);
+    write_string("ALIVE");
     HAL_Delay(1000);
   }
 }

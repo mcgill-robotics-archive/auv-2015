@@ -198,9 +198,9 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   completion_count[instance]++;
   if (completion_count[instance] > 1000) {
     completion_count[instance] = 0;
-    write_buffer("DONE ", 5);
-    write_int(instance);
-    write_buffer("\n", 1);
+    char buff[10];
+    sprintf(buff, "DONE %d", instance);
+    write_string(buff);
   }
 }
 

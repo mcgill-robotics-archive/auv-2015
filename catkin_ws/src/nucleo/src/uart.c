@@ -31,7 +31,9 @@ void write_buffer(uint8_t* data, uint16_t size) {
  * Writes string to UART.
  */
 void write_string(char* data) {
-  HAL_UART_Transmit(&uart, data, strlen(data), 1000);
+  char buff[128];
+  sprintf(buff, "%s\n", data);
+  HAL_UART_Transmit(&uart, buff, strlen(buff), 1000);
 }
 
 
@@ -39,8 +41,8 @@ void write_string(char* data) {
  * Writes integer to UART.
  */
 void write_int(int data) {
-  char buff[10];
-  sprintf(buff, "%d", data);
+  char buff[12];
+  sprintf(buff, "%d\n", data);
   HAL_UART_Transmit(&uart, buff, sizeof(buff), 1000);
 }
 
@@ -50,9 +52,9 @@ void write_int(int data) {
  */
 void log_debug(char* data) {
   #ifdef DEBUG
-  HAL_UART_Transmit(&uart, "[DEBUG] ", 8, 1000);
-  HAL_UART_Transmit(&uart, data, strlen(data), 1000);
-  HAL_UART_Transmit(&uart, "\r\n", 2, 1000);
+  char buff[128];
+  sprintf(buff, "[DEBUG] %s\n", data);
+  HAL_UART_Transmit(&uart, buff, strlen(buff), 1000);
   #endif
 }
 
@@ -61,7 +63,7 @@ void log_debug(char* data) {
  * Writes fatal log to UART.
  */
 void log_fatal(char* data) {
-  HAL_UART_Transmit(&uart, "[FATAL] ", 8, 1000);
-  HAL_UART_Transmit(&uart, data, strlen(data), 1000);
-  HAL_UART_Transmit(&uart, "\r\n", 2, 1000);
+  char buff[128];
+  sprintf(buff, "[FATAL] %s\n", data);
+  HAL_UART_Transmit(&uart, buff, strlen(buff), 1000);
 }
