@@ -69,13 +69,25 @@ void SysTick_Handler(void)
 }
 
 
-void ADC1_2_IRQHandler(void)
+void DMA1_Channel1_IRQHandler(void)
 {
-  HAL_ADC_IRQHandler(&hadc1);
+  HAL_DMA_IRQHandler(&hdma_adc1);
 }
 
 
-void DMA1_Channel1_IRQHandler(void)
+void DMA2_Channel1_IRQHandler(void)
 {
-  HAL_DMA_IRQHandler(hadc1.DMA_Handle);
+  HAL_DMA_IRQHandler(&hdma_adc2);
+}
+
+
+void DMA2_Channel2_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_adc4);
+}
+
+
+void DMA2_Channel5_IRQHandler(void)
+{
+  HAL_DMA_IRQHandler(&hdma_adc3);
 }

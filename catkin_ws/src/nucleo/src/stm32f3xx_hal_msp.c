@@ -1,93 +1,232 @@
 #include "main.h"
 
+// Remember which clocks have been enabled.
+static int ADC12_CLK_ENABLED = 0;
+static int ADC34_CLK_ENABLED = 0;
 
-void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc)
+
+void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
 {
   GPIO_InitTypeDef GPIO_InitStruct;
-  static DMA_HandleTypeDef DmaHandle;
   RCC_PeriphCLKInitTypeDef RCC_PeriphCLKInitStruct;
 
   if (hadc->Instance == ADC1)
   {
-    // Enable clock of GPIO associated to the peripheral channels.
-    __GPIOA_CLK_ENABLE();
+    // Enable peripheral clock.
+    if (!ADC12_CLK_ENABLED) {
+      __ADC12_CLK_ENABLE();
+    }
+    ADC12_CLK_ENABLED++;
 
-    // Enable clock of ADC peripheral.
-    __ADC1_CLK_ENABLE();
-
-    // Enable asynchronous clock source of ADC.
-    RCC_PeriphCLKInitStruct.PeriphClockSelection = RCC_PERIPHCLK_ADC12;
-    RCC_PeriphCLKInitStruct.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
-    HAL_RCCEx_PeriphCLKConfig(&RCC_PeriphCLKInitStruct);
-
-    // Enable clock of DMA associated to the peripheral.
-    __DMA1_CLK_ENABLE();
-
-    // Configure GPIO pin of the selected ADC channel.
-    GPIO_InitStruct.Pin = GPIO_PIN_1;
+    // ADC1 GPIO Configuration.
+    // PB11 ------> ADC1_IN14
+    GPIO_InitStruct.Pin = GPIO_PIN_11;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    // Configure DMA parameters.
-    DmaHandle.Instance = DMA1_Channel1;
+    // Initialize peripheral DMA.
+    hdma_adc1.Instance = DMA1_Channel1;
+    hdma_adc1.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_adc1.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_adc1.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_adc1.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_adc1.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_adc1.Init.Mode = DMA_CIRCULAR;
+    hdma_adc1.Init.Priority = DMA_PRIORITY_HIGH;
+    HAL_DMA_DeInit(&hdma_adc1);
+    HAL_DMA_Init(&hdma_adc1);
 
-    DmaHandle.Init.Direction = DMA_PERIPH_TO_MEMORY;
-    DmaHandle.Init.PeriphInc = DMA_PINC_DISABLE;
-    DmaHandle.Init.MemInc = DMA_MINC_ENABLE;
-
-    // Transfer from ADC by half-word to match with ADC resolution 10 or 12 bits.
-    DmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-
-    // Transfer to memory by half-word to match with buffer variable type:
-    // half-word.
-    DmaHandle.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
-    DmaHandle.Init.Mode = DMA_CIRCULAR;
-    DmaHandle.Init.Priority = DMA_PRIORITY_HIGH;
-
-    // Deinitialize and initialize the DMA for new transfer.
-    HAL_DMA_DeInit(&DmaHandle);
-    HAL_DMA_Init(&DmaHandle);
-
-    /* Associate the initialized DMA handle to the ADC handle */
-    __HAL_LINKDMA(hadc, DMA_Handle, DmaHandle);
+    // Associate the initialized DMA handle to the ADC handle.
+    __HAL_LINKDMA(hadc, DMA_Handle, hdma_adc1);
 
     // NVIC configuration for DMA interrupt (transfer completion or error).
     // Priority: high-priority.
-    HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 1, 0);
+    HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 0, 0);
     HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+  }
+  else if (hadc->Instance == ADC2)
+  {
+    // Enable peripheral clock.
+    if (!ADC12_CLK_ENABLED) {
+      __ADC12_CLK_ENABLE();
+    }
+    ADC12_CLK_ENABLED++;
 
+    // ADC2 GPIO Configuration.
+    // PB2 ------> ADC2_IN12
+    GPIO_InitStruct.Pin = GPIO_PIN_2;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-    // NVIC configuration for ADC interrupt.
+    // Initialize peripheral DMA.
+    hdma_adc2.Instance = DMA2_Channel1;
+    hdma_adc2.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_adc2.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_adc2.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_adc2.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_adc2.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_adc2.Init.Mode = DMA_CIRCULAR;
+    hdma_adc2.Init.Priority = DMA_PRIORITY_HIGH;
+    HAL_DMA_DeInit(&hdma_adc2);
+    HAL_DMA_Init(&hdma_adc2);
+
+    // Associate the initialized DMA handle to the ADC handle.
+    __HAL_LINKDMA(hadc, DMA_Handle, hdma_adc2);
+
+    // NVIC configuration for DMA interrupt (transfer completion or error).
     // Priority: high-priority.
-    HAL_NVIC_SetPriority(ADC1_2_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(ADC1_2_IRQn);
+    HAL_NVIC_SetPriority(DMA2_Channel1_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Channel1_IRQn);
+  }
+  else if (hadc->Instance == ADC3)
+  {
+    // Enable peripheral clock.
+    if (!ADC34_CLK_ENABLED) {
+      __ADC34_CLK_ENABLE();
+    }
+    ADC34_CLK_ENABLED++;
+
+    // ADC3 GPIO Configuration.
+    // PB13 ------> ADC3_IN5
+    GPIO_InitStruct.Pin = GPIO_PIN_13;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    // Initialize peripheral DMA.
+    hdma_adc3.Instance = DMA2_Channel5;
+    hdma_adc3.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_adc3.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_adc3.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_adc3.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_adc3.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_adc3.Init.Mode = DMA_CIRCULAR;
+    hdma_adc3.Init.Priority = DMA_PRIORITY_HIGH;
+    HAL_DMA_DeInit(&hdma_adc3);
+    HAL_DMA_Init(&hdma_adc3);
+
+    // Associate the initialized DMA handle to the ADC handle.
+    __HAL_LINKDMA(hadc, DMA_Handle, hdma_adc3);
+
+    // NVIC configuration for DMA interrupt (transfer completion or error).
+    // Priority: high-priority.
+    HAL_NVIC_SetPriority(DMA2_Channel2_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Channel2_IRQn);
+  }
+  else if (hadc->Instance == ADC4)
+  {
+    // Enable peripheral clock.
+    if (!ADC34_CLK_ENABLED) {
+      __ADC34_CLK_ENABLE();
+    }
+    ADC34_CLK_ENABLED++;
+
+    // ADC4 GPIO Configuration.
+    // PB12 ------> ADC4_IN3
+    GPIO_InitStruct.Pin = GPIO_PIN_12;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+
+    // Initialize peripheral DMA.
+    hdma_adc4.Instance = DMA2_Channel2;
+    hdma_adc4.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    hdma_adc4.Init.PeriphInc = DMA_PINC_DISABLE;
+    hdma_adc4.Init.MemInc = DMA_MINC_ENABLE;
+    hdma_adc4.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+    hdma_adc4.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_adc4.Init.Mode = DMA_CIRCULAR;
+    hdma_adc4.Init.Priority = DMA_PRIORITY_HIGH;
+    HAL_DMA_DeInit(&hdma_adc4);
+    HAL_DMA_Init(&hdma_adc4);
+
+    // Associate the initialized DMA handle to the ADC handle.
+    __HAL_LINKDMA(hadc, DMA_Handle, hdma_adc4);
+
+    // NVIC configuration for DMA interrupt (transfer completion or error).
+    // Priority: high-priority.
+    HAL_NVIC_SetPriority(DMA2_Channel5_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Channel5_IRQn);
   }
 }
 
 
-void HAL_ADC_MspDeInit(ADC_HandleTypeDef *hadc)
+void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
 {
+
   if (hadc->Instance == ADC1)
   {
-    // Reset peripherals.
-    __ADC1_FORCE_RESET();
-    __ADC1_RELEASE_RESET();
-
-    // De-initialize GPIO pin of the selected ADC channel.
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_1);
-
-    // De-Initialize the DMA associated to the peripheral.
-    if(hadc->DMA_Handle != NULL)
-    {
-      HAL_DMA_DeInit(hadc->DMA_Handle);
+    // Disable peripheral clock.
+    ADC12_CLK_ENABLED--;
+    if (!ADC12_CLK_ENABLED){
+      __ADC12_CLK_DISABLE();
     }
+
+    // ADC1 GPIO Configuration.
+    // PB11 ------> ADC1_IN14
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_11);
+
+    // Deinitialize peripheral DMA.
+    HAL_DMA_DeInit(hadc->DMA_Handle);
 
     // Disable the NVIC configuration for DMA interrupt.
     HAL_NVIC_DisableIRQ(DMA1_Channel1_IRQn);
+  }
+  else if (hadc->Instance == ADC2)
+  {
+    // Disable peripheral clock.
+    ADC12_CLK_ENABLED--;
+    if (!ADC12_CLK_ENABLED){
+      __ADC12_CLK_DISABLE();
+    }
 
-    // Disable the NVIC configuration for ADC interrupt.
-    HAL_NVIC_DisableIRQ(ADC1_2_IRQn);
+    // ADC2 GPIO Configuration.
+    // PB2 ------> ADC2_IN12
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_2);
+
+    // Deinitialize peripheral DMA.
+    HAL_DMA_DeInit(hadc->DMA_Handle);
+
+    // Disable the NVIC configuration for DMA interrupt.
+    HAL_NVIC_DisableIRQ(DMA2_Channel1_IRQn);
+  }
+  else if (hadc->Instance == ADC3)
+  {
+    // Disable peripheral clock.
+    ADC34_CLK_ENABLED--;
+    if (!ADC34_CLK_ENABLED){
+      __ADC34_CLK_DISABLE();
+    }
+
+    // ADC3 GPIO Configuration.
+    // PB13 ------> ADC3_IN5
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_13);
+
+    // Deinitialize peripheral DMA.
+    HAL_DMA_DeInit(hadc->DMA_Handle);
+
+    // Disable the NVIC configuration for DMA interrupt.
+    HAL_NVIC_DisableIRQ(DMA2_Channel2_IRQn);
+  }
+  else if (hadc->Instance == ADC4)
+  {
+    // Disable peripheral clock.
+    ADC34_CLK_ENABLED--;
+    if (!ADC34_CLK_ENABLED){
+      __ADC34_CLK_DISABLE();
+    }
+
+    // ADC4 GPIO Configuration.
+    // PB12 ------> ADC4_IN3
+    HAL_GPIO_DeInit(GPIOB, GPIO_PIN_12);
+
+    // Deinitialize peripheral DMA.
+    HAL_DMA_DeInit(hadc->DMA_Handle);
+
+    // Disable the NVIC configuration for DMA interrupt.
+    HAL_NVIC_DisableIRQ(DMA2_Channel5_IRQn);
   }
 }
 
@@ -96,7 +235,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 {
   GPIO_InitTypeDef GPIO_InitStruct;
 
-  if(huart->Instance == USART2)
+  if (huart->Instance == USART2)
   {
     // Enable peripheral clock.
     __USART2_CLK_ENABLE();
@@ -116,7 +255,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 
 void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 {
-  if(huart->Instance == USART2)
+  if (huart->Instance == USART2)
   {
     // Disable peripheral clock.
     __USART2_CLK_DISABLE();
