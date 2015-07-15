@@ -20,12 +20,10 @@ DMA_HandleTypeDef hdma_adc4;
 
 #define BUFFERSIZE ((uint32_t) 1024)
 
-typedef struct {
-  __IO uint16_t data_0[BUFFERSIZE];
-  __IO uint16_t data_1[BUFFERSIZE];
-  __IO uint16_t data_2[BUFFERSIZE];
-  __IO uint16_t data_3[BUFFERSIZE];
-} SignalData;
+__IO uint16_t data_0[BUFFERSIZE];
+__IO uint16_t data_1[BUFFERSIZE];
+__IO uint16_t data_2[BUFFERSIZE];
+__IO uint16_t data_3[BUFFERSIZE];
 
 void ADC_Config(ADC_HandleTypeDef*, ADC_TypeDef*, uint32_t);
 void Calibrate_ADC(ADC_HandleTypeDef*);

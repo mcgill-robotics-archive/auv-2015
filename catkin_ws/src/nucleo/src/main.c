@@ -38,16 +38,14 @@ int main(void)
   Calibrate_ADC(&hadc4);
 
   // Start ADC conversion by DMA.
-  SignalData signals;
   log_debug("Starting ADCs...");
-  Start_ADC(&hadc1, (uint32_t*)signals.data_0);
-  Start_ADC(&hadc2, (uint32_t*)signals.data_1);
-  Start_ADC(&hadc3, (uint32_t*)signals.data_2);
-  Start_ADC(&hadc4, (uint32_t*)signals.data_3);
+  Start_ADC(&hadc1, (uint32_t*) data_0);
+  Start_ADC(&hadc2, (uint32_t*) data_1);
+  Start_ADC(&hadc3, (uint32_t*) data_2);
+  Start_ADC(&hadc4, (uint32_t*) data_3);
 
   while (1)
   {
-    write_string("ALIVE");
     HAL_Delay(1000);
   }
 }

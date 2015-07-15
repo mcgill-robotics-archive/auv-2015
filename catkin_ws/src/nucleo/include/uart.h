@@ -6,6 +6,8 @@
 #include <string.h>
 #include "stm32f3xx_hal.h"
 
+#define BAUD_RATE 115200
+
 UART_HandleTypeDef uart;
 
 void UART_Init(void);

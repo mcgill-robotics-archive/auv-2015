@@ -6,7 +6,7 @@
 void UART_Init(void)
 {
   uart.Instance = USART2;
-  uart.Init.BaudRate = 460800;
+  uart.Init.BaudRate = BAUD_RATE;
   uart.Init.WordLength = UART_WORDLENGTH_8B;
   uart.Init.StopBits = UART_STOPBITS_1;
   uart.Init.Parity = UART_PARITY_NONE;
@@ -26,17 +26,6 @@ void write_buffer(uint8_t* data, uint16_t size) {
   HAL_UART_Transmit(&uart, data, size, 1000);
 }
 
-
-/**
- * Writes string to UART.
- */
-void write_string(char* data) {
-  char buff[128];
-  sprintf(buff, "%s\n", data);
-  HAL_UART_Transmit(&uart, buff, strlen(buff), 1000);
-}
-
-
 /**
  * Writes integer to UART.
  */
@@ -53,7 +42,7 @@ void write_int(int data) {
 void log_debug(char* data) {
   #ifdef DEBUG
   char buff[128];
-  sprintf(buff, "[DEBUG] %s\n", data);
+  sprintf(buff, "[DEBUG]\n%s\n", data);
   HAL_UART_Transmit(&uart, buff, strlen(buff), 1000);
   #endif
 }
@@ -64,6 +53,6 @@ void log_debug(char* data) {
  */
 void log_fatal(char* data) {
   char buff[128];
-  sprintf(buff, "[FATAL] %s\n", data);
+  sprintf(buff, "[FATAL]\n%s\n", data);
   HAL_UART_Transmit(&uart, buff, strlen(buff), 1000);
 }

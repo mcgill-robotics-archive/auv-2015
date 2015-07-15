@@ -197,10 +197,31 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   // Verfify if complete.
   completion_count[instance]++;
   if (completion_count[instance] > 1000) {
+    Stop_ADC(hadc);
+    char header[8];
+    sprintf(header, "[DATA%d]\n", instance);
+    write_buffer(header, 8);
+    switch (instance) {
+      case 0:
+        write_buffer((uint8_t*) data_0, 2 * BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_0);
+        break;
+      case 1:
+        write_buffer((uint8_t*) data_1, 2 * BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_1);
+        break;
+      case 2:
+        write_buffer((uint8_t*) data_2, 2 * BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_2);
+        break;
+      case 3:
+        write_buffer((uint8_t*) data_3, 2 * BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_3);
+        break;
+      default:
+        break;
+    }
     completion_count[instance] = 0;
-    char buff[10];
-    sprintf(buff, "DONE %d", instance);
-    write_string(buff);
   }
 }
 
