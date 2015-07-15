@@ -1,129 +1,129 @@
-/**
-  ******************************************************************************
-  * File Name          : stm32f3xx_hal_msp.c
-  * Description        : This file provides code for the MSP Initialization 
-  *                      and de-Initialization codes.
-  ******************************************************************************
-  *
-  * COPYRIGHT(c) 2015 STMicroelectronics
-  *
-  * Redistribution and use in source and binary forms, with or without modification,
-  * are permitted provided that the following conditions are met:
-  *   1. Redistributions of source code must retain the above copyright notice,
-  *      this list of conditions and the following disclaimer.
-  *   2. Redistributions in binary form must reproduce the above copyright notice,
-  *      this list of conditions and the following disclaimer in the documentation
-  *      and/or other materials provided with the distribution.
-  *   3. Neither the name of STMicroelectronics nor the names of its contributors
-  *      may be used to endorse or promote products derived from this software
-  *      without specific prior written permission.
-  *
-  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-  * DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-  * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-  * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-  * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-  *
-  ******************************************************************************
-  */
-/* Includes ------------------------------------------------------------------*/
-#include "stm32f3xx_hal.h"
+#include "main.h"
 
-/* USER CODE BEGIN 0 */
 
-/* USER CODE END 0 */
-
-/**
-  * Initializes the Global MSP.
-  */
-void HAL_MspInit(void)
+void HAL_ADC_MspInit(ADC_HandleTypeDef *hadc)
 {
-  /* USER CODE BEGIN MspInit 0 */
+  GPIO_InitTypeDef GPIO_InitStruct;
+  static DMA_HandleTypeDef DmaHandle;
+  RCC_PeriphCLKInitTypeDef RCC_PeriphCLKInitStruct;
 
-  /* USER CODE END MspInit 0 */
+  if (hadc->Instance == ADC1)
+  {
+    // Enable clock of GPIO associated to the peripheral channels.
+    __GPIOA_CLK_ENABLE();
 
-  __SYSCFG_CLK_ENABLE();
+    // Enable clock of ADC peripheral.
+    __ADC1_CLK_ENABLE();
 
-  HAL_NVIC_SetPriorityGrouping(NVIC_PRIORITYGROUP_0);
+    // Enable asynchronous clock source of ADC.
+    RCC_PeriphCLKInitStruct.PeriphClockSelection = RCC_PERIPHCLK_ADC12;
+    RCC_PeriphCLKInitStruct.Adc12ClockSelection = RCC_ADC12PLLCLK_DIV1;
+    HAL_RCCEx_PeriphCLKConfig(&RCC_PeriphCLKInitStruct);
 
-  /* System interrupt init*/
-/* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+    // Enable clock of DMA associated to the peripheral.
+    __DMA1_CLK_ENABLE();
 
-  /* USER CODE BEGIN MspInit 1 */
+    // Configure GPIO pin of the selected ADC channel.
+    GPIO_InitStruct.Pin = GPIO_PIN_1;
+    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /* USER CODE END MspInit 1 */
+    // Configure DMA parameters.
+    DmaHandle.Instance = DMA1_Channel1;
+
+    DmaHandle.Init.Direction = DMA_PERIPH_TO_MEMORY;
+    DmaHandle.Init.PeriphInc = DMA_PINC_DISABLE;
+    DmaHandle.Init.MemInc = DMA_MINC_ENABLE;
+
+    // Transfer from ADC by half-word to match with ADC resolution 10 or 12 bits.
+    DmaHandle.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
+
+    // Transfer to memory by half-word to match with buffer variable type:
+    // half-word.
+    DmaHandle.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    DmaHandle.Init.Mode = DMA_CIRCULAR;
+    DmaHandle.Init.Priority = DMA_PRIORITY_HIGH;
+
+    // Deinitialize and initialize the DMA for new transfer.
+    HAL_DMA_DeInit(&DmaHandle);
+    HAL_DMA_Init(&DmaHandle);
+
+    /* Associate the initialized DMA handle to the ADC handle */
+    __HAL_LINKDMA(hadc, DMA_Handle, DmaHandle);
+
+    // NVIC configuration for DMA interrupt (transfer completion or error).
+    // Priority: high-priority.
+    HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, 1, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+
+
+    // NVIC configuration for ADC interrupt.
+    // Priority: high-priority.
+    HAL_NVIC_SetPriority(ADC1_2_IRQn, 0, 0);
+    HAL_NVIC_EnableIRQ(ADC1_2_IRQn);
+  }
 }
+
+
+void HAL_ADC_MspDeInit(ADC_HandleTypeDef *hadc)
+{
+  if (hadc->Instance == ADC1)
+  {
+    // Reset peripherals.
+    __ADC1_FORCE_RESET();
+    __ADC1_RELEASE_RESET();
+
+    // De-initialize GPIO pin of the selected ADC channel.
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_1);
+
+    // De-Initialize the DMA associated to the peripheral.
+    if(hadc->DMA_Handle != NULL)
+    {
+      HAL_DMA_DeInit(hadc->DMA_Handle);
+    }
+
+    // Disable the NVIC configuration for DMA interrupt.
+    HAL_NVIC_DisableIRQ(DMA1_Channel1_IRQn);
+
+    // Disable the NVIC configuration for ADC interrupt.
+    HAL_NVIC_DisableIRQ(ADC1_2_IRQn);
+  }
+}
+
 
 void HAL_UART_MspInit(UART_HandleTypeDef* huart)
 {
-
   GPIO_InitTypeDef GPIO_InitStruct;
-  if(huart->Instance==USART2)
-  {
-  /* USER CODE BEGIN USART2_MspInit 0 */
 
-  /* USER CODE END USART2_MspInit 0 */
-    /* Peripheral clock enable */
+  if(huart->Instance == USART2)
+  {
+    // Enable peripheral clock.
     __USART2_CLK_ENABLE();
-  
-    /**USART2 GPIO Configuration    
-    PA2     ------> USART2_TX
-    PA3     ------> USART2_RX 
-    */
-    GPIO_InitStruct.Pin = GPIO_PIN_2|GPIO_PIN_3;
+
+    // USART2 GPIO Configuration.
+    // PA2 ------> USART2_TX
+    // PA3 ------> USART2_RX
+    GPIO_InitStruct.Pin = GPIO_PIN_2 | GPIO_PIN_3;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF7_USART2;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /* USER CODE BEGIN USART2_MspInit 1 */
-
-  /* USER CODE END USART2_MspInit 1 */
   }
-
 }
+
 
 void HAL_UART_MspDeInit(UART_HandleTypeDef* huart)
 {
-
-  if(huart->Instance==USART2)
+  if(huart->Instance == USART2)
   {
-  /* USER CODE BEGIN USART2_MspDeInit 0 */
-
-  /* USER CODE END USART2_MspDeInit 0 */
-    /* Peripheral clock disable */
+    // Disable peripheral clock.
     __USART2_CLK_DISABLE();
-  
-    /**USART2 GPIO Configuration    
-    PA2     ------> USART2_TX
-    PA3     ------> USART2_RX 
-    */
-    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2|GPIO_PIN_3);
 
-  /* USER CODE BEGIN USART2_MspDeInit 1 */
-
-  /* USER CODE END USART2_MspDeInit 1 */
+    // USART2 GPIO Configuration.
+    // PA2 ------> USART2_TX
+    // PA3 ------> USART2_RX
+    HAL_GPIO_DeInit(GPIOA, GPIO_PIN_2 | GPIO_PIN_3);
   }
-
 }
-
-/* USER CODE BEGIN 1 */
-
-/* USER CODE END 1 */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
