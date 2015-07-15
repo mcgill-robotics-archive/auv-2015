@@ -3,6 +3,8 @@
 // Maintain status of signals.
 __IO uint32_t completion_count[4] = {0, 0, 0, 0};
 
+// Compute double the buffersize to speed up sending the buffer.
+static const uint32_t DOUBLE_BUFFERSIZE = 2 * BUFFERSIZE;
 
 void Calibrate_ADC(ADC_HandleTypeDef* hadc)
 {
@@ -154,7 +156,11 @@ void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc, uint32_t channel)
   hadc->Instance = adc;
 
   hadc->Init.ClockPrescaler = ADC_CLOCK_ASYNC;
+#ifdef EIGHT_BIT_MODE
+  hadc->Init.Resolution = ADC_RESOLUTION8b;
+#else
   hadc->Init.Resolution = ADC_RESOLUTION12b;
+#endif
   hadc->Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc->Init.ScanConvMode = ENABLE;
   hadc->Init.EOCSelection = EOC_SINGLE_CONV;
@@ -197,30 +203,69 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   // Verfify if complete.
   completion_count[instance]++;
   if (completion_count[instance] > 1000) {
+    // Stop ADC to preserve data.
     Stop_ADC(hadc);
+
+    // Construct header.
     char header[8];
     sprintf(header, "[DATA %d]\n", instance);
     write_buffer(header, 9);
+
+#ifdef EIGHT_BIT_MODE
+    // Write 1 byte out of 2 since only 8 bits are actually used out of the 16.
+    // Then, start the ADC again.
     switch (instance) {
       case 0:
-        write_buffer((uint8_t*) data_0, 2 * BUFFERSIZE);
+        for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
+          write_buffer((uint8_t*) data_0 + i, 1);
+        }
         Start_ADC(hadc, (uint32_t*) data_0);
         break;
       case 1:
-        write_buffer((uint8_t*) data_1, 2 * BUFFERSIZE);
+        for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
+          write_buffer((uint8_t*) data_1 + i, 1);
+        }
         Start_ADC(hadc, (uint32_t*) data_1);
         break;
       case 2:
-        write_buffer((uint8_t*) data_2, 2 * BUFFERSIZE);
+        for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
+          write_buffer((uint8_t*) data_2 + i, 1);
+        }
         Start_ADC(hadc, (uint32_t*) data_2);
         break;
       case 3:
-        write_buffer((uint8_t*) data_3, 2 * BUFFERSIZE);
+        for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
+          write_buffer((uint8_t*) data_3 + i, 1);
+        }
         Start_ADC(hadc, (uint32_t*) data_3);
         break;
       default:
         break;
     }
+#else
+    switch (instance) {
+      case 0:
+        write_buffer((uint8_t*) data_0, DOUBLE_BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_0);
+        break;
+      case 1:
+        write_buffer((uint8_t*) data_1, DOUBLE_BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_1);
+        break;
+      case 2:
+        write_buffer((uint8_t*) data_2, DOUBLE_BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_2);
+        break;
+      case 3:
+        write_buffer((uint8_t*) data_3, DOUBLE_BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_3);
+        break;
+      default:
+        break;
+    }
+#endif
+
+    // Reset completion count.
     completion_count[instance] = 0;
   }
 }

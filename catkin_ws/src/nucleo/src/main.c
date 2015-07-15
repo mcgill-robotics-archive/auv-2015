@@ -15,6 +15,12 @@ int main(void)
   UART_Init();
   log_debug("Initialized UART");
 
+#ifdef EIGHT_BIT_MODE
+  log_debug("Running in 8 bit mode");
+#else
+  log_debug("Running in 12 bit mode");
+#endif
+
   // Initialize GPIO.
   log_debug("Initializing GPIO...");
   GPIO_Init();

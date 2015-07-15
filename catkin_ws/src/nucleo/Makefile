@@ -21,6 +21,13 @@ else
     CFLAGS += -DNDEBUG
 endif
 
+# Add eight bit mode flag.
+ifeq (${EIGHT_BIT_MODE}, 1)
+    CFLAGS += -DEIGHT_BIT_MODE
+else
+    CFLAGS += -DNEIGHT_BIT_MODE
+endif
+
 FILE_BUILD = -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -c
 STARTUP = drivers/startup_stm32f303xe.s
 
