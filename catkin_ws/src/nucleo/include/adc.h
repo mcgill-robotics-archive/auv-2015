@@ -18,7 +18,7 @@ DMA_HandleTypeDef hdma_adc2;
 DMA_HandleTypeDef hdma_adc3;
 DMA_HandleTypeDef hdma_adc4;
 
-#define BUFFERSIZE ((uint32_t) 4096)
+#define BUFFERSIZE ((uint32_t) 6000)
 
 __IO uint16_t data_0[BUFFERSIZE];
 __IO uint16_t data_1[BUFFERSIZE];

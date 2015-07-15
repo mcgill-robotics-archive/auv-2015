@@ -10,7 +10,7 @@ from serial import Serial
 __author__ = "Anass Al-Wohoush"
 
 
-BUFFERSIZE = 4096
+BUFFERSIZE = 6000
 
 headers = (
     "[DATA 0]",
