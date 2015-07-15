@@ -105,7 +105,7 @@ void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc, uint32_t channel)
 
   sConfig.Channel = channel;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_1CYCLE_5;
+  sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
