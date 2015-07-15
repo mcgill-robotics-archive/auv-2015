@@ -18,7 +18,7 @@ with Serial("/dev/tty.usbmodem1413", baudrate=460800) as ser:
             instance = int(i.split("\x00")[0])
             end = time.time()
             if start[instance]:
-                print instance, (end - start[instance]) / 1024. / 1000.
+                print instance + 1, (end - start[instance]) / 1024. / 1000.
             start[instance] = end
         elif line.startswith("ALIVE"):
             # Print controller is still alive if it's been a while.
