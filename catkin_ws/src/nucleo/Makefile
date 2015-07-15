@@ -49,6 +49,15 @@ $(PROJECT).bin: $(OBJS)
 
 clean:
 	@echo 'Cleaning up...'
+	find src -name '*~' | xargs rm -f
+	find src -name '*.o' | xargs rm -f
+	find src -name '*.d' | xargs rm -f
+	find . -name '*.elf' | xargs rm -f
+	find . -name '*.bin' | xargs rm -f
+	find . -name '*.map' | xargs rm -f
+
+wipe:
+	@echo 'Wiping all...'
 	find . -name '*~' | xargs rm -f
 	find . -name '*.o' | xargs rm -f
 	find . -name '*.d' | xargs rm -f
