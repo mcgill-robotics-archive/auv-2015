@@ -14,6 +14,13 @@ CFLAGS += -lc -lrdimon -I"include" -I"drivers" -I"drivers/CMSIS/core"
 CFLAGS += -I"drivers/CMSIS/device" -I"drivers/HAL/include"
 CFLAGS += -DSTM32F303xE -DNUCLEO_F303RE -DUSE_HAL_DRIVER -DSTM32F303RETx
 
+# Add debug flag.
+ifeq (${DEBUG}, 1)
+    CFLAGS += -DDEBUG
+else
+    CFLAGS += -DNDEBUG
+endif
+
 FILE_BUILD = -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -c
 STARTUP = drivers/startup_stm32f303xe.s
 
