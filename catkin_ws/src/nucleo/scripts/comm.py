@@ -3,13 +3,27 @@
 
 """Read from Nucleo serial."""
 
+import time
 from serial import Serial
 
 __author__ = "Anass Al-Wohoush"
 
 
-with Serial("/dev/tty.usbmodem1423", baudrate=115200) as ser:
+with Serial("/dev/tty.usbmodem1413", baudrate=460800) as ser:
+    start = [0, 0, 0, 0]
     while ser.readable():
-        c = ser.read(1)
-        if c != "a":
-            print "ERR", c
+        line = ser.readline()
+        if line.startswith("DONE"):
+            _, i = line.split()
+            instance = int(i.split("\x00")[0])
+            end = time.time()
+            if start[instance]:
+                print instance, (end - start[instance]) / 1024. / 1000.
+            start[instance] = end
+        elif line.startswith("alive"):
+            # Print controller is still alive if it's been a while.
+            if time.time() - max(start) > 2:
+                print line,
+        else:
+            # Print everything else.
+            print line,
