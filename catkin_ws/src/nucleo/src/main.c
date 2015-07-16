@@ -105,8 +105,6 @@ void DMA_Init(void)
 void GPIO_Init(void)
 {
   // Enable GPIO port clocks.
-  __GPIOC_CLK_ENABLE();
-  __GPIOF_CLK_ENABLE();
   __GPIOA_CLK_ENABLE();
   __GPIOB_CLK_ENABLE();
 }
