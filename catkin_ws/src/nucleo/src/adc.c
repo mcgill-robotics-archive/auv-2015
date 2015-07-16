@@ -176,19 +176,36 @@ void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc, uint32_t channel)
 
   if (HAL_ADC_Init(hadc) != HAL_OK)
   {
-    Error_Handler("ADC could not be intialized");
+    Error_Handler("Could not initialize ADC");
   }
 
   sConfig.Channel = channel;
   sConfig.Rank = ADC_REGULAR_RANK_1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_19CYCLES_5;
+
+  // Sampling time in ADC clock cycles.
+  // This value is added to a constant ADC clock cycle count dependent on the
+  // ADC resolution:
+  //  8 bit: 8.5 ADC clock cycles.
+  //  12 bit: 12.5 ADC clock cycles.
+#ifdef EIGHT_BIT_MODE
+  // 70 ADC clock cycles --> 72 MHz / 70 = 1 028 571.4286 Hz.
+  // Experimentally, at 72MHz, this is on average approximately 1 027 527 Hz.
+  sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
+#else
+  // 74 ADC clock cycles --> 72 MHz / 74 = 972 972.97297 Hz.
+  // Experimentally, at 72MHz, this is on average approximately 971 959 Hz.
+  sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
+#endif
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
 
   if (HAL_ADC_ConfigChannel(hadc, &sConfig) != HAL_OK)
   {
-    Error_Handler("Channel could not be configured");
+    char* error;
+    uint8_t instance = Get_ADC_Instance(hadc);
+    sprintf(error, "Could not configure ADC%u channel", instance);
+    Error_Handler(error);
   }
 }
 
@@ -207,7 +224,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     Stop_ADC(hadc);
 
     // Construct header.
-    char header[8];
+    char header[9];
     sprintf(header, "[DATA %d]\n", instance);
     write_buffer(header, 9);
 
