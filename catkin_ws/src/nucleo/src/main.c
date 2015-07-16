@@ -33,8 +33,8 @@ int main(void)
   log_debug("Configuring ADCs...");
   ADC_Config(&hadc1, ADC1, ADC_CHANNEL_14);
   ADC_Config(&hadc2, ADC2, ADC_CHANNEL_12);
-  ADC_Config(&hadc3, ADC3, ADC_CHANNEL_15);
-  ADC_Config(&hadc4, ADC4, ADC_CHANNEL_13);
+  ADC_Config(&hadc3, ADC3, ADC_CHANNEL_5);
+  ADC_Config(&hadc4, ADC4, ADC_CHANNEL_3);
 
   // Calibrate ADCs.
   log_debug("Calibrating ADCs...");
