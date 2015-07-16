@@ -28,6 +28,13 @@ else
     CFLAGS += -DNTWELVE_BIT_MODE
 endif
 
+# Add USART3 mode flag.
+ifeq (${USE_USART3}, 1)
+    CFLAGS += -DUSE_USART3
+else
+    CFLAGS += -DNUSE_USART3
+endif
+
 FILE_BUILD = -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -c
 STARTUP = drivers/startup_stm32f303xe.s
 
