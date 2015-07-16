@@ -25,23 +25,24 @@ void setup()
 
 void colorLoop() {  
 
+  // clear all led to black
   for(uint16_t i =0; i < LED_COUNT; i++){
     leds[i] = CRGB::Black;
   }
-  
+   
   for(uint8_t i = 0; i < NUM_LED_PER_STRIP; i++){
-    
-    segmentPhase[i] = (segmentPhase[i] + i) & 511;
-    
+    // Increment the phase for each led
+    segmentPhase[i] = (segmentPhase[i] + i) & 0x1FF;
+
+    // Determin which led to turn on
     uint32_t amplitude = NUM_LED_STRIP * SIN_TABLE_512[segmentPhase[i]];
-    uint8_t pixelIndex = (uint8_t) (amplitude >> 16);
+    uint8_t pixelIndex = (uint8_t)(0xFF & (amplitude >> 16)); 
     
-    CRGB color =  CRGB((255 * (0xFFFF & amplitude)) >> 16,0,0);
-    
-    if(pixelIndex % 2){
-      leds[NUM_LED_PER_STRIP * (pixelIndex + 1) - i -1] = color;
+    // Put on the correct led
+    if(pixelIndex & 1){
+      leds[NUM_LED_PER_STRIP * (pixelIndex + 1) - i -1] = CRGB::Red;
     } else {
-      leds[NUM_LED_PER_STRIP * pixelIndex] = color;
+      leds[NUM_LED_PER_STRIP * pixelIndex] = CRGB::Red;
     }
   } 
 
