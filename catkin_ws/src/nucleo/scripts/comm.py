@@ -11,15 +11,17 @@ from serial import Serial
 
 __author__ = "Anass Al-Wohoush"
 
-EIGHT_BIT_MODE = False
+EIGHT_BIT_MODE = True
 LOOPS = 1000.0
 BUFFERSIZE = 6000
 
-raw_buffersize = BUFFERSIZE if EIGHT_BIT_MODE else 2 * BUFFERSIZE
-data_size = 8 if EIGHT_BIT_MODE else 16
+RAW_BUFFERSIZE = BUFFERSIZE if EIGHT_BIT_MODE else 2 * BUFFERSIZE
+INT_SIZE = 8 if EIGHT_BIT_MODE else 16
 
 if EIGHT_BIT_MODE:
-    print("Assuming in 8 bit mode")
+    print("Assuming 8 bit mode...")
+else:
+    print("Assuming 12 bit mode...")
 
 headers = (
     "[DATA 0]",
@@ -68,15 +70,17 @@ if __name__ == "__main__":
                 # Stop timer.
                 end = time.time()
 
-                # Get data and determine ADC.
-                raw = ser.read(raw_buffersize)
+                # Get data.
+                raw = ser.read(RAW_BUFFERSIZE)
+
+                # Determine ADC.
                 _, i = header.strip("]").split()
                 instance = int(i)
 
                 # Convert to array.
                 stream = bitstring.BitStream(bytes=raw)
                 data = list(
-                    stream.read(data_size).uintle
+                    stream.read(INT_SIZE).uintle
                     for i in range(BUFFERSIZE))
 
                 # Determine sampling frequency.
