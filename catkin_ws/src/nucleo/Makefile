@@ -48,7 +48,7 @@ $(PROJECT).bin: $(OBJS)
 	arm-none-eabi-size $(PROJECT).elf
 
 clean:
-	@echo 'Cleaning up...'
+	@echo 'Cleaning up user space...'
 	find src -name '*~' | xargs rm -f
 	find src -name '*.o' | xargs rm -f
 	find src -name '*.d' | xargs rm -f
@@ -56,14 +56,11 @@ clean:
 	find . -name '*.bin' | xargs rm -f
 	find . -name '*.map' | xargs rm -f
 
-wipe:
-	@echo 'Wiping all...'
+wipe: clean
+	@echo 'Cleaning up libraries...'
 	find . -name '*~' | xargs rm -f
 	find . -name '*.o' | xargs rm -f
 	find . -name '*.d' | xargs rm -f
-	find . -name '*.elf' | xargs rm -f
-	find . -name '*.bin' | xargs rm -f
-	find . -name '*.map' | xargs rm -f
 
 install: $(PROJECT).bin
 	@echo 'Flashing device...'
