@@ -11,17 +11,17 @@ from serial import Serial
 
 __author__ = "Anass Al-Wohoush"
 
-EIGHT_BIT_MODE = True
+TWELVE_BIT_MODE = False
 LOOPS = 1000.0
 BUFFERSIZE = 6000
 
-RAW_BUFFERSIZE = BUFFERSIZE if EIGHT_BIT_MODE else 2 * BUFFERSIZE
-INT_SIZE = 8 if EIGHT_BIT_MODE else 16
+RAW_BUFFERSIZE = 2 * BUFFERSIZE if TWELVE_BIT_MODE else BUFFERSIZE
+INT_SIZE = 16 if TWELVE_BIT_MODE else 8
 
-if EIGHT_BIT_MODE:
-    print("Assuming 8 bit mode...")
-else:
+if TWELVE_BIT_MODE:
     print("Assuming 12 bit mode...")
+else:
+    print("Assuming 8 bit mode...")
 
 headers = (
     "[DATA 0]",

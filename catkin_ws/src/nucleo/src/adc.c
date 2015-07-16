@@ -156,10 +156,10 @@ void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc, uint32_t channel)
   hadc->Instance = adc;
 
   hadc->Init.ClockPrescaler = ADC_CLOCK_ASYNC;
-#ifdef EIGHT_BIT_MODE
-  hadc->Init.Resolution = ADC_RESOLUTION8b;
-#else
+#ifdef TWELVE_BIT_MODE
   hadc->Init.Resolution = ADC_RESOLUTION12b;
+#else
+  hadc->Init.Resolution = ADC_RESOLUTION8b;
 #endif
   hadc->Init.DataAlign = ADC_DATAALIGN_RIGHT;
   hadc->Init.ScanConvMode = ENABLE;
@@ -185,15 +185,15 @@ void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc, uint32_t channel)
   // Sampling time in ADC clock cycles.
   // This value is added to a constant ADC clock cycle count dependent on the
   // ADC resolution:
-  //  8 bit: 8.5 ADC clock cycles.
   //  12 bit: 12.5 ADC clock cycles.
-#ifdef EIGHT_BIT_MODE
-  // 70 ADC clock cycles --> 72 MHz / 70 = 1 028 571.4286 Hz.
-  // Experimentally, at 72MHz, this is on average approximately 1 027 527 Hz.
+  //  8 bit: 8.5 ADC clock cycles.
+#ifdef TWELVE_BIT_MODE
+  // 12.5 + 61.5 = 74 ADC clock cycles --> 72 MHz / 74 = 972 972.97297 Hz.
+  // Experimentally, at 72MHz, this is on average approximately 971 959 Hz.
   sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
 #else
-  // 74 ADC clock cycles --> 72 MHz / 74 = 972 972.97297 Hz.
-  // Experimentally, at 72MHz, this is on average approximately 971 959 Hz.
+  // 8.5 + 61.5 = 70 ADC clock cycles --> 72 MHz / 70 = 1 028 571.4286 Hz.
+  // Experimentally, at 72MHz, this is on average approximately 1 027 527 Hz.
   sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
 #endif
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
@@ -228,7 +228,28 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     sprintf(header, "[DATA %d]\n", instance);
     write_buffer(header, 9);
 
-#ifdef EIGHT_BIT_MODE
+#ifdef TWELVE_BIT_MODE
+    switch (instance) {
+      case 0:
+        write_buffer((uint8_t*) data_0, DOUBLE_BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_0);
+        break;
+      case 1:
+        write_buffer((uint8_t*) data_1, DOUBLE_BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_1);
+        break;
+      case 2:
+        write_buffer((uint8_t*) data_2, DOUBLE_BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_2);
+        break;
+      case 3:
+        write_buffer((uint8_t*) data_3, DOUBLE_BUFFERSIZE);
+        Start_ADC(hadc, (uint32_t*) data_3);
+        break;
+      default:
+        break;
+    }
+#else
     // Write 1 byte out of 2 since only 8 bits are actually used out of the 16.
     // Then, start the ADC again.
     switch (instance) {
@@ -254,27 +275,6 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
         for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
           write_buffer((uint8_t*) data_3 + i, 1);
         }
-        Start_ADC(hadc, (uint32_t*) data_3);
-        break;
-      default:
-        break;
-    }
-#else
-    switch (instance) {
-      case 0:
-        write_buffer((uint8_t*) data_0, DOUBLE_BUFFERSIZE);
-        Start_ADC(hadc, (uint32_t*) data_0);
-        break;
-      case 1:
-        write_buffer((uint8_t*) data_1, DOUBLE_BUFFERSIZE);
-        Start_ADC(hadc, (uint32_t*) data_1);
-        break;
-      case 2:
-        write_buffer((uint8_t*) data_2, DOUBLE_BUFFERSIZE);
-        Start_ADC(hadc, (uint32_t*) data_2);
-        break;
-      case 3:
-        write_buffer((uint8_t*) data_3, DOUBLE_BUFFERSIZE);
         Start_ADC(hadc, (uint32_t*) data_3);
         break;
       default:

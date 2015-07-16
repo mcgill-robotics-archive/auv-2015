@@ -40,11 +40,11 @@ void write_int(int data) {
  * Writes debug log to UART.
  */
 void log_debug(char* data) {
-  #ifdef DEBUG
+#ifdef DEBUG
   char buff[128];
   sprintf(buff, "[DEBUG]\n%s\n", data);
   HAL_UART_Transmit(&uart, buff, strlen(buff), 1000);
-  #endif
+#endif
 }
 
 
