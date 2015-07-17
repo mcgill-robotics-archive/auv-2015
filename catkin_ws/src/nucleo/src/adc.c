@@ -6,6 +6,14 @@ __IO uint32_t completion_count[4] = {0, 0, 0, 0};
 // Compute double the buffersize to speed up sending the buffer.
 static const uint32_t DOUBLE_BUFFERSIZE = 2 * BUFFERSIZE;
 
+// Determine measurement size depending on resolution.
+#ifdef TWELVE_BIT_MODE
+static const uint8_t MEASUREMENT_SIZE = 2;
+#else
+static const uint8_t MEASUREMENT_SIZE = 1;
+#endif
+
+
 void Calibrate_ADC(ADC_HandleTypeDef* hadc)
 {
   if (HAL_ADCEx_Calibration_Start(hadc, ADC_SINGLE_ENDED) != HAL_OK)
@@ -164,7 +172,11 @@ void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc)
   hadc->Init.EOCSelection = EOC_SINGLE_CONV;
   hadc->Init.LowPowerAutoWait = DISABLE;
   hadc->Init.ContinuousConvMode = ENABLE;
+#ifdef SINGLE_ADC_MODE
+  hadc->Init.NbrOfConversion = 4;
+#else
   hadc->Init.NbrOfConversion = 1;
+#endif
   hadc->Init.DiscontinuousConvMode = DISABLE;
   hadc->Init.NbrOfDiscConversion = 0;
   hadc->Init.ExternalTrigConv = ADC_SOFTWARE_START;
@@ -191,15 +203,28 @@ void Add_ADC_Channel(ADC_HandleTypeDef* hadc, uint32_t channel, uint32_t rank)
   // ADC resolution:
   //  12 bit: 12.5 ADC clock cycles.
   //  8 bit: 8.5 ADC clock cycles.
-#ifdef TWELVE_BIT_MODE
-  // 12.5 + 61.5 = 74 ADC clock cycles --> 72 MHz / 74 = 972 972.97297 Hz.
-  // Experimentally, at 72MHz, this is on average approximately 971 959 Hz.
-  sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
+#ifdef SINGLE_ADC_MODE
+  #ifdef TWELVE_BIT_MODE
+    // 12.5 + 7.5 = 20 ADC clock cycles --> 72 MHz / 20 / 4 = 900 000 Hz.
+    // Experimentally, at 72MHz, this is on average approximately 898 799 Hz.
+    sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;
+  #else
+    // 8.5 + 7.5 = 16 ADC clock cycles --> 72 MHz / 16 / 4 = 1 125 000 Hz.
+    // Experimentally, at 72MHz, this is on average approximately 1 123 546 Hz.
+    sConfig.SamplingTime = ADC_SAMPLETIME_7CYCLES_5;
+  #endif
 #else
-  // 8.5 + 61.5 = 70 ADC clock cycles --> 72 MHz / 70 = 1 028 571.4286 Hz.
-  // Experimentally, at 72MHz, this is on average approximately 1 027 527 Hz.
-  sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
+  #ifdef TWELVE_BIT_MODE
+    // 12.5 + 61.5 = 74 ADC clock cycles --> 72 MHz / 74 = 972 972.97297 Hz.
+    // Experimentally, at 72MHz, this is on average approximately 971 959 Hz.
+    sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
+  #else
+    // 8.5 + 61.5 = 70 ADC clock cycles --> 72 MHz / 70 = 1 028 571.4286 Hz.
+    // Experimentally, at 72MHz, this is on average approximately 1 027 527 Hz.
+    sConfig.SamplingTime = ADC_SAMPLETIME_61CYCLES_5;
+  #endif
 #endif
+
   sConfig.SingleDiff = ADC_SINGLE_ENDED;
   sConfig.OffsetNumber = ADC_OFFSET_NONE;
   sConfig.Offset = 0;
@@ -227,57 +252,52 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
     // Stop ADC to preserve data.
     Stop_ADC(hadc);
 
+#ifdef SINGLE_ADC_MODE
+    write_buffer("[DATA 0]\n", 9);
+   for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 8) {
+     write_buffer((uint8_t*) data_0 + i, MEASUREMENT_SIZE);
+   }
+    write_buffer("[DATA 1]\n", 9);
+   for (int i = 2; i < DOUBLE_BUFFERSIZE; i += 8) {
+     write_buffer((uint8_t*) data_0 + i, MEASUREMENT_SIZE);
+   }
+    write_buffer("[DATA 2]\n", 9);
+   for (int i = 4; i < DOUBLE_BUFFERSIZE; i += 8) {
+     write_buffer((uint8_t*) data_0 + i, MEASUREMENT_SIZE);
+   }
+    write_buffer("[DATA 3]\n", 9);
+   for (int i = 6; i < DOUBLE_BUFFERSIZE; i += 8) {
+     write_buffer((uint8_t*) data_0 + i, MEASUREMENT_SIZE);
+   }
+    Start_ADC(hadc, (uint32_t*) data_0);
+#else
     // Construct header.
     char header[9];
     sprintf(header, "[DATA %d]\n", instance);
     write_buffer(header, 9);
 
-#ifdef TWELVE_BIT_MODE
-    switch (instance) {
-      case 0:
-        write_buffer((uint8_t*) data_0, DOUBLE_BUFFERSIZE);
-        Start_ADC(hadc, (uint32_t*) data_0);
-        break;
-      case 1:
-        write_buffer((uint8_t*) data_1, DOUBLE_BUFFERSIZE);
-        Start_ADC(hadc, (uint32_t*) data_1);
-        break;
-      case 2:
-        write_buffer((uint8_t*) data_2, DOUBLE_BUFFERSIZE);
-        Start_ADC(hadc, (uint32_t*) data_2);
-        break;
-      case 3:
-        write_buffer((uint8_t*) data_3, DOUBLE_BUFFERSIZE);
-        Start_ADC(hadc, (uint32_t*) data_3);
-        break;
-      default:
-        break;
-    }
-#else
-    // Write 1 byte out of 2 since only 8 bits are actually used out of the 16.
-    // Then, start the ADC again.
     switch (instance) {
       case 0:
         for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
-          write_buffer((uint8_t*) data_0 + i, 1);
+          write_buffer((uint8_t*) data_0 + i, MEASUREMENT_SIZE);
         }
         Start_ADC(hadc, (uint32_t*) data_0);
         break;
       case 1:
         for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
-          write_buffer((uint8_t*) data_1 + i, 1);
+          write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
         }
         Start_ADC(hadc, (uint32_t*) data_1);
         break;
       case 2:
         for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
-          write_buffer((uint8_t*) data_2 + i, 1);
+          write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
         }
         Start_ADC(hadc, (uint32_t*) data_2);
         break;
       case 3:
         for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
-          write_buffer((uint8_t*) data_3 + i, 1);
+          write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
         }
         Start_ADC(hadc, (uint32_t*) data_3);
         break;

@@ -29,7 +29,31 @@ int main(void)
   log_debug("Initializing DMA...");
   DMA_Init();
 
-  // Configure the ADC peripherals.
+#ifdef SINGLE_ADC_MODE
+  log_debug("Running in single ADC mode");
+
+  // Intialize ADC.
+  log_debug("Initalizing ADC...");
+  ADC_Config(&hadc1, ADC1);
+
+  // Configure ADC channels.
+  log_debug("Configuring ADC channels...");
+  Add_ADC_Channel(&hadc1, ADC_CHANNEL_6, 1);
+  Add_ADC_Channel(&hadc1, ADC_CHANNEL_7, 2);
+  Add_ADC_Channel(&hadc1, ADC_CHANNEL_8, 3);
+  Add_ADC_Channel(&hadc1, ADC_CHANNEL_9, 4);
+
+  // Calibrate ADC.
+  log_debug("Calibrating ADC...");
+  Calibrate_ADC(&hadc1);
+
+  // Start ADC conversion by DMA.
+  log_debug("Starting ADC...");
+  Start_ADC(&hadc1, (uint32_t*) data_0);
+#else
+  log_debug("Running in multiple ADC mode");
+
+  // Intialize ADCs.
   log_debug("Initalizing ADCs...");
   ADC_Config(&hadc1, ADC1);
   ADC_Config(&hadc2, ADC2);
@@ -50,16 +74,17 @@ int main(void)
   Calibrate_ADC(&hadc3);
   Calibrate_ADC(&hadc4);
 
-  // Start ADC conversion by DMA.
+  // Start ADC conversions by DMA.
   log_debug("Starting ADCs...");
   Start_ADC(&hadc1, (uint32_t*) data_0);
   Start_ADC(&hadc2, (uint32_t*) data_1);
   Start_ADC(&hadc3, (uint32_t*) data_2);
   Start_ADC(&hadc4, (uint32_t*) data_3);
+#endif
 
   while (1)
   {
-    HAL_Delay(1000);
+    // Do nothing.
   }
 }
 
@@ -113,7 +138,11 @@ void GPIO_Init(void)
 {
   // Enable GPIO port clocks.
   __GPIOA_CLK_ENABLE();
+#ifdef SINGLE_ADC_MODE
+  __GPIOC_CLK_ENABLE();
+#else
   __GPIOB_CLK_ENABLE();
+#endif
 }
 
 

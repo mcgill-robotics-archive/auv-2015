@@ -18,12 +18,20 @@ DMA_HandleTypeDef hdma_adc2;
 DMA_HandleTypeDef hdma_adc3;
 DMA_HandleTypeDef hdma_adc4;
 
-#define BUFFERSIZE ((uint32_t) 6000)
+#ifndef SINGLE_ADC_MODE
+#define BUFFERSIZE (uint32_t) 6000
+#else
+// Should be four times the BUFFERSIZE of multiple ADC mode.
+#define BUFFERSIZE (uint32_t) 24000
+#endif
 
 __IO uint16_t data_0[BUFFERSIZE];
+
+#ifndef SINGLE_ADC_MODE
 __IO uint16_t data_1[BUFFERSIZE];
 __IO uint16_t data_2[BUFFERSIZE];
 __IO uint16_t data_3[BUFFERSIZE];
+#endif
 
 void ADC_Config(ADC_HandleTypeDef*, ADC_TypeDef*);
 void Add_ADC_Channel(ADC_HandleTypeDef*, uint32_t, uint32_t);
