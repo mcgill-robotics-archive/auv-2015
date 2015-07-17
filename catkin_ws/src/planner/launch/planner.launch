@@ -1,5 +1,5 @@
 <launch>
-    <node name="planner" pkg="planner" type="planner">
+    <node name="planner" pkg="planner" type="Xautonomy">
         <rosparam file="$(find planner)/config/dead_reckoning.yaml" />
     </node>
 </launch>
