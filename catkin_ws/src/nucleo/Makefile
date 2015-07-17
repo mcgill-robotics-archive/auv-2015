@@ -12,28 +12,21 @@ CFLAGS += -ffunction-sections -fdata-sections -T "drivers/linker.ld" -Xlinker
 CFLAGS += --gc-sections -Wl,-Map,$(PROJECT).map --specs=rdimon.specs
 CFLAGS += -lc -lrdimon -I"include" -I"drivers" -I"drivers/CMSIS/core"
 CFLAGS += -I"drivers/CMSIS/device" -I"drivers/HAL/include"
-CFLAGS += -DSTM32F303xE -DNUCLEO_F303RE -DUSE_HAL_DRIVER -DSTM32F303RETx
+CFLAGS += -D STM32F303xE -D NUCLEO_F303RE -D USE_HAL_DRIVER -D STM32F303RETx
 
 # Add debug flag.
 ifeq (${DEBUG}, 1)
-    CFLAGS += -DDEBUG
-else
-    CFLAGS += -DNDEBUG
+    CFLAGS += -D DEBUG
 endif
 
 # Add twelve bit mode flag.
 ifeq (${TWELVE_BIT_MODE}, 1)
-    CFLAGS += -DTWELVE_BIT_MODE
-else
-    CFLAGS += -DNTWELVE_BIT_MODE
+    CFLAGS += -D TWELVE_BIT_MODE
 endif
 
-# Add USART3 mode flag.
-ifeq (${USE_USART3}, 1)
-    CFLAGS += -DUSE_USART3
-else
-    CFLAGS += -DNUSE_USART3
-endif
+# Add serial flag, default is USART2.
+SERIAL?=2
+CFLAGS += -D SERIAL=USART${SERIAL}
 
 FILE_BUILD = -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" -c
 STARTUP = drivers/startup_stm32f303xe.s

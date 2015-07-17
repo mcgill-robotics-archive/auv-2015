@@ -5,11 +5,7 @@
  */
 void UART_Init(void)
 {
-#ifdef USE_USART3
-  uart.Instance = USART3;
-#else
-  uart.Instance = USART2;
-#endif
+  uart.Instance = SERIAL;
   uart.Init.BaudRate = 230400;
   uart.Init.WordLength = UART_WORDLENGTH_8B;
   uart.Init.StopBits = UART_STOPBITS_1;
