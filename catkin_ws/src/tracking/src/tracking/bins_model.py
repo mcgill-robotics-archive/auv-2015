@@ -1,5 +1,6 @@
 import numpy as np
 from math import pi
+import rospy
 
 
 class PositionError(Exception):
@@ -13,7 +14,7 @@ class NoDirectionError(Exception):
 class BinsModel(object):
     yaw_dev = 0.17  # 10 degrees
     spacing = 0.6  # 60 cm
-    max_pos_error = 0.1  # 10 cm
+    max_pos_error = 0.15  # 15 cm
 
     def __init__(self, position, direction, num_bins):
         '''
@@ -35,19 +36,23 @@ class BinsModel(object):
         if np.dot(self.direction, direction) < 0:
             direction = -direction
         if np.arccos(np.min((1-1e-16, np.dot(self.direction, direction)))) > self.yaw_dev:
+            rospy.logdebug('Direction rejection')
             return False
         try:
             position, min_offset, max_offset = self.calculate_bins_locations(
                 np.average(locations, axis=1), direction)
         except PositionError:
+            rospy.logdebug('Spacing rejection')
             return False
 
         # Check that it matches with this bins model.
         offset, error = self.directed_distance_offset(
             self.position, position, direction, self.spacing)
         if np.linalg.norm(error) > self.max_pos_error:
+            rospy.logdebug('Error rejection')
             return False
         if offset + min_offset < 0 or offset + max_offset >= self.num_bins:
+            rospy.logdebug('Offset rejection')
             return False
 
         self.direction = direction

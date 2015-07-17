@@ -29,7 +29,9 @@ add_custom_target(
 
 add_custom_target(
   link_ino_files
-  COMMAND ln -sf ${PROJECT_SOURCE_DIR}/solenoid_test ${PROJECT_SOURCE_DIR}/teensy ${PROJECT_WORKSPACE_DIR}
+  COMMAND mkdir -p ${PROJECT_WORKSPACE_DIR}
+  COMMAND ln -sf ${PROJECT_SOURCE_DIR}/radio_interrupt ${PROJECT_WORKSPACE_DIR}
+  COMMAND ln -sf ${PROJECT_SOURCE_DIR}/teensy ${PROJECT_WORKSPACE_DIR}
 )
 
 add_dependencies(

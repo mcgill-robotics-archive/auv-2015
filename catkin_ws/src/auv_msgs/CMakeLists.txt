@@ -5,19 +5,17 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   actionlib_msgs
   std_msgs
+  sensor_msgs
   geometry_msgs
 )
 
 add_message_files(
   FILES
-  #added by Elec Interface
-  Solenoid.msg
-  Motor.msg
-
   #added by Controls
   SetPosition.msg
   SetVelocity.msg
   MotorCommands.msg
+  SolenoidCommands.msg
 
   #added by State Estimation
   RangeBearingElevation.msg
@@ -25,6 +23,10 @@ add_message_files(
 
   #added by CV
   CVTarget.msg
+
+  #added by IO
+  RadioCommands.msg
+  CPUTemperature.msg
 )
 
 add_service_files(FILES
@@ -38,9 +40,14 @@ add_action_files(
   FILES SetVelocity.action
   SetPosition.action
   SetCVTarget.action
+  InitializeHorizon.action
 )
 
+generate_messages(DEPENDENCIES
+    actionlib_msgs
+    std_msgs
+    geometry_msgs
+    sensor_msgs
+)
 
-generate_messages(DEPENDENCIES actionlib_msgs std_msgs geometry_msgs)
 catkin_package(CATKIN_DEPENDS message_runtime actionlib_msgs)
-

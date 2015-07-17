@@ -43,9 +43,9 @@ def project_bottom_callback(findByContours, img):
         pub.publish(target_msg)
         server.publish_feedback(SetCVTargetFeedback())
 
-
 def project_targets_to_bottom(targets, header):
     try:
+        img.header.stamp = rospy.Time(0)
         transform = listener.asMatrix('floating_horizon', header)
         # The camera pinhole, in the floating_horizon frame
         perspective_point = np.dot(transform, np.array([0., 0., 0., 1.]))

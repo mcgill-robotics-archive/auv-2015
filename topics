@@ -11,6 +11,13 @@ topics:	/camera_down/camera_info
 [sonar]
 shortcut: s
 description: raw sonar data
-topics: tritech_micron/scan
-        tritech_micron/heading
-        tritech_micron/config
+topics: /tritech_micron/scan
+        /tritech_micron/heading
+        /tritech_micron/config
+
+[temperature]
+shortcut: t
+description: CPU core temperatures
+topics: /temperature/cpu
+        /temperature/overheating
+
