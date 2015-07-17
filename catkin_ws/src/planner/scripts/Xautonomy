@@ -6,7 +6,7 @@ import smach_ros
 import rospy
 from threading import Thread
 from planner.primitives import SetVelocityState
-import tasks
+from planner import tasks
 
 __author__ = 'Max Krogius'
 
@@ -24,25 +24,23 @@ def create_state_machine():
     sm = smach.StateMachine(
         outcomes=['succeeded', 'aborted', 'preempted'])
     with sm:
-        sm.add(tasks.initialize(pause, countdown, depth))
+        sm.add_auto('Initialize', tasks.initialize(pause, countdown, depth),
+                    connector_outcomes=['succeeded'])
         for i in range(len(yaws)):
-            smach.StateMachine.add(
+            smach.StateMachine.add_auto(
                 'Yaw {}'.format(yaws[i]),
                 SetVelocityState.create_set_yaw_state(yaws[i]),
-                transitions={'succeeded': 'Move Forward {}'.format(times[i])})
-            smach.StateMachine.add(
+                connector_outcomes=['succeeded'])
+            smach.StateMachine.add_auto(
                 'Move Forward {}'.format(times[i]),
                 SetVelocityState.create_move_forward_state(
                     speed, rospy.Duration.from_sec(times[i])),
-                transitions={'succeeded': 'Stop {}'.format(i)})
-            next_state = 'succeeded'
-            if i+1 < len(times):
-                next_state = 'Yaw {}'.format(yaws[i+1])
-            smach.StateMachine.add(
+                connector_outcomes=['succeeded'])
+            smach.StateMachine.add_auto(
                 'Stop {}'.format(i),
                 SetVelocityState.create_move_forward_state(
                     0, rospy.Duration.from_sec(1)),
-                transitions={'succeeded': next_state})
+                connector_outcomes=['succeeded'])
     return sm
 
 

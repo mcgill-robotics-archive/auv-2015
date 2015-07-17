@@ -3,43 +3,53 @@ from std_msgs.msg import Bool
 import rospy
 import smach_ros
 import components
-from auv_msgs.msg import SetCVTarget, SetCVTargetAction, SetCVTargetGoal
-from primitives import InitializationState, SetVelocityState
+from auv_msgs.msg import CVTarget, SetCVTargetAction, SetCVTargetGoal
+from primitives import InitializationState, SetVelocityState, SetUserDataState
 
 
 def initialize(pause, countdown, depth):
     sm = smach.StateMachine(
         outcomes=['succeeded', 'aborted', 'preempted'],
-        input_keys=['yaw_setpoint', 'depth_setpoint'])
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
     with sm:
+        # Create user data
+        ud = smach.UserData()
+        ud['yaw_setpoint'] = 0.0
+        ud['depth_setpoint'] = 0.0
+        smach.StateMachine.add_auto(
+            'Set User Data',
+            SetUserDataState(ud),
+            connector_outcomes=['success'])
+
         # Wait for mission switch
-        smach.StateMachine.add(
+        smach.StateMachine.add_auto(
             'Mission Switch',
             smach_ros.MonitorState('/mission', Bool, lambda x, y: not y.data),
             # This state should return invalid once mission is true
-            transitions={'valid': 'aborted', 'invalid': 'Pause'})
+            connector_outcomes=['invalid'],
+            transitions={'valid': 'aborted'})
 
         # Pause
-        poll_rate = 0.1
-        smach.StateMachine.add(
+        smach.StateMachine.add_auto(
             'Pause',
             smach_ros.ConditionState(lambda x: False,
-                                     poll_rate=rospy.Duration(0.1),
-                                     max_checks=pause/poll_rate),
+                                     timeout=rospy.Duration(pause),
+                                     max_checks=-1),
             # This state returns false after the period times out
-            transitions={'true': 'aborted', 'false': 'Initialization'})
+            connector_outcomes=['false'],
+            transitions={'true': 'aborted'})
 
         # Horizon initialization.
-        smach.StateMachine.add(
+        smach.StateMachine.add_auto(
             'Initialization',
             InitializationState(countdown),
-            transitions={'succeeded': 'Submerge'})
+            connector_outcomes={'succeeded'})
 
+        
         # Submerge
         smach.StateMachine.add(
             'Submerge',
-            SetVelocityState.create_set_depth_state(depth, tolerance=0.1),
-            transitions={'succeeded': 'Yaw 0'})
+            SetVelocityState.create_set_depth_state(depth, tolerance=0.1))
     return sm
 
 
@@ -72,7 +82,7 @@ def lane_task():
             smach_ros.SimpleActionState(
                 'tracking',
                 SetCVTargetAction,
-                goal=SetCVTargetGoal(SetCVTarget.LANE)))
+                goal=SetCVTargetGoal(CVTarget.LANE)))
     retry_tracking_sm = smach.Iterator()
     with retry_tracking_sm:
         # On failure we retry. This will cause the robot to execute a search
@@ -90,5 +100,5 @@ def lane_task():
         sm.add('CV', smach_ros.SimpleActionState(
             'cv_server',
             SetCVTargetAction,
-            goal=SetCVTargetGoal(SetCVTarget.LANE)))
+            goal=SetCVTargetGoal(CVTarget.LANE)))
     return sm

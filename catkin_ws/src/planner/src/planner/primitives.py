@@ -2,10 +2,25 @@
 
 import rospy
 import auv_msgs.msg
+from smach import State
 from smach_ros import SimpleActionState
 from actionlib.simple_action_client import GoalStatus
 
 __author__ = 'Max Krogius, Anass Al-Wohoush'
+
+
+class SetUserDataState(State):
+    '''Outputs the given user data'''
+
+    def __init__(self, user_data):
+        self.user_data = user_data
+        super(SetUserDataState, self).__init__(
+            outcomes=['success'],
+            output_keys=user_data.keys())
+
+    def execute(self, user_data):
+        user_data.update(self.user_data)
+        return 'success'
 
 
 class InitializationState(SimpleActionState):

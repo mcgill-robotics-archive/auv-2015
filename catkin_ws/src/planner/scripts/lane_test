@@ -14,8 +14,7 @@ __author__ = 'Max Krogius'
 
 def create_state_machine():
     sm = smach.StateMachine(
-        outcomes=['succeeded', 'aborted', 'preempted'],
-        input_keys=['yaw_setpoint', 'depth_setpoint'])
+        outcomes=['succeeded', 'aborted', 'preempted'])
     with sm:
         sm.add(tasks.initialize(5, 5, 1))
         sm.add(tasks.lane_task())
