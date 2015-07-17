@@ -25,7 +25,8 @@ __IO uint16_t data_1[BUFFERSIZE];
 __IO uint16_t data_2[BUFFERSIZE];
 __IO uint16_t data_3[BUFFERSIZE];
 
-void ADC_Config(ADC_HandleTypeDef*, ADC_TypeDef*, uint32_t);
+void ADC_Config(ADC_HandleTypeDef*, ADC_TypeDef*);
+void Add_ADC_Channel(ADC_HandleTypeDef*, uint32_t, uint32_t);
 void Calibrate_ADC(ADC_HandleTypeDef*);
 uint8_t Get_ADC_Instance(ADC_HandleTypeDef*);
 void Start_ADC(ADC_HandleTypeDef*, uint32_t*);

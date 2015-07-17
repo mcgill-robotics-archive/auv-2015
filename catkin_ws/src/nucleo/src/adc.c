@@ -149,10 +149,8 @@ void Stop_ADC(ADC_HandleTypeDef* hadc)
 }
 
 
-void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc, uint32_t channel)
+void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc)
 {
-  ADC_ChannelConfTypeDef sConfig;
-
   hadc->Instance = adc;
 
   hadc->Init.ClockPrescaler = ADC_CLOCK_ASYNC;
@@ -178,9 +176,15 @@ void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc, uint32_t channel)
   {
     Error_Handler("Could not initialize ADC");
   }
+}
+
+
+void Add_ADC_Channel(ADC_HandleTypeDef* hadc, uint32_t channel, uint32_t rank)
+{
+  ADC_ChannelConfTypeDef sConfig;
 
   sConfig.Channel = channel;
-  sConfig.Rank = ADC_REGULAR_RANK_1;
+  sConfig.Rank = rank;
 
   // Sampling time in ADC clock cycles.
   // This value is added to a constant ADC clock cycle count dependent on the
