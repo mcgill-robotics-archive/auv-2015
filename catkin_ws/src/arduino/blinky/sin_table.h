@@ -1,5 +1,5 @@
 //12bit unsigned sin table generated using excel
-constuint16_t SIN_TABLE_256[256]= 
+const uint16_t SIN_TABLE_256[256]= 
    {1024, 1049, 1074, 1099, 1124, 1149, 1174, 1199,
     1224, 1248, 1273, 1297, 1321, 1345, 1369, 1393,
     1416, 1439, 1462, 1484, 1507, 1529, 1550, 1572,
