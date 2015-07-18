@@ -6,10 +6,12 @@
 #define LED_COUNT           NUM_LED_PER_STRIP * NUM_LED_STRIP
 #define LED_OUT_PIN         13
 #define LED_BRIGHTNESS      100
+#define LED_MAX_VALUE       255
 #define TIMEOUT_PERIOD      1000
+#define DEBUG
 
 struct CRGB leds[LED_COUNT];
-uint16_t segmentPhase[NUM_LED_PER_STRIP];
+uint32_t segmentPhase[NUM_LED_PER_STRIP];
 
 // For fading in a new sketch
 long lastTime;
@@ -22,9 +24,19 @@ void setup()
   LEDS.show();
 }
 
+uint8_t mapIntensity(uint16_t amplitude){
+  
+    uint16_t faction = amplitude & 0x3FF;
+    if(faction > (1 << 9)){
+        return (uint8_t) (((1 << 10) - faction) >> 2);
+    } else {
+        return (uint8_t) (faction >> 2); 
+    }
+}
+
 
 void colorLoop() {  
-
+  uint8_t pixelIndex[NUM_LED_PER_STRIP];
   // clear all led to black
   for(uint16_t i =0; i < LED_COUNT; i++){
     leds[i] = CRGB::Black;
@@ -32,20 +44,38 @@ void colorLoop() {
    
   for(uint8_t i = 0; i < NUM_LED_PER_STRIP; i++){
     // Increment the phase for each led
-    segmentPhase[i] = (segmentPhase[i] + i) & 0x1FF;
+    segmentPhase[i] = (segmentPhase[i] + i + 30)  & 0xFFF;
 
     // Determin which led to turn on
-    uint32_t amplitude = NUM_LED_STRIP * SIN_TABLE_512[segmentPhase[i]];
-    uint8_t pixelIndex = (uint8_t)(0xFF & (amplitude >> 16)); 
+    uint16_t amplitude = NUM_LED_STRIP * SIN_TABLE_256[segmentPhase[i] >> 4];
+    pixelIndex[i] = (uint8_t)(0xFF & (amplitude >> 11));
+    uint8_t intensity = mapIntensity(amplitude);
+    
+    CRGB color = CRGB(intensity,0,0); 
     
     // Put on the correct led
-    if(pixelIndex & 1){
-      leds[NUM_LED_PER_STRIP * (pixelIndex + 1) - i -1] = CRGB::Red;
+    if(pixelIndex[i] & 1){
+      leds[NUM_LED_PER_STRIP * (pixelIndex[i] + 1) - i -1] = color;
     } else {
-      leds[NUM_LED_PER_STRIP * pixelIndex] = CRGB::Red;
+      leds[NUM_LED_PER_STRIP * pixelIndex[i]] = color;
     }
   } 
-
+  for(int x = 0; x < NUM_LED_STRIP; x++){
+    for(int y = 0; y < NUM_LED_PER_STRIP; y++ ){
+      if(pixelIndex[y] == x){
+        Serial.print('x');
+      } else {
+        Serial.print(' ');
+      }
+    }
+    Serial.println();
+  }
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println();
+  Serial.println();
 }
 
 void serialLoop() {
@@ -99,5 +129,6 @@ void loop()
   colorLoop();
 
   LEDS.show();
+  delay(2);
 }
 
