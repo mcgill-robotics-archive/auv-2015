@@ -15,12 +15,12 @@ class SetUserDataState(State):
     def __init__(self, user_data):
         self.user_data = user_data
         super(SetUserDataState, self).__init__(
-            outcomes=['success'],
+            outcomes=['succeeded'],
             output_keys=user_data.keys())
 
     def execute(self, user_data):
         user_data.update(self.user_data)
-        return 'success'
+        return 'succeeded'
 
 
 class InitializationState(SimpleActionState):

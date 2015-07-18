@@ -1,8 +1,21 @@
+import smach
+import smach_ros
+from primitives import SetVelocityState
+import rospy
+import tf
+from math import pi
+from auv_msgs.msg import SetPositionAction, CVTarget
+
+
 def switch_entry_point(state_machine, label):
     # Returns a state which switches state_machine's entry point to the
     # specified label.
-    state = smach.State()
-    state.execute = lambda x, y: state_machine.set_initial_state(label)
+    state = smach.State(['succeeded'])
+
+    def execute(user_data):
+        state_machine.set_initial_state(label)
+        return 'succeeded'
+    state.execute = execute
     return state
 
 
@@ -14,10 +27,10 @@ def search_pattern():
 
 def search_pattern_with_condition():
     csm = smach.Concurrence(
-        ['lane_found', 'lane_not_found'],
+        ['lane_tracked', 'lane_not_found'],
         child_termination_cb=lambda x: True,
         default_outcome='lane_not_found',
-        outcomes={'lane_found': {'condition': 'invalid'}})
+        outcome_map={'lane_tracked': {'Condition': 'false'}})
     with csm:
         def test_transform(frame1, frame2, timeout):
             # Tests whether the transform is available
@@ -28,11 +41,11 @@ def search_pattern_with_condition():
                 return False
 
         poll_rate = rospy.Duration(0.1)
-        csm.add(smach_ros.ConditionState(
+        csm.add('Condition', smach_ros.ConditionState(
             lambda x: not test_transform('horizon', 'lane', 0.9 * poll_rate),
             poll_rate=poll_rate,
             max_checks=-1))
-        csm.add(search_pattern())
+        csm.add('Search Pattern', search_pattern())
     return csm
 
 
@@ -63,10 +76,10 @@ def visual_servo():
 
 def dead_reckon_with_monitor(yaw, speed, duration):
     csm = smach.Concurrence(
-        ['lane_found', 'lane_not_found'],
+        ['lane_seen', 'lane_not_found', 'preempted', 'aborted'],
         child_termination_cb=lambda x: True,
         default_outcome='lane_not_found',
-        outcome_map={'lane_found': {'Monitor CV ': 'invalid'}})
+        outcome_map={'lane_seen': {'Monitor CV': 'invalid'}})
     with csm:
         csm.add(
             'Move Forward',
@@ -79,7 +92,8 @@ def dead_reckon_with_monitor(yaw, speed, duration):
                 '/cv/identified_targets',
                 CVTarget,
                 lambda x, y: False))
-    sm = smach.StateMachine(['lane_found', 'lane_not_found'])
+    sm = smach.StateMachine(['lane_seen', 'lane_not_found',
+                             'preempted', 'aborted'])
     with sm:
         sm.add(
             'Set Yaw',
@@ -87,5 +101,3 @@ def dead_reckon_with_monitor(yaw, speed, duration):
             transitions={'succeeded': 'Concurrence'})
         sm.add('Concurrence', csm)
     return sm
-
-

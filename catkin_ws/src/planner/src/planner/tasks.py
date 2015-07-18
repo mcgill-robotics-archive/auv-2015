@@ -19,7 +19,7 @@ def initialize(pause, countdown, depth):
         smach.StateMachine.add_auto(
             'Set User Data',
             SetUserDataState(ud),
-            connector_outcomes=['success'])
+            connector_outcomes=['succeeded'])
 
         # Wait for mission switch
         smach.StateMachine.add_auto(
@@ -45,7 +45,6 @@ def initialize(pause, countdown, depth):
             InitializationState(countdown),
             connector_outcomes={'succeeded'})
 
-        
         # Submerge
         smach.StateMachine.add(
             'Submerge',
@@ -53,24 +52,26 @@ def initialize(pause, countdown, depth):
     return sm
 
 
-def lane_task():
+def lane_task(yaw, speed, duration):
     # Returns a state machine which will dead reckon towards the lane and
     # align over it using visual servoing.
-    motion_sm = smach.StateMachine()
+    motion_sm = smach.StateMachine(['succeeded', 'lane_not_found',
+                                    'preempted', 'aborted'])
     with motion_sm:
         motion_sm.add_auto(
             'Switch Entry Point',
             components.switch_entry_point(motion_sm, 'Search Pattern'),
-            connector_outcomes=['success'])
+            connector_outcomes=['succeeded'])
         motion_sm.add_auto(
-            'Dead Reckon', components.dead_reckon_with_monitor(),
-            connector_outcomes=['success'])
+            'Dead Reckon',
+            components.dead_reckon_with_monitor(yaw, speed, duration),
+            connector_outcomes=['lane_seen'])
         motion_sm.add_auto(
             'Search Pattern', components.search_pattern_with_condition(),
-            connector_outcomes=['success'])
+            connector_outcomes=['lane_tracked'])
         motion_sm.add('Visual Servo', components.visual_servo())
     tracking_concurrence = smach.Concurrence(
-        ['success', 'lane_not_found', 'failed'],
+        ['succeeded', 'lane_not_found', 'failed', 'preempted', 'aborted'],
         child_termination_cb=lambda x: True,
         default_outcome='failed',
         outcome_map={  # TODO:
@@ -83,17 +84,21 @@ def lane_task():
                 'tracking',
                 SetCVTargetAction,
                 goal=SetCVTargetGoal(CVTarget.LANE)))
-    retry_tracking_sm = smach.Iterator()
+    retry_tracking_sm = smach.Iterator(
+        ['succeeded', 'lane_not_found', 'preempted', 'aborted'],
+        input_keys=[],
+        output_keys=[],
+        it=range(5))
     with retry_tracking_sm:
         # On failure we retry. This will cause the robot to execute a search
         # pattern.
         retry_tracking_sm.set_contained_state(
             'Concurrence', tracking_concurrence, loop_outcomes=['failed'])
     sm = smach.Concurrence(
-        ['success', 'lane_not_found', 'failed'],
+        ['succeeded', 'lane_not_found', 'preempted', 'aborted'],
         child_termination_cb=lambda x: True,
-        default_outcome='failed',
-        outcome_map={'success': {'Motion': 'success'},
+        default_outcome='aborted',
+        outcome_map={'succeeded': {'Motion': 'succeeded'},
                      'lane_not_found': {'Motion': 'lane_not_found'}})
     with sm:
         sm.add('Motion', retry_tracking_sm)
