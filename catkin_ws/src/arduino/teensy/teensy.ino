@@ -103,9 +103,9 @@ void motorCb( const auv_msgs::MotorCommands& msg){
     writeMotorT100(MOTOR_PIN_STARBOARD_BOW_HEAVE,
                    msg.port_bow_heave);
     writeMotorT100(MOTOR_PIN_PORT_STERN_HEAVE,
-                   msg.port_stern_heave);
-    writeMotorT100(MOTOR_PIN_STARBOARD_STERN_HEAVE,
                    msg.starboard_stern_heave);
+    writeMotorT100(MOTOR_PIN_STARBOARD_STERN_HEAVE,
+                   msg.port_stern_heave);
     writeMotorSeabotix(MOTOR_PIN_STARBOARD_SWAY,
                        MOTOR_ENABLE_PIN_STARBOARD_SWAY,
                        msg.port_surge);
