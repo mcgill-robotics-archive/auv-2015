@@ -17,7 +17,9 @@ def channels(img):
     multiplied =np.uint8(np.right_shift(np.uint16(h)*np.uint16(s), 8))
     cb.publishImage(multiplied, 'hs')
     added = np.uint8((np.uint16(r)+np.uint16(g))/2)
-    cb.publishImage(added,'rg')
+    cb.publishImage(added,'r_plus_g')
+    subbed = np.uint8((2**8 + (np.int16(r) - np.int16(g)))/2)
+    cb.publishImage(subbed,'r_minus_g')
 
 if __name__ == '__main__':
     cb.addImageCallback(channels)

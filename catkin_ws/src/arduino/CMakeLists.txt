@@ -30,6 +30,7 @@ add_custom_target(
 add_custom_target(
   link_ino_files
   COMMAND mkdir -p ${PROJECT_WORKSPACE_DIR}
+  COMMAND ln -sf ${PROJECT_SOURCE_DIR}/blinky ${PROJECT_WORKSPACE_DIR}
   COMMAND ln -sf ${PROJECT_SOURCE_DIR}/radio_interrupt ${PROJECT_WORKSPACE_DIR}
   COMMAND ln -sf ${PROJECT_SOURCE_DIR}/teensy ${PROJECT_WORKSPACE_DIR}
 )

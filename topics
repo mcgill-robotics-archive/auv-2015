@@ -1,6 +1,6 @@
 [cameras]
 shortcut: c
-description: raw cam data
+description: raw camera data
 topics:	/camera_down/camera_info
 	/camera_down/image_rect_color
 	/camera_front_left/camera_info

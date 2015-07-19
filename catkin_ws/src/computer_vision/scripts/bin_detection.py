@@ -1,7 +1,6 @@
 #! /usr/bin/env python2.7
 
 import cv2
-import math
 import numpy as np
 import glob
 from cv_backbone import CvBackbone, filters
@@ -18,13 +17,6 @@ identified.
 silhouettes = None
 
 
-def filterSize(contours, min_length, min_area):
-    # Removes small contours
-    return [c for c in contours
-            if cv2.arcLength(c, closed=True) > min_length
-            and cv2.contourArea(c) > min_area]
-
-
 def suppressBadShapes(contours):
     # This works well without skew, but with skew it doesn't work so well.
     # It allows things that look like rectanges but with more vertices.
@@ -33,126 +25,29 @@ def suppressBadShapes(contours):
     # This also applies the constraint that the rectangle we want is about
     # twice as long in one direction
     rect = np.array([[[0, 0]], [[0, 1]], [[2, 1]], [[2, 0]]])
-    return [c for c in contours if cv2.matchShapes(c, rect, 1, 0.0) < 0.1]
+    return filters.suppressBadShapes(contours, rect, 0.1)
 
 
-def filterRectangles(contours, tol):
-    # This suppresses some good shapes, why? Because they have extra vertices.
-    # Increasing the tolerance causes more stuff to be fit as quadrilaterals.
-    valid = []
-    for c in contours:
-        poly = cv2.approxPolyDP(c, tol*cv2.arcLength(c, True), True)
-        if len(poly) == 4 and cv2.isContourConvex(poly):
-            valid.append(poly)
-    return valid
-
-
-def dist(p1, p2):
-    # Distance between two points
-    return math.sqrt((p1[0] - p2[0])**2 + (p1[1] - p2[1])**2)
-
-
-def sideLengths(rect):
-    # Returns the lengths of the sides of the rectangle
-    return map(lambda i: dist(rect[i-1], rect[i]), range(4))
-
-
-def filterAspectRatio(rects, desired_aspect_ratio, aspect_ratio_tol):
-    # Test that the aspect ratio of the rectangle i.e is it x times
-    # as long in one direction as the other.
-    desired_aspect_ratio = desired_aspect_ratio if desired_aspect_ratio > 1 \
-        else 1/desired_aspect_ratio
-    valid = []
-    for r in rects:
-        r = r.reshape(-1, 2)
-        lengths = sideLengths(r)
-        aspect_ratio = (lengths[0] + lengths[2])/(lengths[1] + lengths[3])
-        aspect_ratio = aspect_ratio if aspect_ratio > 1 else 1/aspect_ratio
-        if abs(aspect_ratio - desired_aspect_ratio) < aspect_ratio_tol:
-            valid.append(r)
-    return valid
-
-
-def contourIntensityAverage(img, outerContour, innerContour=None):
-    # Calculates the average intensity inside outerContour and outside
-    # innerContour (if provided)
-    mask = np.zeros(img.shape, np.uint8)
-    cv2.drawContours(mask, [outerContour], 0, 255, -1)
-    if innerContour is not None:
-        cv2.drawContours(mask, [innerContour], 0, 0, -1)
-    return cv2.mean(img, mask=mask)[0]
-
-
-def filterIntensities(contours, img, flag, intensity_change):
-    # Tests for rectangles where the area just outside the border
-    # is lighter than just inside. This is useful to suppress the
-    # outside of the bins.
-    if flag == 0:
-        return contours
-
-    valid = []
-    border = 0.1
-    for c in contours:
-        # Scale contour up and down
-        outer_border = np.int32((1+border)*c - border*np.average(c, axis=0))
-        inner_border = np.int32((1-border)*c + border*np.average(c, axis=0))
-        # Calculate average inner and outer border intensities
-        outer_avg = contourIntensityAverage(img, outer_border, c)
-        inner_avg = contourIntensityAverage(img, c, inner_border)
-        if flag == 1:
-            if outer_avg > inner_avg + intensity_change:
-                valid.append(c)
-        elif flag == -1:
-            if inner_avg > outer_avg + intensity_change:
-                valid.append(c)
-    return valid
-
-
-def suppressConcentric(contours):
-    # Suppresses concentric contours by looking at their enclosing circle
-    valid = []
-    for x in contours:
-        x_center, x_rad = cv2.minEnclosingCircle(x)
-        for y in contours:
-            y_center, y_rad = cv2.minEnclosingCircle(y)
-            if y_rad > x_rad and dist(x_center, y_center) < y_rad:
-                break
-        else:
-            valid.append(x)
-    return valid
-
-
-def angle_cos(p0, p1, p2):
-    d1, d2 = (p0-p1).astype('float'), (p2-p1).astype('float')
-    return abs(np.dot(d1, d2) / np.sqrt(np.dot(d1, d1)*np.dot(d2, d2)))
-
-
-def suppressSkewed(contours, cos_thresh):
-    valid = []
-    for c in contours:
-        coses = [angle_cos(c[i-2], c[i-1], c[i]) for i in range(4)]
-        max_cos = np.max(coses)
-        if max_cos < cos_thresh:
-            valid.append(c)
-    return valid
-
-
-def validate(contours, img):
+def validate(contours, img, debug):
+    filter_list = []
     # Minimum perimeter of target
     min_length = 4*20
     # Minimum area of target
     min_area = 20*20
-    validContours = filterSize(contours, min_length, min_area)
+    filter_list.append(lambda x: filters.filterSize(x, min_length, min_area))
     # Tolerance for polygon fitting. Increasing means things get fit
     # with fewer vertices.
     polygon_approx_tolerance = 0.05
-    validContours = filterRectangles(validContours, polygon_approx_tolerance)
+    filter_list.append(
+        lambda x: filters.suppress_non_rectangles(x, polygon_approx_tolerance))
     # The ratio of size in one dimension to the other.
     aspect_ratio = 2
     # Allowed variance in aspect ratio
     aspect_ratio_tol = 0.5
-    validContours = \
-        filterAspectRatio(validContours, aspect_ratio, aspect_ratio_tol)
+    filter_list.append(
+        lambda x: filters.filterRectAspectRatio(x,
+                                                aspect_ratio,
+                                                aspect_ratio_tol))
     # Flag for how the intensity changes from the inside of the border to the
     # outside of the border. 1 means that the outside is more intense than the
     # inside. 0 means there isn't a difference. -1 means the inside is more
@@ -160,13 +55,14 @@ def validate(contours, img):
     intensity_change_flag = 1
     # Minimum average increase in intensity
     intensity_change = 10
-    validContours = filterIntensities(validContours, img,
-                                      intensity_change_flag, intensity_change)
-    validContours = suppressConcentric(validContours)
+    filter_list.append(
+        lambda x: filters.filter_intensities(x, img, intensity_change_flag,
+                                             intensity_change))
+    filter_list.append(lambda x: filters.suppress_concentric(x))
     # Max cosine of any internal angle of the rectangle
     max_cos = 0.15
-    validContours = suppressSkewed(validContours, max_cos)
-    return validContours
+    filter_list.append(lambda x: filters.suppress_skewed(x, max_cos))
+    return filters.validate_contours(contours, filter_list, debug)
 
 
 def matchShapes(img1, img2):
@@ -213,7 +109,7 @@ def matchSilhouettes(img, rects, orig):
     for rect in rects:
         # Ensure that the rectangle has the long side matched with
         # the long side of src_rect
-        lengths = sideLengths(rect)
+        lengths = filters.sideLengths(rect)
         aspect_ratio = (lengths[0] + lengths[2])/(lengths[1] + lengths[3])
         if aspect_ratio < 1:
             rect = np.roll(rect, 1, axis=0)
@@ -237,19 +133,18 @@ def matchSilhouettes(img, rects, orig):
 
 def findByContours(orig):
     img = orig.copy()
+    debug = orig.copy()
     gray = filters.grayScale(img)
     gray = filters.medianBlur(gray)
     img = cv2.Canny(gray, 0, 100, apertureSize=5)
     contours, _ = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    rects = validate(contours, gray)
-    return rects
+    return validate(contours, gray, debug)
 
 
 def debug_callback(orig):
-    rects = findByContours(orig)
-    matchSilhouettes(cv2.split(orig)[2], rects, orig)
-    cv2.drawContours(orig, rects, -1, (0, 0, 255), 1)
-    cb.publishImage(orig)
+    rects, debug = findByContours(orig)
+    matchSilhouettes(cv2.split(orig)[2], rects, debug)
+    cb.publishImage(debug)
 
 
 def loadSilhouettes():
@@ -267,6 +162,6 @@ def loadSilhouettes():
 if __name__ == '__main__':
     global cb
     cb = CvBackbone.CvBackbone('bin_detection')
-    cb.addImageCallback(findByContours)
+    cb.addImageCallback(debug_callback)
     cb.onStart(loadSilhouettes)
     cb.start()

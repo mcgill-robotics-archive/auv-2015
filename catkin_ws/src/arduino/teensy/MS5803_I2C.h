@@ -85,9 +85,11 @@ class MS5803
                 void getMeasurements(precision _precision);
                 int32_t getRawTemperature();
                 int32_t getRawPressure();
+                int8_t getSensorStatus();
 
 
 	private:
+                int8_t _sensor_status;
                 int32_t _temperature_raw;
                 int32_t _pressure_raw;
 

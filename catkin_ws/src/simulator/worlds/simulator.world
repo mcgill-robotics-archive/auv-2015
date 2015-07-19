@@ -4,7 +4,7 @@
   <world name='default'> <!-- Assuming pool is 5m deep -->
 
     <physics type='ode'>
-      <max_step_size>0.0001</max_step_size>
+      <max_step_size>0.001</max_step_size>
       <real_time_factor>1</real_time_factor>
       <real_time_update_rate>1000</real_time_update_rate>
       <gravity>0 0 0</gravity>
@@ -104,7 +104,7 @@
 	</visual>
 
 	<sensor type="camera" name="camera1">
-	  <update_rate>300.0</update_rate>
+	  <update_rate>15.0</update_rate>
 
 	  <camera name="head">
 	    <horizontal_fov>1.56079666</horizontal_fov>
@@ -178,7 +178,7 @@
 	</visual>
 
 	<sensor type="camera" name="camera2">
-	  <update_rate>300.0</update_rate>
+	  <update_rate>15.0</update_rate>
 
 	  <camera name="head">
 	    <horizontal_fov>1.56079666</horizontal_fov>
@@ -251,7 +251,7 @@
 	</visual>
 
 	<sensor type="camera" name="camera3">
-	  <update_rate>300.0</update_rate>
+	  <update_rate>15.0</update_rate>
 
 	  <camera name="head">
 	    <horizontal_fov>1.56079666</horizontal_fov>
