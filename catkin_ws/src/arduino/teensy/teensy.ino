@@ -159,10 +159,40 @@ void solenoidCb( const auv_msgs::SolenoidCommands& msg){
   }
 }
 
+void inline toggleLed(){
+  digitalWrite(LED_PIN,!digitalRead(LED_PIN));
+}
+
 ros::Subscriber<auv_msgs::SolenoidCommands> solenoidSub("~solenoid", &solenoidCb );
 ros::Subscriber<auv_msgs::MotorCommands> motorSub("~motor", &motorCb );
-int test;
-void setup(){
+
+void resetDepthSensor(){
+  for(int i = 0; i< 5 ; i++){
+    Wire1.resetBus();
+    Wire1.beginTransmission(MS5803_I2C_ADDR);
+    if(Wire1.endTransmission() == 0){
+      depthSensorConnected = true;
+      depthSensor.reset();
+      depthSensor.begin();
+      break;
+    } else {
+      nh.logwarn("Depth Sensor Unresponsive....");
+    }
+  }
+}
+
+void reconnectDepthSensor(){
+  
+    resetDepthSensor(); 
+    
+   if(depthSensorConnected){
+     nh.logwarn("Depth Sensor Reset Successfully!!!");
+   } else {
+     nh.logfatal("Depth Sensor Reset has failed!!!");
+   }
+}
+
+void motorInit(){
 
   //Setup for T100, normal servo control
   myservo[MOTOR_PIN_PORT_SURGE].attach(MOTOR_PIN_PORT_SURGE);
@@ -174,17 +204,23 @@ void setup(){
 
   //Setup for Seabotix, PWM with highier frequency
   //Calling frequency change will affect both pin
-  analogWriteFrequency(MOTOR_PIN_STARBOARD_SWAY,PWM_FREQUENCY);
-
+  analogWriteFrequency(MOTOR_PIN_STARBOARD_SWAY,PWM_FREQUENCY); 
+   
   // Change the resolution to 0 - 1023
-  analogWriteResolution(10);
+  analogWriteResolution(10); 
+  
+  //Enable status pins
+  pinMode(STATUS_PIN_FAULT, INPUT);
+  pinMode(STATUS_PIN_OTW, INPUT);
+  
+  //Enable enable pins 
   pinMode(MOTOR_ENABLE_PIN_STARBOARD_SWAY, OUTPUT);
   pinMode(MOTOR_ENABLE_PIN_PORT_SWAY, OUTPUT);
 
   resetMotor();
-  pinMode(STATUS_PIN_FAULT, INPUT);
-  pinMode(STATUS_PIN_OTW, INPUT);
-
+}
+void solenoidInit(){
+  
   pinMode(SOLENOID_PIN_PORT_DROPPER, OUTPUT);
   pinMode(SOLENOID_PIN_STARBOARD_DROPPER, OUTPUT);
   pinMode(SOLENOID_PIN_PORT_GRABBER, OUTPUT);
@@ -194,30 +230,31 @@ void setup(){
   pinMode(SOLENOID_PIN_EXTRA, OUTPUT);
   resetSolenoid();
 
+}
+
+void gpioInit(){
+  
   //Analog Setup
   pinMode(COMPUTER_VOLTAGE_PIN,INPUT);
   pinMode(COMPUTER_CURRENT_PIN,INPUT);
   pinMode(MOTOR_VOLTAGE_PIN,INPUT);
   pinMode(MOTOR_CURRENT_PIN,INPUT);
   pinMode(MISSION_PIN,INPUT);
+  //Onboard LED setup
+  pinMode(LED_PIN,OUTPUT);
+  
+}
 
-  pinMode(13,OUTPUT);
+void depthSensorInit(){
+  
   Wire1.begin(I2C_MASTER, 0x00, I2C_PINS_29_30, I2C_PULLUP_EXT, I2C_RATE_400);
-  Wire1.resetBus();
-  Wire1.setDefaultTimeout(100);
-  depthSensor.reset();
-  Wire1.beginTransmission(MS5803_I2C_ADDR);       // slave addr
-  if(Wire1.endTransmission() == 0){
-    depthSensorConnected = true;
-    depthSensor.begin();
-  } else {
-    delay(10);
-  }
-  digitalWrite(13,depthSensorConnected);
+  resetDepthSensor();
+  
+}
+
+void rosInit(){
   //ros node initialization
-  nh.initNode();
-
-
+  nh.initNode();  
   //ros publisher initialization
   nh.advertise(pressurePub);        //depth sensor
   nh.advertise(externalTemperaturePub);
@@ -233,24 +270,44 @@ void setup(){
 
 }
 
-void toggleLed(){
-  //digitalWrite(LED_PIN,!digitalRead(LED_PIN));
+void setup(){
+  
+  motorInit();
+  solenoidInit();
+  gpioInit();
+  depthSensorInit();
+  
+  digitalWrite(LED_PIN, depthSensorConnected);
+
+  rosInit();
 }
-
+  
 void loop(){
-
   unsigned long currentTime = millis();
   mission_m.data = digitalRead(MISSION_PIN);
   //Depth Sensing
   if(depthSensorSchedule < currentTime){
     if(depthSensorConnected){
+      //Get Readings
       depthSensor.getMeasurements(ADC_4096);
-      pressure_m.data = depthSensor.getPressure();
-      pressurePub.publish(&pressure_m);
-      depthSensorSchedule += DEPTH_INTERVAL;
-      toggleLed();
+      
+      //check status, reconnect if needed
+      if(!depthSensor.getSensorStatus()){
+   
+        nh.logerror("Depth Sensor Communication Error, Attemping Reset...");
+        depthSensorConnected = false;
+        
+        reconnectDepthSensor();
+        
+      } else {
+        // passed connection test, putting data to ros
+        pressure_m.data = depthSensor.getPressure();
+        pressurePub.publish(&pressure_m);
+        depthSensorSchedule += DEPTH_INTERVAL;
+        toggleLed();
+      }
     } else {
-      nh.logfatal("Depth Sensor is NOT CONNECTED!!");
+      nh.logwarn("Depth Sensor is NOT CONNECTED!!");
       depthSensorSchedule += DEPTH_DISCONNECT_INTERVAL;
       toggleLed();
     }
@@ -269,7 +326,7 @@ void loop(){
       toggleLed();
     }
   }
-
+  
   if(powerMonitorSchedule < currentTime){
     computerVoltage_m.data = analogRead(COMPUTER_VOLTAGE_PIN) * kCOM_VOLT_SLOPE + kCOM_VOLT_OFFSET;
     computerCurrent_m.data = analogRead(COMPUTER_CURRENT_PIN) * kCOM_CURR_SLOPE + kCOM_CURR_OFFSET;
@@ -318,7 +375,7 @@ void loop(){
       timeLastMotorCommand = currentTime;
       toggleLed();
     } else {
-      timeLastMotorCommand = currentTime + 500;
+      timeLastMotorCommand = currentTime + MOTOR_TIMEOUT;
       toggleLed();
     }
     resetMotor();
