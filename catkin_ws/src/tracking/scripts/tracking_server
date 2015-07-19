@@ -12,7 +12,8 @@ sub = None
 transform_broadcaster = None
 num_bins = 4
 target_name = ''
-target_tracked = False 
+target_tracked = False
+tracker = None
 
 
 def target_callback(msg):
@@ -50,15 +51,22 @@ def target_callback(msg):
             server.set_aborted()
             target_tracked = False
         rospy.logerr('Tracker has {} configurations'
-                       .format(len(tracker.configurations)))
+                     .format(len(tracker.configurations)))
 
 
 def set_target():
-    global sub, target_name, target_tracked
+    global sub, target_name, target_tracked, tracker
     target_tracked = False
     target_name = server.accept_new_goal().target_name
     if target_name == CVTarget.BINS or CVTarget.LANE:
-        sub = rospy.Subscriber('cv/identified_targets', CVTarget, target_callback)
+        sub = rospy.Subscriber(
+            'cv/identified_targets', CVTarget, target_callback)
+        if target_name == CVTarget.BINS:
+            tracker = Tracker(
+                lambda x: BinsModel.generate_configs(x, num_bins=4), 5)
+        elif target_name == CVTarget.LANE:
+            tracker = Tracker(
+                lambda x: BinsModel.generate_configs(x, num_bins=1), 5)
     else:
         rospy.logerr('Unknown Target')
 
@@ -74,9 +82,9 @@ def cancel_target():
 if __name__ == '__main__':
     global tracker, server
     rospy.init_node('tracking_server')
-    tracker = Tracker(lambda x: BinsModel.generate_configs(x, num_bins=num_bins), 3)
     transform_broadcaster = tf.TransformBroadcaster()
-    server = SimpleActionServer('tracking', SetCVTargetAction, auto_start=False)
+    server = SimpleActionServer('tracking',
+                                SetCVTargetAction, auto_start=False)
     server.register_goal_callback(set_target)
     server.register_preempt_callback(cancel_target)
     server.start()
