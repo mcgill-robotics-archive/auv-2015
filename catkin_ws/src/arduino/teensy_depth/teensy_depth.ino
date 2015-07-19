@@ -11,10 +11,13 @@ ros::NodeHandle nh;
 bool depthSensorConnected = false;
 
 unsigned long depthSensorSchedule = 0;
+unsigned long externalTempSchedule = 0;
 
 std_msgs::Float32 pressure_m;
+std_msgs::Float32 external_temperature_m;
 
 ros::Publisher pressurePub("~pressure", &pressure_m);  // Publish the depth topic
+ros::Publisher externalTemperaturePub("~external_temperature", &external_temperature_m);
 
 void inline toggleLed(){
   digitalWrite(LED_PIN,!digitalRead(LED_PIN));
@@ -59,6 +62,7 @@ void rosInit(){
   nh.initNode();  
   //ros publisher initialization
   nh.advertise(pressurePub);        //depth sensor
+  nh.advertise(externalTemperaturePub);
 }
 
 void setup(){
@@ -98,6 +102,19 @@ void loop(){
       nh.logerror("Depth Sensor is NOT CONNECTED!!");
       depthSensorSchedule += DEPTH_DISCONNECT_INTERVAL;
       reconnectDepthSensor();
+      toggleLed();
+    }
+  }
+  
+  //external Temperature
+  if(externalTempSchedule < currentTime){
+    if(depthSensorConnected){
+      external_temperature_m.data = depthSensor.getTemperature(CELSIUS);
+      externalTemperaturePub.publish(&external_temperature_m);
+      externalTempSchedule += TEMPERATURE_INTERVAL;
+      toggleLed();
+    } else{
+      externalTempSchedule += TEMPERATURE_INTERVAL;
       toggleLed();
     }
   }
