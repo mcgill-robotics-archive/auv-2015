@@ -1,4 +1,6 @@
-//12bit unsigned sin table generated using excel
+//11bit unsigned sin table generated using excel
+#define LEN_SIN_TABLE 256
+#define MAX_SINTABLE (1 << 11)  
 const uint16_t SIN_TABLE_256[256]= 
    {1024, 1049, 1074, 1099, 1124, 1149, 1174, 1199,
     1224, 1248, 1273, 1297, 1321, 1345, 1369, 1393,
