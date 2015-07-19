@@ -30,7 +30,6 @@ std_msgs::Float32 motorVoltage_m;
 std_msgs::Float32 motorCurrent_m;
 std_msgs::Bool mission_m;
 
-ros::Publisher externalTemperaturePub("~external_temperature", &external_temperature_m);
 ros::Publisher computerVoltagePub("~computerVoltage", &computerVoltage_m);
 ros::Publisher ComputerCurrentPub("~computerCurrent", &computerCurrent_m);
 ros::Publisher motorVoltagePub("~motorVoltage", &motorVoltage_m);
@@ -217,7 +216,6 @@ void rosInit(){
   //ros node initialization
   nh.initNode();  
   //ros publisher initialization
-  nh.advertise(externalTemperaturePub);
   nh.advertise(computerVoltagePub);     //battery level
   nh.advertise(ComputerCurrentPub);
   nh.advertise(motorVoltagePub);
