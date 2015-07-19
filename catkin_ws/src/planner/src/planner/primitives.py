@@ -176,3 +176,44 @@ class SetVelocityState(SimpleActionState):
             success_cb=success_cb,
             input_keys=['yaw_setpoint', 'depth_setpoint'],
             output_keys=['yaw_setpoint', 'depth_setpoint'])
+
+
+class SetPositionState(SimpleActionState):
+    def __init__(self, goal_cb, pos_tol=0.05, yaw_tol=0.04):
+        self.goal_cb = goal_cb
+        self.pos_tol = pos_tol
+        self.yaw_tol = yaw_tol
+        super(SetPositionState, self).__init__(
+            'controls_position',
+            auv_msgs.msg.SetPositionAction,
+            goal_cb=self._goal_cb,
+            result_cb=self.result_cb,
+            input_keys=['yaw_setpoint', 'depth_setpoint'],
+            output_keys=['yaw_setpoint', 'depth_setpoint'])
+
+    def _goal_cb(self, user_data, goal):
+        # Initialize this state.
+        self.succeeded = False
+        # Get the goal to send to controls.
+        self.goal_cb(user_data, goal)
+
+    def _goal_feedback_cb(self, feedback):
+        super(SetPositionState, self)._goal_feedback_cb(feedback)
+
+        if (feedback.yaw_error < self.yaw_tol and
+                feedback.x_error**2 + feedback.y_error**2 < self.pos_tol**2):
+            self.exit_success()
+
+    def result_cb(self, user_data, goal_status, goal_result):
+        # If we preempted based on the timeout, the result should be success.
+        if self.succeeded and goal_status == GoalStatus.PREEMPTED:
+            return 'succeeded'
+        # For all other cases, we let the super handle it, so no need to
+        # return anything.
+        return None
+
+    def exit_success(self):
+        # This will cancel the pending action and transition to the next state.
+        # The preempt is redefined to be success in result_cb.
+        self.succeeded = True
+        self.request_preempt()

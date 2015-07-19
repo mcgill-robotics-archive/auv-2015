@@ -55,8 +55,10 @@ def initialize(pause, countdown, depth):
 def lane_task(yaw, speed, duration):
     # Returns a state machine which will dead reckon towards the lane and
     # align over it using visual servoing.
-    motion_sm = smach.StateMachine(['succeeded', 'lane_not_found',
-                                    'preempted', 'aborted'])
+    motion_sm = smach.StateMachine(
+        ['succeeded', 'lane_not_found', 'preempted', 'aborted'],
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
     with motion_sm:
         motion_sm.add_auto(
             'Switch Entry Point',
@@ -68,14 +70,19 @@ def lane_task(yaw, speed, duration):
             connector_outcomes=['lane_seen'])
         motion_sm.add_auto(
             'Search Pattern', components.search_pattern_with_condition(),
-            connector_outcomes=['lane_tracked'])
+            connector_outcomes=['lane_tracking'])
         motion_sm.add('Visual Servo', components.visual_servo())
     tracking_concurrence = smach.Concurrence(
-        ['succeeded', 'lane_not_found', 'failed', 'preempted', 'aborted'],
+        ['succeeded', 'lane_not_found', 'tracking_failed',
+         'preempted', 'aborted'],
         child_termination_cb=lambda x: True,
-        default_outcome='failed',
-        outcome_map={  # TODO:
-            })
+        default_outcome='tracking_failed',
+        outcome_map={
+            'succeeded': {'Motion': 'succeeded'},
+            'lane_not_found': {'Motion': 'lane_not_found'},
+            'tracking_failed': {'Tracking': 'aborted'}},
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
     with tracking_concurrence:
         tracking_concurrence.add('Motion', motion_sm)
         tracking_concurrence.add(
@@ -84,24 +91,27 @@ def lane_task(yaw, speed, duration):
                 'tracking',
                 SetCVTargetAction,
                 goal=SetCVTargetGoal(CVTarget.LANE)))
-    retry_tracking_sm = smach.Iterator(
+    retry_tracking_sm = smach.StateMachine(
         ['succeeded', 'lane_not_found', 'preempted', 'aborted'],
-        input_keys=[],
-        output_keys=[],
-        it=range(5))
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
     with retry_tracking_sm:
         # On failure we retry. This will cause the robot to execute a search
         # pattern.
-        retry_tracking_sm.set_contained_state(
-            'Concurrence', tracking_concurrence, loop_outcomes=['failed'])
+        retry_tracking_sm.add(
+            'Tracking Concurrence',
+            tracking_concurrence,
+            transitions={'tracking_failed': 'Tracking Concurrence'})
     sm = smach.Concurrence(
         ['succeeded', 'lane_not_found', 'preempted', 'aborted'],
         child_termination_cb=lambda x: True,
         default_outcome='aborted',
-        outcome_map={'succeeded': {'Motion': 'succeeded'},
-                     'lane_not_found': {'Motion': 'lane_not_found'}})
+        outcome_map={'succeeded': {'Retry Tracking': 'succeeded'},
+                     'lane_not_found': {'Retry Tracking': 'lane_not_found'}},
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
     with sm:
-        sm.add('Motion', retry_tracking_sm)
+        sm.add('Retry Tracking', retry_tracking_sm)
         sm.add('CV', smach_ros.SimpleActionState(
             'cv_server',
             SetCVTargetAction,

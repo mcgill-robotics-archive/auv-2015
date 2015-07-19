@@ -1,10 +1,11 @@
 import smach
 import smach_ros
-from primitives import SetVelocityState
+from primitives import SetVelocityState, SetPositionState
 import rospy
 import tf
+import util
 from math import pi
-from auv_msgs.msg import SetPositionAction, CVTarget
+from auv_msgs.msg import CVTarget
 
 
 def switch_entry_point(state_machine, label):
@@ -13,7 +14,7 @@ def switch_entry_point(state_machine, label):
     state = smach.State(['succeeded'])
 
     def execute(user_data):
-        state_machine.set_initial_state(label)
+        state_machine.set_initial_state([label])
         return 'succeeded'
     state.execute = execute
     return state
@@ -27,23 +28,27 @@ def search_pattern():
 
 def search_pattern_with_condition():
     csm = smach.Concurrence(
-        ['lane_tracked', 'lane_not_found'],
+        ['lane_tracking', 'lane_not_found'],
         child_termination_cb=lambda x: True,
         default_outcome='lane_not_found',
-        outcome_map={'lane_tracked': {'Condition': 'false'}})
+        outcome_map={'lane_tracking': {'Condition': 'true'}},
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
     with csm:
         def test_transform(frame1, frame2, timeout):
             # Tests whether the transform is available
             try:
-                tf.waitForTransform(frame1, frame2, timeout)
+                util.get_listener().waitForTransform(
+                    frame1, frame2, rospy.Time.now(), timeout)
                 return True
             except tf.Exception:
                 return False
 
-        poll_rate = rospy.Duration(0.1)
+        poll_rate = 0.1
         csm.add('Condition', smach_ros.ConditionState(
-            lambda x: not test_transform('horizon', 'lane', 0.9 * poll_rate),
-            poll_rate=poll_rate,
+            lambda x: test_transform('horizon', 'lane0',
+                                     rospy.Duration(0.9 * poll_rate)),
+            poll_rate=rospy.Duration(poll_rate),
             max_checks=-1))
         csm.add('Search Pattern', search_pattern())
     return csm
@@ -54,24 +59,20 @@ def visual_servo():
     def goal_cb(user_data, goal):
         # This transform will exist, since we only start visual servoing
         # once it does
-        (trans, rot) = \
-            tf.TransformListener().lookupTransform('horizon', 'lane')
+        (trans, rot) = util.get_listener().lookupTransform(
+            'horizon', 'lane0', rospy.Time(0))
         yaw = rot[2]
         # We attempt to align in the direction closest to our
         # starting direction
         if abs(yaw) > pi/2:
             goal.cmd.yaw = pi
             yaw += pi
+        goal.cmd.depth = user_data.depth_setpoint
         # Store the yaw, so that in case the visual servoing fails we will
         # at least be pointing in the right direction.
         user_data.yaw_setpoint += yaw
 
-    return smach_ros.SimpleActionState(
-        'controls_position',
-        SetPositionAction,
-        goal_cb=goal_cb,
-        input_keys=['yaw_setpoint'],
-        output_keys=['yaw_setpoint'])
+    return SetPositionState(goal_cb)
 
 
 def dead_reckon_with_monitor(yaw, speed, duration):
@@ -79,7 +80,9 @@ def dead_reckon_with_monitor(yaw, speed, duration):
         ['lane_seen', 'lane_not_found', 'preempted', 'aborted'],
         child_termination_cb=lambda x: True,
         default_outcome='lane_not_found',
-        outcome_map={'lane_seen': {'Monitor CV': 'invalid'}})
+        outcome_map={'lane_seen': {'Monitor CV': 'invalid'}},
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
     with csm:
         csm.add(
             'Move Forward',
@@ -92,12 +95,14 @@ def dead_reckon_with_monitor(yaw, speed, duration):
                 '/cv/identified_targets',
                 CVTarget,
                 lambda x, y: False))
-    sm = smach.StateMachine(['lane_seen', 'lane_not_found',
-                             'preempted', 'aborted'])
+    sm = smach.StateMachine(
+        ['lane_seen', 'lane_not_found', 'preempted', 'aborted'],
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
     with sm:
         sm.add(
             'Set Yaw',
             SetVelocityState.create_set_yaw_state(yaw),
-            transitions={'succeeded': 'Concurrence'})
-        sm.add('Concurrence', csm)
+            transitions={'succeeded': 'Move Forward With Monitor'})
+        sm.add('Move Forward With Monitor', csm)
     return sm

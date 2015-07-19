@@ -11,12 +11,14 @@ __author__ = 'Max Krogius'
 
 def create_state_machine():
     sm = smach.StateMachine(
-        outcomes=['succeeded', 'lane_not_found', 'aborted', 'preempted'])
+        outcomes=['succeeded', 'lane_not_found', 'aborted', 'preempted'],
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
     with sm:
-        sm.add_auto(
-            'Initialize',
-            tasks.initialize(5, 5, 1),
-            connector_outcomes=['succeeded'])
+        #sm.add_auto(
+        #    'Initialize',
+        #    tasks.initialize(5, 5, 1),
+        #    connector_outcomes=['succeeded'])
         sm.add('Lane Task', tasks.lane_task(yaw=0, speed=1, duration=10))
     return sm
 
@@ -27,9 +29,12 @@ if __name__ == '__main__':
     sis = smach_ros.IntrospectionServer('lane_test', sm, '/SM_ROOT')
     sis.start()
 
+    ud = smach.UserData()
+    ud['yaw_setpoint'] = 0
+    ud['depth_setpoint'] = 0
     # In order to get smach to respond to ctrl+c we run it in a different
     # thread and request a preempt on ctrl+c.
-    smach_thread = Thread(target=lambda: sm.execute())
+    smach_thread = Thread(target=lambda: sm.execute(ud))
     smach_thread.start()
 
     # It is necessary to use the on_shutdown method to request the preempt

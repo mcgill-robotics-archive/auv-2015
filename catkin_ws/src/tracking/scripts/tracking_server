@@ -12,9 +12,11 @@ sub = None
 transform_broadcaster = None
 num_bins = 4
 target_name = ''
+target_tracked = False 
 
 
 def target_callback(msg):
+    global target_tracked
     if msg.type != target_name:
         return
     if msg.header.frame_id != 'floating_horizon':
@@ -32,6 +34,7 @@ def target_callback(msg):
         targets.append(target)
     tracker.update(targets)
     if len(tracker.configurations) == 1:
+        target_tracked = True
         conf = tracker.configurations[0]
         for i in range(conf.num_bins):
             position = conf.position + i * conf.spacing * conf.direction
@@ -40,15 +43,19 @@ def target_callback(msg):
                 (position[0], position[1], height),
                 (0, 0, sin(yaw/2), cos(yaw/2)),
                 rospy.Time.now(),
-                'Bin'+str(i),
+                target_name+str(i),
                 'floating_horizon')
     else:
+        if target_tracked:
+            server.set_aborted()
+            target_tracked = False
         rospy.logerr('Tracker has {} configurations'
                        .format(len(tracker.configurations)))
 
 
 def set_target():
-    global sub, target_name
+    global sub, target_name, target_tracked
+    target_tracked = False
     target_name = server.accept_new_goal().target_name
     if target_name == CVTarget.BINS or CVTarget.LANE:
         sub = rospy.Subscriber('cv/identified_targets', CVTarget, target_callback)
@@ -57,8 +64,9 @@ def set_target():
 
 
 def cancel_target():
-    global target_name
+    global target_name, target_tracked
     target_name = ''
+    target_tracked = False
     if sub:
         sub.unregister()
 
