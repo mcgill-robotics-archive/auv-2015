@@ -62,13 +62,13 @@ int boundCheck(int motorCommandValue){
 void writeMotorT100 (uint8_t motorNumber, int motorCommandValue)
 {
   int difference = motorCommandValue-lastMotorCommands[motorNumber];
-  
+
   if(abs(difference) < THRESHOLD_MOTOR)
     lastMotorCommands[motorNumber] = boundCheck(motorCommandValue);
   else if (difference > 0)
     lastMotorCommands[motorNumber] = boundCheck(lastMotorCommands[motorNumber] + THRESHOLD_MOTOR);
   else
-    lastMotorCommands[motorNumber] = boundCheck(lastMotorCommands[motorNumber] - THRESHOLD_MOTOR); 
+    lastMotorCommands[motorNumber] = boundCheck(lastMotorCommands[motorNumber] - THRESHOLD_MOTOR);
   myservo[motorNumber].writeMicroseconds(MOTOR_T100_RST_VALUE + lastMotorCommands[motorNumber]);
 }
 
@@ -77,37 +77,37 @@ void writeMotorSeabotix (uint8_t motorPin, uint8_t enablePin, int motorCommandVa
   int difference = motorCommandValue-lastMotorCommands[enablePin];
   if(abs(difference) < THRESHOLD_MOTOR)
     lastMotorCommands[enablePin] = boundCheck(motorCommandValue);
-  
+
   else if (difference > 0)
     lastMotorCommands[enablePin] = boundCheck(lastMotorCommands[enablePin] + THRESHOLD_MOTOR);
   else
-    lastMotorCommands[enablePin] = boundCheck(lastMotorCommands[enablePin] - THRESHOLD_MOTOR);   
-  
+    lastMotorCommands[enablePin] = boundCheck(lastMotorCommands[enablePin] - THRESHOLD_MOTOR);
+
   if(abs(lastMotorCommands[enablePin]) > MOTOR_SEABOTICX_DEADBAND)
     digitalWrite(enablePin,HIGH);
   else 
     digitalWrite(enablePin,LOW);
- 
+
   analogWrite(motorPin, MOTOR_SEABOTIX_RST_VALUE + lastMotorCommands[enablePin]);
 }
 
 void motorCb( const auv_msgs::MotorCommands& msg){
   if(mission_m.data){
     timeLastMotorCommand = millis();
-    writeMotorT100(MOTOR_PIN_PORT_SURGE, 
-                   msg.bow_sway);              
-    writeMotorT100(MOTOR_PIN_STARBOARD_SURGE, 
+    writeMotorT100(MOTOR_PIN_PORT_SURGE,
+                   msg.bow_sway);
+    writeMotorT100(MOTOR_PIN_STARBOARD_SURGE,
                    msg.stern_sway);
-    writeMotorT100(MOTOR_PIN_PORT_BOW_HEAVE, 
+    writeMotorT100(MOTOR_PIN_PORT_BOW_HEAVE,
                    msg.port_bow_heave);
-    writeMotorT100(MOTOR_PIN_STARBOARD_BOW_HEAVE, 
-                   msg.starboard_bow_heave);               
-    writeMotorT100(MOTOR_PIN_PORT_STERN_HEAVE, 
-                   msg.port_stern_heave);            
-    writeMotorT100(MOTOR_PIN_STARBOARD_STERN_HEAVE, 
+    writeMotorT100(MOTOR_PIN_STARBOARD_BOW_HEAVE,
+                   msg.starboard_bow_heave);
+    writeMotorT100(MOTOR_PIN_PORT_STERN_HEAVE,
+                   msg.port_stern_heave);
+    writeMotorT100(MOTOR_PIN_STARBOARD_STERN_HEAVE,
                    msg.starboard_stern_heave);
     writeMotorSeabotix(MOTOR_PIN_STARBOARD_SWAY,
-                       MOTOR_ENABLE_PIN_STARBOARD_SWAY, 
+                       MOTOR_ENABLE_PIN_STARBOARD_SWAY,
                        msg.port_surge);
     writeMotorSeabotix(MOTOR_PIN_PORT_SWAY,
                        MOTOR_ENABLE_PIN_PORT_SWAY,
@@ -182,14 +182,14 @@ void resetDepthSensor(){
 }
 
 void reconnectDepthSensor(){
-  
-    resetDepthSensor(); 
-    
-   if(depthSensorConnected){
-     nh.logwarn("Depth Sensor Reset Successfully!!!");
-   } else {
-     nh.logfatal("Depth Sensor Reset has failed!!!");
-   }
+
+  resetDepthSensor(); 
+
+  if(depthSensorConnected){
+    nh.logwarn("Depth Sensor Reset Successfully!!!");
+  } else {
+    nh.logfatal("Depth Sensor Reset has failed!!!");
+  }
 }
 
 void motorInit(){
@@ -201,27 +201,27 @@ void motorInit(){
   myservo[MOTOR_PIN_STARBOARD_BOW_HEAVE].attach(MOTOR_PIN_STARBOARD_BOW_HEAVE);
   myservo[MOTOR_PIN_PORT_STERN_HEAVE].attach(MOTOR_PIN_PORT_STERN_HEAVE);
   myservo[MOTOR_PIN_STARBOARD_STERN_HEAVE].attach(MOTOR_PIN_STARBOARD_STERN_HEAVE);
-  
+
   //Setup for Seabotix, PWM with highier frequency
   //Calling frequency change will affect both pin
-  analogWriteFrequency(MOTOR_PIN_STARBOARD_SWAY,PWM_FREQUENCY); 
-   
+  analogWriteFrequency(MOTOR_PIN_STARBOARD_SWAY,PWM_FREQUENCY);
+
   // Change the resolution to 0 - 1023
-  analogWriteResolution(10); 
-  
+  analogWriteResolution(10);
+
   //Enable status pins
   pinMode(STATUS_PIN_FAULT, INPUT);
   pinMode(STATUS_PIN_OTW, INPUT);
-  
+
   //Enable enable pins 
   pinMode(MOTOR_ENABLE_PIN_STARBOARD_SWAY, OUTPUT);
-  pinMode(MOTOR_ENABLE_PIN_PORT_SWAY, OUTPUT); 
+  pinMode(MOTOR_ENABLE_PIN_PORT_SWAY, OUTPUT);
 
   resetMotor();
 }
 
 void solenoidInit(){
-  
+
   pinMode(SOLENOID_PIN_PORT_DROPPER, OUTPUT);
   pinMode(SOLENOID_PIN_STARBOARD_DROPPER, OUTPUT);
   pinMode(SOLENOID_PIN_PORT_GRABBER, OUTPUT);
@@ -234,17 +234,17 @@ void solenoidInit(){
 }
 
 void gpioInit(){
-  
+
   //Analog Setup
   pinMode(COMPUTER_VOLTAGE_PIN,INPUT);
   pinMode(COMPUTER_CURRENT_PIN,INPUT);
   pinMode(MOTOR_VOLTAGE_PIN,INPUT);
   pinMode(MOTOR_CURRENT_PIN,INPUT);
   pinMode(MISSION_PIN,INPUT);
-  
+
   //Onboard LED setup
   pinMode(LED_PIN,OUTPUT);
-  
+
 }
 
 void depthSensorInit(){
@@ -272,12 +272,12 @@ void rosInit(){
 }
 
 void setup(){
-  
+
   motorInit();
   solenoidInit();
   gpioInit();
   depthSensorInit();
-  
+
   digitalWrite(LED_PIN, depthSensorConnected);
 
   rosInit();
@@ -292,15 +292,15 @@ void loop(){
     if(depthSensorConnected){
       //Get Readings
       depthSensor.getMeasurements(ADC_4096);
-      
+
       //check status, reconnect if needed
       if(!depthSensor.getSensorStatus()){
-   
+
         nh.logerror("Depth Sensor Communication Error, Attemping Reset...");
         depthSensorConnected = false;
-        
+
         reconnectDepthSensor();
-        
+
       } else {
         // passed connection test, putting data to ros
         pressure_m.data = depthSensor.getPressure();
@@ -314,7 +314,7 @@ void loop(){
       toggleLed();
     }
   }
-  
+
   //external Temperature
   if(externalTempSchedule < currentTime){
     if(depthSensorConnected){
@@ -328,7 +328,7 @@ void loop(){
       toggleLed();
     }
   }
-  
+
   if(powerMonitorSchedule < currentTime){
     computerVoltage_m.data = analogRead(COMPUTER_VOLTAGE_PIN) * kCOM_VOLT_SLOPE + kCOM_VOLT_OFFSET;
     computerCurrent_m.data = analogRead(COMPUTER_CURRENT_PIN) * kCOM_CURR_SLOPE + kCOM_CURR_OFFSET;
@@ -341,15 +341,15 @@ void loop(){
     powerMonitorSchedule += POWER_MONITOR_INTERVAL;
     toggleLed();
   }
-  
+
   //Seabotix Motor status
   if(MissionSchedule < currentTime){
     missionPub.publish(&mission_m);
     MissionSchedule += MISSION_INTERVAL;
     toggleLed();
   }
-  
-  
+
+
   if(MotorStatusSchedule < currentTime){
     if(mission_m.data){
       if(!digitalRead(STATUS_PIN_FAULT)){
@@ -362,7 +362,7 @@ void loop(){
     MotorStatusSchedule += MOTOR_STATUS_INTERVAL;
     toggleLed();
   }
-  
+
   //Motor
   if(lastSolenoidCommand + MOTOR_TIMEOUT < currentTime){
     //nh.logerror("Solenoid Command timeout!");
@@ -370,7 +370,7 @@ void loop(){
     lastSolenoidCommand = currentTime;
     toggleLed();
   }
-  
+
   if(timeLastMotorCommand + MOTOR_TIMEOUT < currentTime){
     if(mission_m.data){
       nh.logwarn("Motor Commands timeout!");
