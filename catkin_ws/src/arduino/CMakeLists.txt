@@ -33,6 +33,7 @@ add_custom_target(
   COMMAND ln -sf ${PROJECT_SOURCE_DIR}/blinky ${PROJECT_WORKSPACE_DIR}
   COMMAND ln -sf ${PROJECT_SOURCE_DIR}/radio_interrupt ${PROJECT_WORKSPACE_DIR}
   COMMAND ln -sf ${PROJECT_SOURCE_DIR}/teensy ${PROJECT_WORKSPACE_DIR}
+  COMMAND ln -sf ${PROJECT_SOURCE_DIR}/teensy_depth ${PROJECT_WORKSPACE_DIR}
 )
 
 add_dependencies(
