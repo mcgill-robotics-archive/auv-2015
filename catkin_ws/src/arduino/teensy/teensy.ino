@@ -1,4 +1,3 @@
-#include <i2c_t3.h>
 #include <Servo.h>
 #include <ros.h>
 #include <std_msgs/Int16.h>
@@ -235,8 +234,6 @@ void setup(){
   motorInit();
   solenoidInit();
   gpioInit();
-
-  digitalWrite(LED_PIN, depthSensorConnected);
 
   rosInit();
 }
