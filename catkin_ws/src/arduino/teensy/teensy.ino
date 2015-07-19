@@ -248,6 +248,7 @@ void gpioInit(){
 void depthSensorInit(){
 
   Wire1.begin(I2C_MASTER, 0x00, I2C_PINS_29_30, I2C_PULLUP_EXT, I2C_RATE_400);
+  Wire1.setDefaultTimeout(100);
   resetDepthSensor();
 
 }
