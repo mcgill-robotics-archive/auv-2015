@@ -19,7 +19,7 @@ kp_roll: 5.0
 ki_roll: 0.1
 kd_roll: 5.0
 
-kp_yaw: 5.0
+kp_yaw: 20.0
 ki_yaw: 0.0
 kd_yaw: 5.0
 
