@@ -3,35 +3,54 @@ import os
 import rospy
 from std_msgs.msg import Float32
 from auv_msgs.msg import CPUTemperature
+import numpy
+
+
+class RingBuffer(object):
+    def __init__(self, size):
+        self.data = numpy.zeros(size)
+
+    def push(self, datum):
+        numpy.roll(self.data, 1)
+        self.data[0] = datum
 
 min_real_voltage = 5
+computer_voltages = RingBuffer(50)
 computer_warn = 21.0
 computer_shutoff = 20.0
+motor_voltages = RingBuffer(50)
 motor_warn = 11.0
 motor_shutoff = 10.5
+temperature_values = RingBuffer(50)
 temperature_warn = 65
 temperature_shutoff = 75
 
 
 def motor_voltage_cb(msg):
-    if msg.data > min_real_voltage and msg.data < motor_shutoff:
-        shutdown()
-    if msg.data > min_real_voltage and msg.data < motor_warn:
+    motor_voltages.push(msg.data)
+    val = numpy.median(motor_voltages.data)
+    if val > min_real_voltage and val < motor_warn:
         warn('Motor voltage low! {} V'.format(msg.data))
+    if val > min_real_voltage and val < motor_shutoff:
+        shutdown()
 
 
 def computer_voltage_cb(msg):
-    if msg.data > min_real_voltage and msg.data < computer_shutoff:
-        shutdown()
-    if msg.data > min_real_voltage and msg.data < computer_warn:
+    computer_voltages.push(msg.data)
+    val = numpy.median(computer_voltages.data)
+    if val > min_real_voltage and val < computer_warn:
         warn('Computer voltage low! {} V'.format(msg.data))
+    if val > min_real_voltage and val < computer_shutoff:
+        shutdown()
 
 
 def temperature_cb(msg):
-    if msg.temperature > temperature_shutoff:
-        shutdown()
-    if msg.temperature > temperature_warn:
+    temperature_values.push(msg.temperature)
+    val = numpy.median(temperature_values.data)
+    if val > temperature_warn:
         warn('Computer temperature high! {} V'.format(msg.data))
+    if val > temperature_shutoff:
+        shutdown()
 
 
 def warn(msg):
@@ -39,7 +58,6 @@ def warn(msg):
 
 
 def shutdown():
-    warn('Power too low. Shutting down now!')
     os.system("echo 'elgordo21' | sudo --stdin shutdown now -H -P")
 
 
