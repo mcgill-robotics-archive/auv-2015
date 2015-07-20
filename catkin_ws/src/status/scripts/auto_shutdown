@@ -4,8 +4,8 @@ import rospy
 from std_msgs.msg import Float32
 from auv_msgs.msg import CPUTemperature
 
-computer_warn = 21.5
-computer_shutoff = 20.5
+computer_warn = 21.0
+computer_shutoff = 20.0
 motor_warn = 11.0
 motor_shutoff = 10.5
 temperature_warn = 65
@@ -38,7 +38,8 @@ def warn(msg):
 
 
 def shutdown():
-    os.system("echo 'elgordo21' | sudo --stdin shutdown now")
+    warn('Power too low. Shutting down now!')
+    os.system("echo 'elgordo21' | sudo --stdin shutdown now -H -P")
 
 
 if __name__ == '__main__':
