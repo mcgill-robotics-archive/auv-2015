@@ -60,7 +60,8 @@ def warn(msg):
 
 
 def shutdown():
-    os.system("echo 'elgordo21' | sudo --stdin shutdown now -H -P")
+   # os.system("echo 'elgordo21' | sudo --stdin shutdown now -H -P")
+   pass
 
 
 if __name__ == '__main__':
