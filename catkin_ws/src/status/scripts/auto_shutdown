@@ -4,6 +4,7 @@ import rospy
 from std_msgs.msg import Float32
 from auv_msgs.msg import CPUTemperature
 
+min_real_voltage = 5
 computer_warn = 21.0
 computer_shutoff = 20.0
 motor_warn = 11.0
@@ -13,16 +14,16 @@ temperature_shutoff = 75
 
 
 def motor_voltage_cb(msg):
-    if msg.data < motor_shutoff:
+    if msg.data > min_real_voltage and msg.data < motor_shutoff:
         shutdown()
-    if msg.data < motor_warn:
+    if msg.data > min_real_voltage and msg.data < motor_warn:
         warn('Motor voltage low! {} V'.format(msg.data))
 
 
 def computer_voltage_cb(msg):
-    if msg.data < computer_shutoff:
+    if msg.data > min_real_voltage and msg.data < computer_shutoff:
         shutdown()
-    if msg.data < computer_warn:
+    if msg.data > min_real_voltage and msg.data < computer_warn:
         warn('Computer voltage low! {} V'.format(msg.data))
 
 
