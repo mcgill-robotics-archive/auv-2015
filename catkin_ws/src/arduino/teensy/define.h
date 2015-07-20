@@ -65,13 +65,13 @@
 #define MOTOR_CURRENT_PIN                   A6
 
 //POWER MONITORING
-const double kCOM_VOLT_SLOPE = 1.0;
+const double kCOM_VOLT_SLOPE = 0.03466353678;
 const double kCOM_VOLT_OFFSET = 0.0;
 
 const double kCOM_CURR_SLOPE = 1.0;
 const double kCOM_CURR_OFFSET = 0.0;
 
-const double kMOT_VOLT_SLOPE = 1.0;
+const double kMOT_VOLT_SLOPE = 0.01421672556;
 const double kMOT_VOLT_OFFSET = 0.0;
 
 const double kMOT_CURR_SLOPE = 1.0;
