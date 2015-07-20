@@ -1,0 +1,52 @@
+#! /usr/bin/env python2.7
+import os
+import rospy
+from std_msgs.msg import Float32
+from auv_msgs.msg import CPUTemperature
+
+computer_warn = 21.5
+computer_shutoff = 20.5
+motor_warn = 11.0
+motor_shutoff = 10.5
+temperature_warn = 65
+temperature_shutoff = 75
+
+
+def motor_voltage_cb(msg):
+    if msg.data < motor_shutoff:
+        shutdown()
+    if msg.data < motor_warn:
+        warn('Motor voltage low! {} V'.format(msg.data))
+
+
+def computer_voltage_cb(msg):
+    if msg.data < computer_shutoff:
+        shutdown()
+    if msg.data < computer_warn:
+        warn('Computer voltage low! {} V'.format(msg.data))
+
+
+def temperature_cb(msg):
+    if msg.temperature > temperature_shutoff:
+        shutdown()
+    if msg.temperature > temperature_warn:
+        warn('Computer temperature high! {} V'.format(msg.data))
+
+
+def warn(msg):
+    os.system("echo '{}' | wall".format(msg))
+
+
+def shutdown():
+    os.system("echo 'elgordo21' | sudo --stdin shutdown now")
+
+
+if __name__ == '__main__':
+    rospy.init_node('auto_shutdown')
+    s1 = rospy.Subscriber(
+        'electrical_interface/motorVoltage', Float32, motor_voltage_cb)
+    s2 = rospy.Subscriber(
+        'electrical_interface/computerVoltage', Float32, computer_voltage_cb)
+    s3 = rospy.Subscriber(
+        'temperature/temperature', CPUTemperature, temperature_cb)
+    rospy.spin()
