@@ -8,7 +8,7 @@
 #include <auv_msgs/MotorCommands.h>
 #include <auv_msgs/SolenoidCommands.h>
 
-#include "define.h"
+#include "defs.h"
 
 ros::NodeHandle nh;
 
