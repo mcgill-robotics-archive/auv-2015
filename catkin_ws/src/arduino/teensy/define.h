@@ -64,15 +64,15 @@
 #define MOTOR_VOLTAGE_PIN                   A7
 #define MOTOR_CURRENT_PIN                   A6
 
-//
-const double kCOM_VOLT_SLOPE = 0.113390131; //(teensy voltage * total resistance / (single resisitance * mamotorCommandValue bit))
-const double kCOM_VOLT_OFFSET = -48.180;
+//POWER MONITORING
+const double kCOM_VOLT_SLOPE = 1.0;
+const double kCOM_VOLT_OFFSET = 0.0;
 
 const double kCOM_CURR_SLOPE = 1.0;
 const double kCOM_CURR_OFFSET = 0.0;
 
-const double kMOT_VOLT_SLOPE = 0.051530;
-const double kMOT_VOLT_OFFSET = -20.015;
+const double kMOT_VOLT_SLOPE = 1.0;
+const double kMOT_VOLT_OFFSET = 0.0;
 
 const double kMOT_CURR_SLOPE = 1.0;
 const double kMOT_CURR_OFFSET = 0.0;
