@@ -3,7 +3,7 @@ import rospy
 from rospkg import RosPack
 from geometry_msgs.msg import Wrench
 from auv_msgs.msg import MotorCommands
-from numpy import matrix, interp, genfromtxt
+from numpy import matrix, interp, genfromtxt, sign
 from numpy.linalg import pinv
 
 #set length from axis for each thruster ex:l_1z is distance from T1 to z-axis
@@ -46,7 +46,27 @@ def Wrench_to_thrust_callback(data):
 
     
     # TODO: Use seabotics calibration too
-    T1234 = t100_pwm(Fx_Fy_Mz_to_T1234*Fx_Fy_Mz)
+    f1234 = Fx_Fy_Mz_to_T1234*Fx_Fy_Mz
+    f1 = f1234[0]
+    f2 = f1234[1]
+
+
+    # Protect the depth sensor.
+    maximum = 8 
+    summ = saturate(f1 + f2, 2*maximum)
+    diff = f1 - f2
+    f1 = summ/2 
+    f2 = summ/2
+    rem = maximum - max(abs(f1), abs(f2))
+    diff_to_add = min(rem, abs(diff/2))*sign(diff)
+    f1 += diff_to_add
+    f2 -= diff_to_add
+
+
+    f1234[0] = f1
+    f1234[1] = f2
+
+    T1234 = t100_pwm(f1234)
     T5678 = t100_pwm(Fz_Mx_My_to_T5678*Fz_Mx_My)
 
     #T1 = surge port         \surges positive thrust towards stern
@@ -68,8 +88,12 @@ def Wrench_to_thrust_callback(data):
     cmds_msg.port_stern_heave = T5678[3]
     thrust_pub.publish(cmds_msg)
 
+def saturate(cmd, maximum):
+    if abs(cmd) > maximum:
+        return cmd*maximum/abs(cmd)
+    return cmd
+
 def pwm(thrust, data):
-    print thrust
     min_thrust = 0.01
     pwm = interp(thrust, data[:,0], data[:,1])
     pwm[abs(thrust) < min_thrust] = 0
