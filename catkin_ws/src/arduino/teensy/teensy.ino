@@ -30,10 +30,10 @@ std_msgs::Float32 motorVoltage_m;
 std_msgs::Float32 motorCurrent_m;
 std_msgs::Bool mission_m;
 
-ros::Publisher computerVoltagePub("~computerVoltage", &computerVoltage_m);
-ros::Publisher ComputerCurrentPub("~computerCurrent", &computerCurrent_m);
-ros::Publisher motorVoltagePub("~motorVoltage", &motorVoltage_m);
-ros::Publisher motorCurrentPub("~motorCurrent", &motorCurrent_m);
+ros::Publisher computerVoltagePub("~computer_voltage", &computerVoltage_m);
+ros::Publisher ComputerCurrentPub("~computer_current", &computerCurrent_m);
+ros::Publisher motorVoltagePub("~motor_voltage", &motorVoltage_m);
+ros::Publisher motorCurrentPub("~motor_current", &motorCurrent_m);
 
 ros::Publisher missionPub("/mission",&mission_m);
 
@@ -103,7 +103,7 @@ void motorCb( const auv_msgs::MotorCommands& msg){
                        MOTOR_ENABLE_PIN_PORT_SWAY,
                        msg.starboard_surge);
   } else {
-    nh.logwarn("Motor Commands Received while Mission Off!! Commands IGNORED!!");
+    nh.logwarn("Motor commands received while mission off!! Commands IGNORED!!");
   }
 }
 
@@ -145,7 +145,7 @@ void solenoidCb( const auv_msgs::SolenoidCommands& msg){
     digitalWrite(SOLENOID_PIN_STARBOARD_TORPEDO,msg.starboard_torpedo);
     digitalWrite(SOLENOID_PIN_EXTRA,msg.extra);
   } else {
-    nh.logwarn("Solenoid Commands Received while Mission Off!! Commands IGNORED!!");
+    nh.logwarn("Solenoid commands received while mission off!! Commands IGNORED!!");
   }
 }
 
@@ -264,10 +264,10 @@ void loop(){
   if(MotorStatusSchedule < currentTime){
     if(mission_m.data){
       if(!digitalRead(STATUS_PIN_FAULT)){
-        nh.logerror("Seabotix Fault Error!");
+        nh.logerror("Seabotix fault rrror!");
       }
       if(!digitalRead(STATUS_PIN_OTW)){
-        nh.logerror("Seabotix OTW Error!");
+        nh.logerror("Seabotix OTW error!");
       }
     }
     MotorStatusSchedule += MOTOR_STATUS_INTERVAL;
@@ -284,7 +284,7 @@ void loop(){
 
   if(timeLastMotorCommand + MOTOR_TIMEOUT < currentTime){
     if(mission_m.data){
-      nh.logwarn("Motor Commands timeout!");
+      nh.logwarn("Motor commands timeout!");
       timeLastMotorCommand = currentTime;
       toggleLed();
     } else {

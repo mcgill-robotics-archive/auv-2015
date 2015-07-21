@@ -39,7 +39,7 @@ void multiplyQuaternions(double q[],double p[])
 
 void spin() {
 	try{
-		port.open("/dev/ttyUSB0");
+		port.open("/dev/imu");
 		port.set_option(asio::serial_port_base::baud_rate(115200));
 	}
 	catch(exception& e) {
