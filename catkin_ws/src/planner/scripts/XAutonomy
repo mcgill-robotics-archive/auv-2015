@@ -41,7 +41,7 @@ def create_state_machine():
                     'Final Stop',
                     SetVelocityState.create_move_forward_state(
                         0, rospy.Duration.from_sec(1)),
-                    transitions={'success': 'Initialize'})
+                    transitions={'succeeded': 'Initialize'})
             smach.StateMachine.add_auto(
                 'Stop {}'.format(i),
                 SetVelocityState.create_move_forward_state(
