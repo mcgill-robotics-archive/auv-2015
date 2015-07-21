@@ -27,13 +27,26 @@ void resetDepthSensor(){
   for(int i = 0; i< 5 ; i++){
     Wire1.resetBus();
     Wire1.beginTransmission(MS5803_I2C_ADDR);
-    if(Wire1.endTransmission() == 0){
-      depthSensorConnected = true;
-      depthSensor.reset();
-      depthSensor.begin();
-      break;
-    } else {
-      nh.logwarn("Depth Sensor Unresponsive....");
+    switch( Wire1.endTransmission() ) {
+      case 0:
+        depthSensorConnected = true;
+        depthSensor.reset();
+        depthSensor.begin();
+        break;
+      case 1:
+        nh.logwarn("Depth Sensor DATA TOO LONG.");
+        break;
+      case 2:
+        nh.logwarn("Depth Sensor ADDR NANK.");
+        break;
+      case 3:
+        nh.logwarn("Depth Sensor DATA NANK.");
+        break;
+      case 4:
+        nh.logwarn("Depth Sensor OTHER ERROR.");
+        break;
+      default :
+        nh.logwarn("Depth Sensor UNKNOWN ERROR.");
     }
   }
 }
@@ -43,9 +56,12 @@ void reconnectDepthSensor(){
   resetDepthSensor(); 
 
   if(depthSensorConnected){
-    nh.logwarn("Depth Sensor Reset Successfully!!!");
+    nh.logwarn("Depth sensor reset successfully!");
   } else {
-    nh.logfatal("Depth Sensor Reset has failed!!!");
+    nh.logfatal("Depth sensor reset has failed!");
+
+    delay(100);
+    CPU_RESET;
   }
 }
 
@@ -86,7 +102,7 @@ void loop(){
       //check status, reconnect if needed
       if(depthSensor.getSensorStatus()){
 
-        nh.logerror("Depth Sensor Communication Error, Attemping Reset...");
+        nh.logerror("Depth sensor communication error, attemping reset...");
         depthSensorConnected = false;
 
         reconnectDepthSensor();
@@ -99,7 +115,7 @@ void loop(){
         toggleLed();
       }
     } else {
-      nh.logerror("Depth Sensor is NOT CONNECTED!!");
+      nh.logerror("Depth sensor is NOT CONNECTED!!");
       depthSensorSchedule += DEPTH_DISCONNECT_INTERVAL;
       reconnectDepthSensor();
       toggleLed();
