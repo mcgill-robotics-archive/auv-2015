@@ -104,9 +104,9 @@ class InitializeHorizonActionServer(object):
                 "/raw_horizon",
                 # Now
                 now)
-        except (tf.LookupException, tf.ConnectivityException,
-                tf.ExtrapolationException):
+        except tf.Exception as e:
             # Give up.
+            rospy.logerr(e)
             return
 
         # Add rotation.
