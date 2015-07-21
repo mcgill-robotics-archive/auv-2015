@@ -58,8 +58,7 @@ def create_state_machine():
         child_termination_cb=lambda x: True,
         default_outcome='aborted',
         outcome_map={'succeeded': {'Motion': 'succeeded'},
-                     'preempted': {'Motion': 'preempted'},
-                     'aborted': {'Motion': 'aborted'}},
+                     'preempted': {'Motion': 'preempted'}},
         input_keys=['yaw_setpoint', 'depth_setpoint'],
         output_keys=['yaw_setpoint', 'depth_setpoint'])
     with csm:
@@ -69,7 +68,7 @@ def create_state_machine():
             smach_ros.MonitorState(
                 'mission',
                 Bool,
-                lambda x, y: False))
+                lambda x, y: y.data))
 
     sm = smach.StateMachine(
         ['succeeded', 'preempted', 'aborted'])
