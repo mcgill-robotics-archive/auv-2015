@@ -60,16 +60,15 @@ def warn(msg):
 
 
 def shutdown():
-    # os.system("echo 'elgordo21' | sudo --stdin shutdown now -H -P")
-    pass
+    os.system('shutdown -H -P now "Automatic shutdown now!"')
 
 
 if __name__ == '__main__':
     rospy.init_node('auto_shutdown')
     s1 = rospy.Subscriber(
-        'electrical_interface/motorVoltage', Float32, motor_voltage_cb)
+        'electrical_interface/motor_voltage', Float32, motor_voltage_cb)
     s2 = rospy.Subscriber(
-        'electrical_interface/computerVoltage', Float32, computer_voltage_cb)
+        'electrical_interface/computer_voltage', Float32, computer_voltage_cb)
     s3 = rospy.Subscriber(
         'temperature/temperature', CPUTemperature, temperature_cb)
     rospy.spin()
