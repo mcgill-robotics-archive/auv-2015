@@ -16,6 +16,7 @@ def create_state_machine():
     pause = rospy.get_param('~pause')
     countdown = rospy.get_param('~countdown')
     depth = rospy.get_param('~depth')
+    stop_time = rospy.get_param('~stop_time')
     speed = rospy.get_param('~speed')
     yaws = rospy.get_param('~yaws')
     times = rospy.get_param('~times')
@@ -40,7 +41,7 @@ def create_state_machine():
             smach.StateMachine.add_auto(
                 'Stop {}'.format(i),
                 SetVelocityState.create_move_forward_state(
-                    0, rospy.Duration.from_sec(1)),
+                    0, rospy.Duration.from_sec(stop_time)),
                 connector_outcomes=['succeeded'])
         smach.StateMachine.add(
             'Sleep',
