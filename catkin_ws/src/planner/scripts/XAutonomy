@@ -36,6 +36,12 @@ def create_state_machine():
                 SetVelocityState.create_move_forward_state(
                     speed, rospy.Duration.from_sec(times[i])),
                 connector_outcomes=['succeeded'])
+            if i == len(yaws) - 1:
+                smach.StateMachine.add(
+                    'Final Stop',
+                    SetVelocityState.create_move_forward_state(
+                        0, rospy.Duration.from_sec(1)),
+                    transitions={'success': 'Initialize'})
             smach.StateMachine.add_auto(
                 'Stop {}'.format(i),
                 SetVelocityState.create_move_forward_state(
