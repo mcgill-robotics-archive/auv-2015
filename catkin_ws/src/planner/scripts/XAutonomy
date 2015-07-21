@@ -7,6 +7,7 @@ import rospy
 from threading import Thread
 from planner.primitives import SetVelocityState
 from planner import tasks
+from std_msgs.msg import Bool
 
 __author__ = 'Max Krogius'
 
@@ -21,11 +22,11 @@ def create_state_machine():
     if len(yaws) != len(times):
         raise ValueError('~yaws and ~times must have the same length')
 
-    sm = smach.StateMachine(
-        outcomes=['succeeded', 'aborted', 'preempted'])
-    with sm:
-        sm.add_auto('Initialize', tasks.initialize(pause, countdown, depth),
-                    connector_outcomes=['succeeded'])
+    motion_sm = smach.StateMachine(
+        outcomes=['succeeded', 'aborted', 'preempted'],
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
+    with motion_sm:
         for i in range(len(yaws)):
             smach.StateMachine.add_auto(
                 'Yaw {}'.format(yaws[i]),
@@ -36,17 +37,51 @@ def create_state_machine():
                 SetVelocityState.create_move_forward_state(
                     speed, rospy.Duration.from_sec(times[i])),
                 connector_outcomes=['succeeded'])
-            if i == len(yaws) - 1:
-                smach.StateMachine.add(
-                    'Final Stop',
-                    SetVelocityState.create_move_forward_state(
-                        0, rospy.Duration.from_sec(1)),
-                    transitions={'succeeded': 'Initialize'})
             smach.StateMachine.add_auto(
                 'Stop {}'.format(i),
                 SetVelocityState.create_move_forward_state(
                     0, rospy.Duration.from_sec(1)),
                 connector_outcomes=['succeeded'])
+        smach.StateMachine.add(
+            'Sleep',
+            smach_ros.ConditionState(
+                lambda x: False,
+                poll_rate=rospy.Duration(1),
+                max_checks=-1),
+            transitions={
+                'false': 'succeeded',
+                'true': 'aborted'})
+
+    csm = smach.Concurrence(
+        ['succeeded', 'aborted', 'preempted'],
+        child_termination_cb=lambda x: True,
+        default_outcome='aborted',
+        outcome_map={'succeeded': {'Motion': 'succeeded'},
+                     'preempted': {'Motion': 'preempted'},
+                     'aborted': {'Motion': 'aborted'}},
+        input_keys=['yaw_setpoint', 'depth_setpoint'],
+        output_keys=['yaw_setpoint', 'depth_setpoint'])
+    with csm:
+        csm.add('Motion', motion_sm)
+        csm.add(
+            'Monitor Mission',
+            smach_ros.MonitorState(
+                'mission',
+                Bool,
+                lambda x, y: False))
+
+    sm = smach.StateMachine(
+        ['succeeded', 'preempted', 'aborted'])
+    with sm:
+        sm.add_auto(
+            'Initialize', tasks.initialize(pause, countdown, depth),
+            connector_outcomes=['succeeded'])
+        sm.add(
+            'Motion and Monitor', csm,
+            transitions={
+                'succeeded': 'Initialize',
+                'preempted': 'Initialize',
+                'aborted': 'Initialize'})
     return sm
 
 
