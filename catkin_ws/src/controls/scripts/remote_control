@@ -8,10 +8,10 @@ rc_center = 1500
 
 def rc_callback(msg):
     wrench = Wrench()
-    wrench.force.x = (msg.channel1 - rc_center) / 500
-    wrench.force.y = (msg.channel2 - rc_center) / 500
-    wrench.force.z = (msg.channel3 - rc_center) / 500
-    wrench.torque.z = (msg.channel4 - rc_center) / 500
+    wrench.force.x = (msg.channel3 - rc_center) / 250
+    wrench.force.y = (msg.channel4 - rc_center) / 250
+    wrench.force.z = (msg.channel2 - rc_center) / 250
+    wrench.torque.z = (msg.channel1 - rc_center) / 250
     pub.publish(wrench)
 
 
@@ -19,5 +19,6 @@ if __name__ == '__main__':
     global pub, sub
     rospy.init_node('remote_control')
     pub = rospy.Publisher('controls/wrench', Wrench, queue_size=10)
-    sub = rospy.Subscriber('radio', RadioCommands, rc_callback)
+    sub = rospy.Subscriber(
+        'electrical_interface/radio', RadioCommands, rc_callback)
     rospy.spin()

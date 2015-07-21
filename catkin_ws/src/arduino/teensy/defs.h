@@ -25,7 +25,7 @@
 //THRESHOLD for motor control
 #define THRESHOLD_MOTOR                     50
 
-#define PWM_FREQUENCY 93750 //One of the Ideal Frequency of teensy3.1
+#define PWM_FREQUENCY                       23437 //One of the Ideal Frequency of teensy3
 
 //SOLENOID, one used pin for (Pin_33)
 #define SOLENOID_PIN_STARBOARD_DROPPER      12
