@@ -16,10 +16,10 @@ candidates based on size and shape.
 def suppress_bad_shapes(contours, threshold):
     # Here we try to find something that looks like a lane, including the legs
     lane = np.array([[[5, 0]], [[5, 14]], [[0, 14]], [[0, 16]],
-                    [[5, 16]], [[5, 70]], [[0, 70]], [[0, 72]],
-                    [[5, 72]], [[5, 86]], [[15, 86]], [[15, 72]],
-                    [[20, 72]], [[20, 70]], [[15, 70]], [[15, 16]],
-                    [[20, 16]], [[20, 14]], [[15, 14]], [[15, 0]]])
+        [[5, 16]], [[5, 70]], [[0, 70]], [[0, 72]],
+        [[5, 72]], [[5, 86]], [[15, 86]], [[15, 72]],
+        [[20, 72]], [[20, 70]], [[15, 70]], [[15, 16]],
+        [[20, 16]], [[20, 14]], [[15, 14]], [[15, 0]]])
     return filters.suppress_bad_shapes(contours, lane, threshold)
 
 
@@ -53,25 +53,25 @@ def filterEccentricity(contours, eccentricity_thresh):
 def validate1(contours, img, debug):
     filter_list = []
     # Minimum perimeter of target
-    min_length = 20*4
+    min_length = 2*10+2*180
     # Minimum area of target
-    min_area = 35  # Increasing to 40 suppresses target
+    min_area = 10*180  # Increasing to 40 suppresses target
     filter_list.append(lambda x: filters.filterSize(x, min_length, min_area))
     # Tolerance for polygon fitting. Increasing means things get fit
     # with fewer vertices.
     # eccentricity_threshold = 17
     # filter_list.append(filterEccentricity(contours, eccentricity_threshold))
-    filter_list.append(lambda x: suppress_bad_shapes(x, 1.0))
+    filter_list.append(lambda x: suppress_bad_shapes(x, 0.5))
 
     # Flag for how the intensity changes from the inside of the border to the
     # outside of the border. 1 means that the outside is more intense than the
     # inside. 0 means there isn't a difference. -1 means the inside is more
     # intense than the outside.
-    intensity_change_flag = -1
+    intensity_change_flag = 1
     # Minimum average increase in intensity
     # For Lanes, inside is more intense in the Red channel by about
     # 115 (= 175 - 60) Using greyscale for now, inside more intense by 70
-    intensity_change = 20
+    intensity_change = 60
     filter_list.append(lambda x: filters.filter_intensities(x, img,
                        intensity_change_flag, intensity_change))
     filter_list.append(lambda x: filters.suppress_concentric(x))
@@ -82,9 +82,9 @@ def validate1(contours, img, debug):
 def validate2(contours, img, debug):
     filter_list = []
     # Minimum perimeter of target
-    min_length = 4*20
+    min_length = 2*150+2*30
     # Minimum area of target
-    min_area = 20*20
+    min_area = 30*150
     filter_list.append(lambda x: filters.filterSize(x, min_length, min_area))
     # Tolerance for polygon fitting. Increasing means things get fit
     # with fewer vertices.
@@ -103,9 +103,9 @@ def validate2(contours, img, debug):
     # outside of the border. 1 means that the outside is more intense than the
     # inside. 0 means there isn't a difference. -1 means the inside is more
     # intense than the outside.
-    intensity_change_flag = -1
+    intensity_change_flag = 1
     # Minimum average increase in intensity
-    intensity_change = -100
+    intensity_change = 60
     filter_list.append(
         lambda x: filters.filter_intensities(x, img, intensity_change_flag,
                                              intensity_change))
@@ -120,22 +120,27 @@ def findByContours(orig):
     img = orig.copy()
     debug = orig.copy()
     # gray = cv2.split(img)[2]
-    # gray = filters.grayScale(img)
+    #gray = filters.grayScale(img)
     b, g, r = cv2.split(img)
-    gray = (2**7 + r/2) - g/2
-    gray = filters.medianBlur(gray)
-    img = cv2.Canny(gray, 0, 100, apertureSize=5)
+    # Red minus green
+    gray = (2**7 + img[:,:,2]/2) - img[:,:,1]/2
+    gray = cv2.equalizeHist(gray)
+    gray = filters.medianBlur(gray, size=5)
+    img = cv2.Canny(gray, 100, 200, apertureSize=3)
     contours, _ = cv2.findContours(img, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
-    return validate2(contours, gray, debug)
+    return validate1(contours, gray, debug)
 
 
 def debug_callback(orig):
     #gray = cb.filters.grayScale(orig)
     #gray = cv2.split(orig)[2]
-    #b, g, r = cv2.split(orig)
-    #gray = (2**7 + r/2) - g/2
-    #gray = cb.filters.medianBlur(gray, size=19)
-    #img = cv2.Canny(gray, 0, 100, apertureSize=5)
+    # Red minus green
+    #img = orig.copy()
+    #gray = (2**7 + img[:,:,2]/2) - img[:,:,1]/2
+    #gray = cb.filters.grayScale(orig)
+    #gray = cb.filters.gaussianBlur(gray, size=5)
+    #img = cv2.Canny(gray, 20, 50, apertureSize=3)
+    #_, img =cv2.threshold(gray, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
     #cb.publishImage(img)
     _, debug = findByContours(orig)
     cb.publishImage(debug)
