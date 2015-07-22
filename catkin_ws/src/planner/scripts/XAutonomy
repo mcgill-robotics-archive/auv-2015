@@ -7,7 +7,6 @@ import rospy
 from threading import Thread
 from planner.primitives import SetVelocityState
 from planner import tasks
-from std_msgs.msg import Bool
 
 __author__ = 'Max Krogius'
 
@@ -24,10 +23,11 @@ def create_state_machine():
         raise ValueError('~yaws and ~times must have the same length')
 
     motion_sm = smach.StateMachine(
-        outcomes=['succeeded', 'aborted', 'preempted'],
-        input_keys=['yaw_setpoint', 'depth_setpoint'],
-        output_keys=['yaw_setpoint', 'depth_setpoint'])
+        outcomes=['succeeded', 'aborted', 'preempted'])
     with motion_sm:
+        smach.StateMachine.add_auto(
+            'Initialize', tasks.initialize(pause, countdown, depth),
+            connector_outcomes=['succeeded'])
         for i in range(len(yaws)):
             smach.StateMachine.add_auto(
                 'Yaw {}'.format(yaws[i]),
@@ -53,36 +53,7 @@ def create_state_machine():
                 'false': 'succeeded',
                 'true': 'aborted'})
 
-    csm = smach.Concurrence(
-        ['succeeded', 'aborted', 'preempted'],
-        child_termination_cb=lambda x: True,
-        default_outcome='aborted',
-        outcome_map={'succeeded': {'Motion': 'succeeded'},
-                     'preempted': {'Motion': 'preempted'}},
-        input_keys=['yaw_setpoint', 'depth_setpoint'],
-        output_keys=['yaw_setpoint', 'depth_setpoint'])
-    with csm:
-        csm.add('Motion', motion_sm)
-        csm.add(
-            'Monitor Mission',
-            smach_ros.MonitorState(
-                'mission',
-                Bool,
-                lambda x, y: y.data))
-
-    sm = smach.StateMachine(
-        ['succeeded', 'preempted', 'aborted'])
-    with sm:
-        sm.add_auto(
-            'Initialize', tasks.initialize(pause, countdown, depth),
-            connector_outcomes=['succeeded'])
-        sm.add(
-            'Motion and Monitor', csm,
-            transitions={
-                'succeeded': 'Initialize',
-                'preempted': 'Initialize',
-                'aborted': 'Initialize'})
-    return sm
+    return tasks.mission_switch_wrapper(motion_sm)
 
 
 if __name__ == '__main__':

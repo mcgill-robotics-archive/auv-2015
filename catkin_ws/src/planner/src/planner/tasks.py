@@ -7,6 +7,45 @@ from auv_msgs.msg import CVTarget, SetCVTargetAction, SetCVTargetGoal
 from primitives import InitializationState, SetVelocityState, SetUserDataState
 
 
+def mission_switch_wrapper(state_machine):
+    # This will return a state macine containing @arg state_machine which
+    # listens to mission switch to start and stop @arg state_machine.
+    # @arg state_machine must have one outcome called 'succeeded', and may
+    # also have outcomes called 'aborted' or 'preempted'.
+    csm = smach.Concurrence(
+        ['succeeded', 'aborted', 'preempted'],
+        child_termination_cb=lambda x: True,
+        default_outcome='aborted',
+        outcome_map={
+            'succeeded': {'Mission': 'succeeded'},
+            'preempted': {'Monitor Mission': 'preempted'}})
+    with csm:
+        csm.add('Mission', state_machine)
+        csm.add(
+            'Monitor Mission',
+            smach_ros.MonitorState(
+                'mission',
+                Bool,
+                lambda x, y: y.data))
+
+    sm = smach.StateMachine(['preempted', 'aborted'])
+    with sm:
+        # Wait for mission switch
+        smach.StateMachine.add_auto(
+            'Mission Switch',
+            smach_ros.MonitorState('/mission', Bool, lambda x, y: not y.data),
+            # This state should return invalid once mission is true
+            connector_outcomes=['invalid'],
+            transitions={'valid': 'aborted'})
+        smach.StateMachine.add(
+            'Mission with Monitor',
+            csm,
+            transitions={
+                'aborted': 'Mission Switch',
+                'succeeded': 'Mission Switch'})
+    return sm
+
+
 def initialize(pause, countdown, depth):
     sm = smach.StateMachine(
         outcomes=['succeeded', 'aborted', 'preempted'],
@@ -20,14 +59,6 @@ def initialize(pause, countdown, depth):
             'Set User Data',
             SetUserDataState(ud),
             connector_outcomes=['succeeded'])
-
-        # Wait for mission switch
-        smach.StateMachine.add_auto(
-            'Mission Switch',
-            smach_ros.MonitorState('/mission', Bool, lambda x, y: not y.data),
-            # This state should return invalid once mission is true
-            connector_outcomes=['invalid'],
-            transitions={'valid': 'aborted'})
 
         # Pause
         smach.StateMachine.add_auto(
