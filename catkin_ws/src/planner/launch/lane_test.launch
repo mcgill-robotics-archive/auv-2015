@@ -1,0 +1,6 @@
+<launch>
+    <node name="lane_test" pkg="planner" type="lane_test" output="screen"/>
+    <node name="cv_server" pkg="computer_vision" type="cv_server" output="screen"/>
+    <node name="tracking_server" pkg="tracking" type="tracking_server" output="screen"/>
+    <node name="camera_down_transform" pkg="tf" type="static_transform_publisher" args="0 0 0 0 0 0 robot camera_down 20" output="screen"/> 
+</launch>
