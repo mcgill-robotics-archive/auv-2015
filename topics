@@ -1,21 +1,27 @@
+[battery]
+shortcut: b
+description: battery voltage data
+topics: /electrical_interface/computer_voltage
+        /electrical_interface/motor_voltage
+
 [cameras]
 shortcut: c
 description: raw camera data
-topics:	/camera_down/camera_info
-	/camera_down/image_rect_color
-	/camera_front_left/camera_info
-	/camera_front_left/image_rect_color
-	/camera_front_right/camera_info
-	/camera_front_right/image_rect_color
+topics: /camera_down/camera_info
+        /camera_down/image_rect_color
+        /camera_front_left/camera_info
+        /camera_front_left/image_rect_color
+        /camera_front_right/camera_info
+        /camera_front_right/image_rect_color
 
 [state_estimation]
 shortcut: se
 description: state estimation data
-topics:	/state_estimation/depth
-	/state_estimation/acc
-	/state_estimation/gyro
-	/state_estimation/mag
-	/state_estimation/pose
+topics: /state_estimation/depth
+        /state_estimation/acc
+        /state_estimation/gyro
+        /state_estimation/mag
+        /state_estimation/pose
 
 [sonar]
 shortcut: s
