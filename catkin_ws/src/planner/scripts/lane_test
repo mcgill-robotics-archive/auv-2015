@@ -10,17 +10,17 @@ __author__ = 'Max Krogius'
 
 
 def create_state_machine():
-    sm = smach.StateMachine(
-        outcomes=['succeeded', 'lane_not_found', 'aborted', 'preempted'],
-        input_keys=['yaw_setpoint', 'depth_setpoint'],
-        output_keys=['yaw_setpoint', 'depth_setpoint'])
+    sm = smach.StateMachine(outcomes=['succeeded', 'aborted', 'preempted'])
     with sm:
-        #sm.add_auto(
-        #    'Initialize',
-        #    tasks.initialize(5, 5, 1),
-        #    connector_outcomes=['succeeded'])
-        sm.add('Lane Task', tasks.lane_task(yaw=0, speed=1, duration=10))
-    return sm
+        sm.add_auto(
+            'Initialize',
+            tasks.initialize(3, 5, 1),
+            connector_outcomes=['succeeded'])
+        sm.add(
+            'Lane Task',
+            tasks.lane_task(yaw=0, speed=1, duration=10),
+            transitions={'lane_not_found': 'succeeded'})
+    return tasks.mission_switch_wrapper(sm)
 
 
 if __name__ == '__main__':
