@@ -18,24 +18,12 @@ void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
     }
     ADC12_CLK_ENABLED++;
 
-#ifdef SINGLE_ADC_MODE
-    // ADC1 GPIO Configuration.
-    // PC0 ------> ADC12_IN6
-    // PC1 ------> ADC12_IN7
-    // PC2 ------> ADC12_IN8
-    // PC3 ------> ADC12_IN9
-    GPIO_InitStruct.Pin = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3;
-    GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
-    HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
-#else
     // ADC1 GPIO Configuration.
     // PB11 ------> ADC1_IN14
     GPIO_InitStruct.Pin = GPIO_PIN_11;
     GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
-#endif
 
     // Initialize peripheral DMA.
     hdma_adc1.Instance = DMA1_Channel1;
@@ -176,18 +164,9 @@ void HAL_ADC_MspDeInit(ADC_HandleTypeDef* hadc)
       __ADC12_CLK_DISABLE();
     }
 
-#ifdef SINGLE_ADC_MODE
-    // ADC1 GPIO Configuration.
-    // PC0 ------> ADC12_IN6
-    // PC1 ------> ADC12_IN7
-    // PC2 ------> ADC12_IN8
-    // PC3 ------> ADC12_IN9
-    HAL_GPIO_DeInit(GPIOC, GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3);
-#else
     // ADC1 GPIO Configuration.
     // PB11 ------> ADC1_IN14
     HAL_GPIO_DeInit(GPIOB, GPIO_PIN_11);
-#endif
 
     // Deinitialize peripheral DMA.
     HAL_DMA_DeInit(hadc->DMA_Handle);

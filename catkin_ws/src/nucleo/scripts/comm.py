@@ -24,10 +24,10 @@ else:
     print("Assuming 8 bit mode...")
 
 headers = (
-    "[DATA 0]",
     "[DATA 1]",
     "[DATA 2]",
     "[DATA 3]",
+    "[DATA 4]",
     "[DEBUG]",
     "[FATAL]"
 )

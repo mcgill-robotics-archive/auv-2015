@@ -24,11 +24,6 @@ ifeq (${TWELVE_BIT_MODE}, 1)
     CFLAGS += -D TWELVE_BIT_MODE
 endif
 
-# Add single ADC mode flag.
-ifeq (${SINGLE_ADC_MODE}, 1)
-    CFLAGS += -D SINGLE_ADC_MODE
-endif
-
 # Add serial flag, default is USART2.
 SERIAL?=2
 CFLAGS += -D SERIAL=USART${SERIAL}
