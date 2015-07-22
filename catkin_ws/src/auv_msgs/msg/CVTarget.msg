@@ -1,5 +1,5 @@
 Header header
-string type
+string target_name
 geometry_msgs/Polygon[] targets 
 
 # Target types

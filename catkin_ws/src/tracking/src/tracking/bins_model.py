@@ -108,7 +108,8 @@ class BinsModel(object):
             long_dir = cls.calculate_direction(locations[0])
             return np.array([long_dir[1], -long_dir[0]])
         else:
-            centers = np.average(locations, axis=1)
+            # Each location array can be a different length.
+            centers = np.average([np.average(l, axis=0) for l in locations], axis=0)
             return cls.calculate_direction(centers)
 
     @classmethod

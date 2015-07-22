@@ -17,6 +17,7 @@ bins_depth = 4.7268  # 16 ft - 15 cm
 down_camera_model = None
 bridge = CvBridge()
 subscribers = []
+target_name = ''
 
 
 def bins_callback(img):
@@ -32,20 +33,21 @@ def project_bottom_callback(findByContours, img):
         rospy.logwarn('No camera info')
         return
     rects, debug_img = findByContours(bridge.imgmsg_to_cv2(img))
-    debug_pub.publish(bridge.cv2_to_imgmsg(debug_img))
+    debug_pub.publish(bridge.cv2_to_imgmsg(debug_img, 'bgr8'))
     target_msg = CVTarget()
     header = Header()
     header.frame_id = 'floating_horizon'
     target_msg.header = header
-    target_msg.type = CVTarget.BINS
+    target_msg.target_name = target_name
     target_msg.targets = project_targets_to_bottom(rects, img.header)
     if len(target_msg.targets) > 0:
         pub.publish(target_msg)
         server.publish_feedback(SetCVTargetFeedback())
 
+
 def project_targets_to_bottom(targets, header):
     try:
-        img.header.stamp = rospy.Time(0)
+        header.stamp = rospy.Time(0)
         transform = listener.asMatrix('floating_horizon', header)
         # The camera pinhole, in the floating_horizon frame
         perspective_point = np.dot(transform, np.array([0., 0., 0., 1.]))
@@ -55,6 +57,7 @@ def project_targets_to_bottom(targets, header):
             perspective=perspective_point)
         transformed_targets = []
         for target in targets:
+            target = np.reshape(target, (-1, 2))
             polygon = Polygon()
             for xy in target:
                 camera_ray = down_camera_model.projectPixelTo3dRay(xy)
@@ -88,6 +91,7 @@ def camera_info_callback(msg):
 
 
 def register_target():
+    global target_name
     target_name = server.accept_new_goal().target_name
     if target_name == CVTarget.BINS:
         subscribers.append(rospy.Subscriber('camera_down/camera_info',
@@ -107,11 +111,14 @@ def cancel_target():
     global subscribers
     [s.unregister() for s in subscribers]
     subscribers = []
+    target_name = ''
+    if server.is_active():
+        server.set_preempted()
 
 target_map = {CVTarget.BINS: bins_callback}
 
 if __name__ == '__main__':
-    global listener, pub, debug_pub
+    global listener, pub, debug_pub, server
     rospy.init_node('cv_server')
     server = SimpleActionServer('cv_server', SetCVTargetAction,
                                 auto_start=False)

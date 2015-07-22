@@ -20,7 +20,10 @@ def suppress_bad_shapes(contours, threshold):
         [[5, 72]], [[5, 86]], [[15, 86]], [[15, 72]],
         [[20, 72]], [[20, 70]], [[15, 70]], [[15, 16]],
         [[20, 16]], [[20, 14]], [[15, 14]], [[15, 0]]])
-    return filters.suppress_bad_shapes(contours, lane, threshold)
+    contours = filters.suppress_bad_shapes(contours, lane, threshold)
+    # Smooth the contours a bit so we don't push way too much data.
+    return [cv2.approxPolyDP(c, 0.005*cv2.arcLength(c, True), True)
+            for c in contours]
 
 
 def angle_cos(p0, p1, p2):

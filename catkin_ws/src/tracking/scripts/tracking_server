@@ -9,6 +9,7 @@ from actionlib import SimpleActionServer
 from math import atan2, pi, sin, cos
 
 sub = None
+tracker = None
 transform_broadcaster = None
 num_bins = 4
 target_name = ''
@@ -17,10 +18,13 @@ target_tracked = False
 
 def target_callback(msg):
     global target_tracked
-    if msg.type != target_name:
+    if not server.is_active():
+        return
+    if msg.target_name != target_name:
         return
     if msg.header.frame_id != 'floating_horizon':
         rospy.logerr('Target frame transformation not implemented')
+    print 'msg received'
     targets = []
     height = None
     for polygon in msg.targets:
@@ -54,11 +58,16 @@ def target_callback(msg):
 
 
 def set_target():
-    global sub, target_name, target_tracked
+    global sub, target_name, target_tracked, tracker
     target_tracked = False
     target_name = server.accept_new_goal().target_name
+    if target_name == CVTarget.LANE:
+        num_bins = 1
+    if target_name == CVTarget.BINS:
+        num_bins = 4
     if target_name == CVTarget.BINS or CVTarget.LANE:
         sub = rospy.Subscriber('cv/identified_targets', CVTarget, target_callback)
+        tracker = Tracker(lambda x: BinsModel.generate_configs(x, num_bins=num_bins), 3)
     else:
         rospy.logerr('Unknown Target')
 
@@ -69,12 +78,13 @@ def cancel_target():
     target_tracked = False
     if sub:
         sub.unregister()
+    if server.is_active():
+        server.set_preempted()
 
 
 if __name__ == '__main__':
-    global tracker, server
+    global server
     rospy.init_node('tracking_server')
-    tracker = Tracker(lambda x: BinsModel.generate_configs(x, num_bins=num_bins), 3)
     transform_broadcaster = tf.TransformBroadcaster()
     server = SimpleActionServer('tracking', SetCVTargetAction, auto_start=False)
     server.register_goal_callback(set_target)

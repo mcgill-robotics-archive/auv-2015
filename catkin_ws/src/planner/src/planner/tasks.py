@@ -42,7 +42,10 @@ def mission_switch_wrapper(state_machine):
             csm,
             transitions={
                 'aborted': 'Mission Switch',
-                'succeeded': 'Mission Switch'})
+                'succeeded': 'Mission Switch',
+                # Yes we do want preempted to go back to mission switch. Some
+                # of the states can return preempted witout ctrl+c.
+                'preempted': 'Mission Switch'})
     return sm
 
 
