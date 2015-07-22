@@ -13,10 +13,13 @@
       <param name="video_mode" value="format7_mode0" />
       <param name="frame_id" value="$(arg CAMERA_NAME)" />
 
+      <!-- Manual Exposure -->
+      <param name="auto_exposure" value="0"/>
+      <param name="exposure" value="266"/>
       <!-- The White Balance is set to manual here -->
       <param name="auto_white_balance" value="3" />
-      <param name="white_balance_BU" value="1000" />
-      <param name="white_balance_RV" value="500" />
+      <param name="white_balance_BU" value="709" />
+      <param name="white_balance_RV" value="1023" />
       <param name="bayer_pattern" value="gbrg" />
       <param name="format7_color_coding" value="raw8"/>
     </node>
