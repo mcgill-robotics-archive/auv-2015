@@ -1,7 +1,7 @@
 pause: 3
 countdown: 5
-depth: 0.75
+depth: 1.7
 speed: 5
 stop_time: 3
-yaws: [0, 8]
-times: [28, 13.734]
+yaws: [0, 0.1395]
+times: [50, 24.5]
