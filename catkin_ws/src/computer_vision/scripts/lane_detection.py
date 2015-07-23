@@ -124,7 +124,7 @@ def findByContours(orig):
     debug = orig.copy()
     # gray = cv2.split(img)[2]
     #gray = filters.grayScale(img)
-    b, g, r = cv2.split(img)
+    #b, g, r = cv2.split(img)
     # Red minus green
     gray = (2**7 + img[:,:,2]/2) - img[:,:,1]/2
     gray = cv2.equalizeHist(gray)
