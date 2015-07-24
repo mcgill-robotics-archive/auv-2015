@@ -42,13 +42,13 @@ def create_state_machine():
                     connector_outcomes=['succeeded'])
             else:
                 smach.StateMachine.add_auto(
-                    'Yaw {}'.format(yaws[i] + pi),
+                    'Yaw {}'.format(yaws[i]),
                     SetVelocityState.create_set_yaw_state(yaws[i]),
                     connector_outcomes=['succeeded'])
                 smach.StateMachine.add_auto(
                     'Move Forward {}'.format(times[i]),
                     SetVelocityState.create_move_forward_state(
-                        -speed, rospy.Duration.from_sec(times[i])),
+                        -speed, rospy.Duration.from_sec(abs(times[i]))),
                     connector_outcomes=['succeeded'])
 
             smach.StateMachine.add_auto(
