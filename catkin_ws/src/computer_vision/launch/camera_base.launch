@@ -14,8 +14,8 @@
       <param name="frame_id" value="$(arg CAMERA_NAME)" />
 
       <!-- Manual Exposure -->
-      <param name="auto_exposure" value="0"/>
-      <param name="exposure" value="266"/>
+      <param name="auto_exposure" value="2"/>
+      <param name="auto_brightness" value="2"/>
       <!-- The White Balance is set to manual here -->
       <param name="auto_white_balance" value="3" />
       <param name="white_balance_BU" value="709" />
