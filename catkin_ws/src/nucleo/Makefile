@@ -13,6 +13,7 @@ CFLAGS += --gc-sections -Wl,-Map,$(PROJECT).map --specs=rdimon.specs
 CFLAGS += -lc -lrdimon -I"include" -I"drivers" -I"drivers/CMSIS/core"
 CFLAGS += -I"drivers/CMSIS/device" -I"drivers/HAL/include"
 CFLAGS += -D STM32F303xE -D NUCLEO_F303RE -D USE_HAL_DRIVER -D STM32F303RETx
+CFLAGS += -D ARM_MATH_CM4 -D __FPU_PRESENT=1
 
 # Add debug flag.
 ifeq (${DEBUG}, 1)
