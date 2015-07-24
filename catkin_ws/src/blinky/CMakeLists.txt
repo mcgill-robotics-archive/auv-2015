@@ -54,8 +54,8 @@ add_message_files(
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
-  UpdateBattery1Lights.srv
-  UpdateBattery2Lights.srv
+  UpdateMotorBatteryLights.srv
+  UpdateComputerBatteryLights.srv
   UpdatePlannerLights.srv
   WarningLights.srv
 )
