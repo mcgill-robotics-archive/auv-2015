@@ -31,7 +31,7 @@ LIGHT_GREEN = RGB(0,127,0)
 # blinky tape class handle (accesses 2 segments)
 # change first argument with usb serial port
 # where the tape is found
-blt = bt.BlinkyTape("/dev/ttyUSB0", 2 * NUM_LED_PER_SIDE)
+blt = bt.BlinkyTape("/dev/blinky", 2 * NUM_LED_PER_SIDE)
 
 # Color to separate subsections in the planner segment
 separation_color = RGB(0,0,0)
