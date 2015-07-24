@@ -36,7 +36,7 @@ headers = (
 if __name__ == "__main__":
     starts = [0, 0, 0, 0]
 
-    with Serial("/dev/tty.usbmodem1413", baudrate=230400) as ser:
+    with Serial("/dev/nucleo", baudrate=230400) as ser:
         print("Initializing...")
         while not ser.readable():
             pass
