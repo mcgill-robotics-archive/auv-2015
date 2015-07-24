@@ -13,7 +13,14 @@ int main(void)
 
   // Initialize UART.
   UART_Init();
+  write_buffer("\n", 1);  // Force clear communication channel.
   log_debug("Initialized UART");
+
+#ifdef TWELVE_BIT_MODE
+  log_debug("Running in 12 bit mode");
+#else
+  log_debug("Running in 8 bit mode");
+#endif
 
   // Write core clock rate.
   char clock_buff[32];
@@ -24,12 +31,6 @@ int main(void)
   char lsi_buff[32];
   sprintf(lsi_buff, "LSI running at %u Hz", LSI_VALUE);
   log_debug(lsi_buff);
-
-#ifdef TWELVE_BIT_MODE
-  log_debug("Running in 12 bit mode");
-#else
-  log_debug("Running in 8 bit mode");
-#endif
 
   // Initialize GPIO.
   log_debug("Initializing GPIO...");
