@@ -3,6 +3,7 @@
 		name="XimuPublisher"
 		type="XimuPublisher"
 		pkg="state_estimation"
+    respawn="true"
 	/>
 
 	<node
