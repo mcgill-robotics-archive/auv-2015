@@ -20,6 +20,9 @@ add_message_files(FILES
   #added by State Estimation
   RangeBearingElevation.msg
   SlamEstimate.msg
+
+  #added by hydrophones
+  Signals.msg
 )
 
 add_service_files(FILES
