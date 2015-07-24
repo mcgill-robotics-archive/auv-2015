@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Read from Nucleo serial."""
+"""Nucleo deserializer."""
 
 import rospy
 import bitstring
@@ -10,27 +10,34 @@ from auv_msgs.msg import Signals
 
 __author__ = "Anass Al-Wohoush"
 
-TWELVE_BIT_MODE = False
-BUFFERSIZE = 6000
+# Define bootup header.
+BOOTUP_HEADER = "[BOOTUP]"
 
+# Define logging headers.
 DEBUG_HEADER = "[DEBUG]"
 FATAL_HEADER = "[FATAL]"
 
+# Define all available headers.
 headers = (
-    "[DATA 0]",
     "[DATA 1]",
     "[DATA 2]",
     "[DATA 3]",
     "[DATA 4]",
     DEBUG_HEADER,
-    FATAL_HEADER
+    FATAL_HEADER,
+    BOOTUP_HEADER
 )
-
-RAW_BUFFERSIZE = 2 * BUFFERSIZE if TWELVE_BIT_MODE else BUFFERSIZE
-INT_SIZE = 16 if TWELVE_BIT_MODE else 8
 
 
 def get_header(ser):
+    """Gets next header from serial buffer.
+
+    Args:
+        ser: Serial port.
+
+    Returns:
+        Header.
+    """
     skipped = 0
     while ser.readable() and not rospy.is_shutdown():
         # Read until next line feed.
@@ -44,11 +51,19 @@ def get_header(ser):
 
         # Otherwise reset.
         skipped += len(header)
-        print(header)
         header = ""
 
 
 def get_data(ser, header):
+    """Gets next payload.
+
+    Args:
+        ser: Serial port.
+        header: Corresponding header.
+
+    Returns:
+        Tuple of (quadrant, data).
+    """
     # Get data.
     raw = ser.read(RAW_BUFFERSIZE)
 
@@ -66,6 +81,16 @@ def get_data(ser, header):
 
 
 def iter_data(ser):
+    """Iterate through data.
+
+    Note: This is blocking.
+
+    Args:
+        ser: Serial port.
+
+    Yields:
+        Tuple of (quadrant, data).
+    """
     while ser.readable() and not rospy.is_shutdown():
         header = get_header(ser)
         if "DATA" in header:
@@ -76,14 +101,27 @@ def iter_data(ser):
                 rospy.logdebug(payload)
             elif header == FATAL_HEADER:
                 rospy.logfatal(payload)
+            elif header == BOOTUP_HEADER:
+                rospy.logwarn("Device was reset")
 
 
 if __name__ == "__main__":
     rospy.init_node("nucleo", log_level=rospy.DEBUG)
     pub = rospy.Publisher("~signals", Signals, queue_size=1)
-    rospy.loginfo("Assuming %d bit mode", 12 if TWELVE_BIT_MODE else 8)
 
-    with Serial("/dev/nucleo", baudrate=230400) as ser:
+    # Get baudrate.
+    baudrate = int(rospy.get_param("~baudrate", 230400))
+
+    # Get whether 12 bit mode or not.
+    TWELVE_BIT_MODE = bool(rospy.get_param("~twelve_bit_mode", False))
+    rospy.loginfo("Assuming %d bit mode", 12 if TWELVE_BIT_MODE else 8)
+    INT_SIZE = 16 if TWELVE_BIT_MODE else 8
+
+    # Get buffersize.
+    BUFFERSIZE = int(rospy.get_param("~buffersize", 6000))
+    RAW_BUFFERSIZE = 2 * BUFFERSIZE if TWELVE_BIT_MODE else BUFFERSIZE
+
+    with Serial("/dev/nucleo", baudrate=baudrate) as ser:
         rospy.loginfo("Waiting for device...")
         while not ser.readable():
             pass
@@ -92,7 +130,28 @@ if __name__ == "__main__":
         rospy.loginfo("Waiting for data...")
         signals = Signals()
         received = [0 for i in range(4)]
+        previous_received_time = rospy.get_rostime()
         for quadrant, data in iter_data(ser):
+            # Determine how long it has been since last packet.
+            current_time = rospy.get_rostime()
+            dt = current_time - previous_received_time
+            previous_received_time = current_time
+
+            rospy.logdebug("Received quadrant %d data", quadrant)
+
+            # Reset if it has been too long, since packets might not match.
+            if any(received) and dt > rospy.Duration(0.5):
+                rospy.logwarn("Timeout %r, resetting...", dt.to_sec())
+                received = [0 for i in received]
+
+            # Verify no packet has been received multiple times.
+            received[quadrant - 1] += 1
+            if any(q > 1 for q in received):
+                rospy.logwarn("Received inconsistent data %r", received)
+                received = [0 for i in received]
+                received[quadrant - 1] = 1
+
+            # Set quadrant corresponding to packet.
             if quadrant == 1:
                 signals.quadrant_1 = data
             elif quadrant == 2:
@@ -102,10 +161,8 @@ if __name__ == "__main__":
             elif quadrant == 4:
                 signals.quadrant_4 = data
 
-            received[quadrant] += 1
+            # Send data if all packets were received.
             if all(q == 1 for q in received):
                 pub.publish(signals)
-                received = [0 for i in received]
-            elif any(q > 1 for q in received):
-                rospy.logwarn("Received inconsistent data %r", received)
+                rospy.loginfo("Received ping")
                 received = [0 for i in received]
