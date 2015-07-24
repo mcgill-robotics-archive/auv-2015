@@ -22,7 +22,7 @@ int main(void)
 
   // Write LSI frequency.
   char lsi_buff[32];
-  sprintf(lsi_buff, "LSI unning at %u Hz", LSI_VALUE);
+  sprintf(lsi_buff, "LSI running at %u Hz", LSI_VALUE);
   log_debug(lsi_buff);
 
 #ifdef TWELVE_BIT_MODE
