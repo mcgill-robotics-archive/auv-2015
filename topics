@@ -36,3 +36,7 @@ description: CPU core temperatures
 topics: /temperature/cpu
         /temperature/overheating
 
+[mission]
+shortcut: m
+description: Mission switch
+topics:	/mission
