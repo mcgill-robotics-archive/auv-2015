@@ -8,7 +8,7 @@ import numpy
 from auv_msgs.msg import Signals
 from matplotlib import pyplot as plt
 
-FS = 1028571.4286
+FS = 972972.97297
 
 
 def plot(msg):
@@ -39,7 +39,7 @@ def plot(msg):
 
 if __name__ == '__main__':
     rospy.init_node("plotter")
-    rospy.Subscriber("/nucleo/signals", Signals, plot, queue_size=10)
+    rospy.Subscriber("/nucleo/signals", Signals, plot, queue_size=1)
     plt.ion()
     plt.show()
     rospy.spin()
