@@ -116,7 +116,7 @@ if __name__ == "__main__":
     INT_SIZE = 16 if TWELVE_BIT_MODE else 8
 
     # Get buffersize.
-    BUFFERSIZE = int(rospy.get_param("~buffersize", 2048))
+    BUFFERSIZE = int(rospy.get_param("~buffersize", 1024))
     RAW_BUFFERSIZE = 2 * BUFFERSIZE if TWELVE_BIT_MODE else BUFFERSIZE
 
     with Serial("/dev/nucleo", baudrate=baudrate) as ser:
