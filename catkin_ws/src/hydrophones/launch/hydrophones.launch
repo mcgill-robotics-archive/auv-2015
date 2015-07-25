@@ -1,0 +1,4 @@
+<launch>
+    <node name="tdoas" type="tdoas.py" pkg="hydrophones" output="screen" respawn="true"/>
+    <node name="nucleo" type="nucleo.py" pkg="nucleo" output="screen" respawn="true"/>
+</launch>
