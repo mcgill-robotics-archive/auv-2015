@@ -12,18 +12,25 @@ __author__ = 'Max Krogius, Anass Al-Wohoush'
 class FireDropperState(State):
     '''Fires a dropper'''
     def __init__(self):
+        self.pub = rospy.Publisher(
+            'electrical_interface/solenoid',
+            auv_msgs.msg.SolenoidCommands, queue_size=100)
         super(FireDropperState, self).__init__(outcomes=['succeeded'])
 
     def execute(self, user_data):
         global pub
-        cmd = auv_msgs.msg.SolenoidCommands()
-        cmd.port_dropper = True
-        cmd.starboard_dropper = True
-        pub = rospy.Publisher(
-            'electrical_interface/solenoid',
-            auv_msgs.msg.SolenoidCommands, queue_size=100)
-        rospy.Timer(rospy.Duration(0.1), lambda x: pub.publish(cmd))
+        self.num_pubs = 10
+        rospy.Timer(rospy.Duration(0.1), self.fire_cb)
         return 'succeeded'
+
+    def fire_cb(self, event):
+        fire = self.num_pubs > 0
+        self.num_pubs -= 1
+        cmd = auv_msgs.msg.SolenoidCommands()
+        cmd.port_dropper = fire
+        cmd.starboard_dropper = fire
+        cmd.port_torpedo = fire
+        self.pub.publish(cmd)
 
 
 class SetUserDataState(State):

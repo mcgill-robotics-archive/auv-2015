@@ -22,6 +22,7 @@ def create_state_machine():
     times = rospy.get_param('~times')
     depths = rospy.get_param('~depths')
     dropper_index = rospy.get_param('~dropper_index')
+    torp_yaw = rospy.get_param('~torp_yaw')
     if len(yaws) != len(times):
         raise ValueError('~yaws and ~times must have the same length')
 
@@ -54,15 +55,22 @@ def create_state_machine():
                 connector_outcomes=['succeeded'])
             if i == dropper_index:
                 smach.StateMachine.add_auto(
+                    'Yaw {}'.format(torp_yaw),
+                    SetVelocityState.create_set_yaw_state(torp_yaw),
+                    connector_outcomes=['succeeded'])
+                smach.StateMachine.add_auto(
                     'Fire',
                     FireDropperState(),
+                    connector_outcomes=['succeeded'])
+                smach.StateMachine.add_auto(
+                    'Yaw {}'.format(-torp_yaw),
+                    SetVelocityState.create_set_yaw_state(-torp_yaw),
                     connector_outcomes=['succeeded'])
 
         smach.StateMachine.add_auto(
             'Hydrophones',
             AcousticServoState(tdoa_tol=1.4e-6),
             connector_outcomes=['succeeded'])
-            
         smach.StateMachine.add(
             'Sleep',
             smach_ros.ConditionState(
