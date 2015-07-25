@@ -7,6 +7,14 @@ kp_yPos: 0.0
 ki_yPos: 0.0
 kd_yPos: 0.0
 
+kp_xHydro: 0.0
+ki_xHydro: 0.0
+kd_xHydro: 0.0
+
+kp_yHydro: 0.0
+ki_yHydro: 0.0
+kd_yHydro: 0.0
+
 kp_depth: 20.0
 ki_depth: 2.0
 kd_depth: 85.0
