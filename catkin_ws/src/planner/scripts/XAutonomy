@@ -5,7 +5,8 @@ import smach
 import smach_ros
 import rospy
 from threading import Thread
-from planner.primitives import SetVelocityState, FireDropperState
+from planner.primitives import (
+    SetVelocityState, FireDropperState, AcousticServoState)
 from planner import tasks
 from numpy import sign
 
@@ -57,6 +58,11 @@ def create_state_machine():
                     FireDropperState(),
                     connector_outcomes=['succeeded'])
 
+        smach.StateMachine.add_auto(
+            'Hydrophones',
+            AcousticServoState(tdoa_tol=1.4e-6),
+            connector_outcomes=['succeeded'])
+            
         smach.StateMachine.add(
             'Sleep',
             smach_ros.ConditionState(

@@ -234,3 +234,42 @@ class SetPositionState(SimpleActionState):
         # The preempt is redefined to be success in result_cb.
         self.succeeded = True
         self.request_preempt()
+
+
+class AcousticServoState(SimpleActionState):
+    def __init__(self, tdoa_tol=0.05):
+        self.tdoa_tol = tdoa_tol
+        super(AcousticServoState, self).__init__(
+            'controls_hydro',
+            auv_msgs.msg.AcousticServoAction,
+            goal_cb=self._goal_cb,
+            result_cb=self.result_cb,
+            input_keys=['yaw_setpoint', 'depth_setpoint'],
+            output_keys=['yaw_setpoint', 'depth_setpoint'])
+
+    def _goal_cb(self, user_data, goal):
+        # Initialize this state.
+        self.succeeded = False
+        # Get the goal to send to controls.
+        goal.cmd.depth = user_data['depth_setpoint']
+        goal.cmd.yaw = user_data['yaw_setpoint']
+
+    def _goal_feedback_cb(self, feedback):
+        super(SetPositionState, self)._goal_feedback_cb(feedback)
+
+        if feedback.x_error**2 + feedback.y_error**2 < self.tdoa_tol**2:
+            self.exit_success()
+
+    def result_cb(self, user_data, goal_status, goal_result):
+        # If we preempted based on the timeout, the result should be success.
+        if self.succeeded and goal_status == GoalStatus.PREEMPTED:
+            return 'succeeded'
+        # For all other cases, we let the super handle it, so no need to
+        # return anything.
+        return None
+
+    def exit_success(self):
+        # This will cancel the pending action and transition to the next state.
+        # The preempt is redefined to be success in result_cb.
+        self.succeeded = True
+        self.request_preempt()
