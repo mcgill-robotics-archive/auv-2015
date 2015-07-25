@@ -29,6 +29,9 @@ add_message_files(
   #added by IO
   RadioCommands.msg
   CPUTemperature.msg
+
+  #added by hydrophones
+  Signals.msg
 )
 
 add_service_files(FILES
