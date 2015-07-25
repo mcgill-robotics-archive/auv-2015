@@ -9,8 +9,10 @@ static const uint32_t DOUBLE_BUFFERSIZE = 2 * BUFFERSIZE;
 // Determine measurement size depending on resolution.
 #ifdef TWELVE_BIT_MODE
 static const uint8_t MEASUREMENT_SIZE = 2;
+static const uint16_t THRESHOLD = 1500;
 #else
 static const uint8_t MEASUREMENT_SIZE = 1;
+static const uint16_t THRESHOLD = 100;
 #endif
 
 
@@ -127,73 +129,212 @@ void Stop_ADC(ADC_HandleTypeDef* hadc)
 void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 {
   // Conversion is complete.
+  uint32_t sum = 0;
+  char energy_buff[30];
 
-  // Verfify if ping had been detected in previous half callback.
-  if (found_ping && !buffer_inverted)
+  if (Get_ADC_Instance(hadc) == 1)
   {
-    // If so, stop this ADC.
-    Stop_ADC(hadc);
-  }
-
-  // Write data if all ADCs have been stopped and restart ADCs.
-  if (active_adcs == 0)
-  {
-    write_buffer(Get_Quadrant_Header(&hadc1), 9);
-    for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
-    }
-
-    write_buffer(Get_Quadrant_Header(&hadc2), 9);
-    for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
-    }
-
-    write_buffer(Get_Quadrant_Header(&hadc3), 9);
-    for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
-    }
-
-    write_buffer(Get_Quadrant_Header(&hadc4), 9);
-    for (int i = 0; i < DOUBLE_BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_4 + i, MEASUREMENT_SIZE);
-    }
-
-    // Restart ADCs.
-    Start_ADC(&hadc1, (uint32_t*) data_1);
-    Start_ADC(&hadc2, (uint32_t*) data_2);
-    Start_ADC(&hadc3, (uint32_t*) data_3);
-    Start_ADC(&hadc4, (uint32_t*) data_4);
-
-    // Reset flag.
-    found_ping = 0;
-    buffer_inverted = 0;
-  }
-  // Otherwise determine if there is a ping in the second half.
-  else
-  {
-    uint8_t instance = Get_ADC_Instance(hadc);
-    uint32_t* buffer_pointer;
-    switch (instance) {
-      case 1:
-        buffer_pointer = (uint32_t*) data_1 + HALF_BUFFERSIZE;
-        break;
-      case 2:
-        buffer_pointer = (uint32_t*) data_2 + HALF_BUFFERSIZE;
-        break;
-      case 3:
-        buffer_pointer = (uint32_t*) data_3 + HALF_BUFFERSIZE;
-        break;
-      case 4:
-        buffer_pointer = (uint32_t*) data_4 + HALF_BUFFERSIZE;
-        break;
-      default:
-        // Dealt with in Get_ADC_Instance().
-        return;
-    }
-    found_ping = has_ping(buffer_pointer, HALF_BUFFERSIZE, energy_threshold);
-    if (found_ping)
+    for (int i = BUFFERSIZE / 2; i < BUFFERSIZE; i += 1)
     {
-      buffer_inverted = 1;
+      sum += abs((int16_t) data_1[i] - DC_OFFSET);
+    }
+
+    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    {
+      Stop_ADC(&hadc1);
+      Stop_ADC(&hadc2);
+      Stop_ADC(&hadc3);
+      Stop_ADC(&hadc4);
+
+      sprintf(energy_buff, "ADC1 trigger on complete: %d", 2 * sum / BUFFERSIZE);
+      log_debug(energy_buff);
+
+      write_buffer(Get_Quadrant_Header(&hadc1), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc2), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc3), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc4), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_4 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      Start_ADC(&hadc1, (uint32_t*) data_1);
+      Start_ADC(&hadc2, (uint32_t*) data_2);
+      Start_ADC(&hadc3, (uint32_t*) data_3);
+      Start_ADC(&hadc4, (uint32_t*) data_4);
+    }
+  }
+  else if (Get_ADC_Instance(hadc) == 2)
+  {
+    for (int i = BUFFERSIZE / 2; i < BUFFERSIZE; i += 1)
+    {
+      sum += abs((int16_t) data_2[i] - DC_OFFSET);
+    }
+
+    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    {
+      Stop_ADC(&hadc1);
+      Stop_ADC(&hadc2);
+      Stop_ADC(&hadc3);
+      Stop_ADC(&hadc4);
+
+      sprintf(energy_buff, "ADC2 trigger on complete: %d", 2 * sum / BUFFERSIZE);
+      log_debug(energy_buff);
+
+
+      write_buffer(Get_Quadrant_Header(&hadc1), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc2), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc3), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc4), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_4 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      Start_ADC(&hadc1, (uint32_t*) data_1);
+      Start_ADC(&hadc2, (uint32_t*) data_2);
+      Start_ADC(&hadc3, (uint32_t*) data_3);
+      Start_ADC(&hadc4, (uint32_t*) data_4);
+    }
+  }
+  else if (Get_ADC_Instance(hadc) == 3)
+  {
+    for (int i = BUFFERSIZE / 2; i < BUFFERSIZE; i += 1)
+    {
+      sum += abs((int16_t) data_3[i] - DC_OFFSET);
+    }
+
+    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    {
+      Stop_ADC(&hadc1);
+      Stop_ADC(&hadc2);
+      Stop_ADC(&hadc3);
+      Stop_ADC(&hadc4);
+
+      sprintf(energy_buff, "ADC3 trigger on complete: %d", 2 * sum / BUFFERSIZE);
+      log_debug(energy_buff);
+
+      write_buffer(Get_Quadrant_Header(&hadc1), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc2), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc3), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc4), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_4 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      Start_ADC(&hadc1, (uint32_t*) data_1);
+      Start_ADC(&hadc2, (uint32_t*) data_2);
+      Start_ADC(&hadc3, (uint32_t*) data_3);
+      Start_ADC(&hadc4, (uint32_t*) data_4);
+    }
+  }
+  else if (Get_ADC_Instance(hadc) == 4)
+  {
+    for (int i = BUFFERSIZE / 2; i < BUFFERSIZE; i += 1)
+    {
+      sum += abs((int16_t) data_4[i] - DC_OFFSET);
+    }
+
+    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    {
+      Stop_ADC(&hadc1);
+      Stop_ADC(&hadc2);
+      Stop_ADC(&hadc3);
+      Stop_ADC(&hadc4);
+
+      sprintf(energy_buff, "ADC4 trigger on complete: %d", 2 * sum / BUFFERSIZE);
+      log_debug(energy_buff);
+
+      write_buffer(Get_Quadrant_Header(&hadc1), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc2), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc3), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc4), 9);
+      for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_4 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      Start_ADC(&hadc1, (uint32_t*) data_1);
+      Start_ADC(&hadc2, (uint32_t*) data_2);
+      Start_ADC(&hadc3, (uint32_t*) data_3);
+      Start_ADC(&hadc4, (uint32_t*) data_4);
     }
   }
 }
@@ -202,86 +343,212 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
 {
   // ADC conversion half-complete.
+  uint32_t sum = 0;
+  char energy_buff[30];
 
-  // Verfify if ping had been detected in previous complete callback.
-  if (found_ping && buffer_inverted)
+  if (Get_ADC_Instance(hadc) == 1)
   {
-    // If so, stop this ADC.
-    Stop_ADC(hadc);
-  }
+    for (int i = 0; i < BUFFERSIZE / 2; i += 1)
+    {
+      sum += abs((int16_t) data_1[i] - DC_OFFSET);
+    }
 
-  // Write data if all ADCs have been stopped and restart ADCs.
-  if (active_adcs == 0)
+    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    {
+      Stop_ADC(&hadc1);
+      Stop_ADC(&hadc2);
+      Stop_ADC(&hadc3);
+      Stop_ADC(&hadc4);
+
+      sprintf(energy_buff, "ADC1 trigger on half: %d", 2 * sum / BUFFERSIZE);
+      log_debug(energy_buff);
+
+      write_buffer(Get_Quadrant_Header(&hadc1), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc2), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc3), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc4), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_4 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      Start_ADC(&hadc1, (uint32_t*) data_1);
+      Start_ADC(&hadc2, (uint32_t*) data_2);
+      Start_ADC(&hadc3, (uint32_t*) data_3);
+      Start_ADC(&hadc4, (uint32_t*) data_4);
+    }
+  }
+  else if (Get_ADC_Instance(hadc) == 2)
   {
-    write_buffer(Get_Quadrant_Header(&hadc1), 9);
-    for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
-    }
-    for (int i = 0; i < BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
+    for (int i = 0; i < BUFFERSIZE / 2; i += 1)
+    {
+      sum += abs((int16_t) data_2[i] - DC_OFFSET);
     }
 
-    write_buffer(Get_Quadrant_Header(&hadc2), 9);
-    for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
-    }
-    for (int i = 0; i < BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
-    }
+    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    {
+      Stop_ADC(&hadc1);
+      Stop_ADC(&hadc2);
+      Stop_ADC(&hadc3);
+      Stop_ADC(&hadc4);
 
-    write_buffer(Get_Quadrant_Header(&hadc3), 9);
-    for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
-    }
-    for (int i = 0; i < BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
-    }
+      sprintf(energy_buff, "ADC2 trigger on half: %d", 2 * sum / BUFFERSIZE);
+      log_debug(energy_buff);
 
-    write_buffer(Get_Quadrant_Header(&hadc4), 9);
-    for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_4 + i, MEASUREMENT_SIZE);
+      write_buffer(Get_Quadrant_Header(&hadc1), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc2), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc3), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc4), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_4 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      Start_ADC(&hadc1, (uint32_t*) data_1);
+      Start_ADC(&hadc2, (uint32_t*) data_2);
+      Start_ADC(&hadc3, (uint32_t*) data_3);
+      Start_ADC(&hadc4, (uint32_t*) data_4);
     }
-    for (int i = 0; i < BUFFERSIZE; i += 2) {
-      write_buffer((uint8_t*) data_4 + i, MEASUREMENT_SIZE);
-    }
-
-    // Restart ADCs.
-    Start_ADC(&hadc1, (uint32_t*) data_1);
-    Start_ADC(&hadc2, (uint32_t*) data_2);
-    Start_ADC(&hadc3, (uint32_t*) data_3);
-    Start_ADC(&hadc4, (uint32_t*) data_4);
-
-    // Reset flags.
-    found_ping = 0;
-    buffer_inverted = 0;
-
-    return;
   }
-
-  // Determine if ping is available in first half of ping.
-  uint8_t instance = Get_ADC_Instance(hadc);
-  uint32_t* buffer_pointer;
-  switch (instance) {
-    case 1:
-      buffer_pointer = (uint32_t*) data_1;
-      break;
-    case 2:
-      buffer_pointer = (uint32_t*) data_2;
-      break;
-    case 3:
-      buffer_pointer = (uint32_t*) data_3;
-      break;
-    case 4:
-      buffer_pointer = (uint32_t*) data_4;
-      break;
-    default:
-      // Dealt with in Get_ADC_Instance().
-      return;
-  }
-  found_ping = has_ping(buffer_pointer, HALF_BUFFERSIZE, energy_threshold);
-  if (found_ping)
+  else if (Get_ADC_Instance(hadc) == 3)
   {
-    buffer_inverted = 0;
+    for (int i = 0; i < BUFFERSIZE / 2; i += 1)
+    {
+      sum += abs((int16_t) data_3[i] - DC_OFFSET);
+    }
+
+    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    {
+      Stop_ADC(&hadc1);
+      Stop_ADC(&hadc2);
+      Stop_ADC(&hadc3);
+      Stop_ADC(&hadc4);
+
+      sprintf(energy_buff, "ADC3 trigger on half: %d", 2 * sum / BUFFERSIZE);
+      log_debug(energy_buff);
+
+      write_buffer(Get_Quadrant_Header(&hadc1), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc2), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc3), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc4), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_4 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      Start_ADC(&hadc1, (uint32_t*) data_1);
+      Start_ADC(&hadc2, (uint32_t*) data_2);
+      Start_ADC(&hadc3, (uint32_t*) data_3);
+      Start_ADC(&hadc4, (uint32_t*) data_4);
+    }
+  }
+  else if (Get_ADC_Instance(hadc) == 4)
+  {
+    for (int i = 0; i < BUFFERSIZE / 2; i += 1)
+    {
+      sum += abs((int16_t) data_4[i] - DC_OFFSET);
+    }
+
+    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    {
+      Stop_ADC(&hadc1);
+      Stop_ADC(&hadc2);
+      Stop_ADC(&hadc3);
+      Stop_ADC(&hadc4);
+
+      sprintf(energy_buff, "ADC4 trigger on half: %d", 2 * sum / BUFFERSIZE);
+      log_debug(energy_buff);
+
+      write_buffer(Get_Quadrant_Header(&hadc1), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_1 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc2), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_2 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc3), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_3 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      write_buffer(Get_Quadrant_Header(&hadc4), 9);
+      for (int i = 0; i < BUFFERSIZE; i += 2)
+      {
+        write_buffer((uint8_t*) data_4 + i, MEASUREMENT_SIZE);
+      }
+      write_buffer("\n", 1);
+
+      Start_ADC(&hadc1, (uint32_t*) data_1);
+      Start_ADC(&hadc2, (uint32_t*) data_2);
+      Start_ADC(&hadc3, (uint32_t*) data_3);
+      Start_ADC(&hadc4, (uint32_t*) data_4);
+    }
   }
 }
 
@@ -306,16 +573,16 @@ void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc)
 char* Get_Quadrant_Header(ADC_HandleTypeDef* hadc)
 {
   if (hadc->Instance == QUADRANT_I) {
-    return "[DATA 1]";
+    return "[DATA 1]\n";
   }
   else if (hadc->Instance == QUADRANT_II) {
-    return "[DATA 2]";
+    return "[DATA 2]\n";
   }
   else if (hadc->Instance == QUADRANT_III) {
-    return "[DATA 3]";
+    return "[DATA 3]\n";
   }
   else if (hadc->Instance == QUADRANT_IV) {
-    return "[DATA 4]";
+    return "[DATA 4]\n";
   }
   else {
     // Oops...

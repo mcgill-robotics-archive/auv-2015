@@ -29,7 +29,7 @@ DMA_HandleTypeDef hdma_adc4;
 // The duration in seconds is equal to the sampling frequncy * BUFFERSIZE.
 // The buffersize must be large enough to hold at least the 4 ms the ping
 // lasts.
-#define BUFFERSIZE (uint32_t) 6000
+#define BUFFERSIZE (uint32_t) 4096
 
 // Data storage.
 __IO uint16_t data_1[BUFFERSIZE];
