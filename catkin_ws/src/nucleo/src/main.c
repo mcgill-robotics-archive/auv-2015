@@ -14,6 +14,7 @@ int main(void)
   // Initialize UART.
   UART_Init();
   write_buffer("\n", 1);  // Force clear communication channel.
+  write_buffer("[BOOTUP]\n", 9);  // Force clear communication channel.
   log_debug("Initialized UART");
 
 #ifdef TWELVE_BIT_MODE
