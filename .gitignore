@@ -64,3 +64,10 @@ docs/_build/
 
 # rosserial lib
 ros_lib/
+
+# Nucleo builds
+*.o
+*.d
+*.map
+*.elf
+*.bin

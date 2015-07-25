@@ -5,9 +5,10 @@ import smach
 import smach_ros
 import rospy
 from threading import Thread
-from planner.primitives import SetVelocityState
+from planner.primitives import (
+    SetVelocityState, FireDropperState, AcousticServoState)
 from planner import tasks
-from math import pi
+from numpy import sign
 
 __author__ = 'Max Krogius'
 
@@ -15,11 +16,13 @@ __author__ = 'Max Krogius'
 def create_state_machine():
     pause = rospy.get_param('~pause')
     countdown = rospy.get_param('~countdown')
-    depth = rospy.get_param('~depth')
     stop_time = rospy.get_param('~stop_time')
     speed = rospy.get_param('~speed')
     yaws = rospy.get_param('~yaws')
     times = rospy.get_param('~times')
+    depths = rospy.get_param('~depths')
+    dropper_index = rospy.get_param('~dropper_index')
+    torp_yaw = rospy.get_param('~torp_yaw')
     if len(yaws) != len(times):
         raise ValueError('~yaws and ~times must have the same length')
 
@@ -27,35 +30,47 @@ def create_state_machine():
         outcomes=['succeeded', 'aborted', 'preempted'])
     with motion_sm:
         smach.StateMachine.add_auto(
-            'Initialize', tasks.initialize(pause, countdown, depth),
+            'Initialize', tasks.initialize(pause, countdown, depths[0]),
             connector_outcomes=['succeeded'])
         for i in range(len(yaws)):
-            if times[i] > 0:
-                smach.StateMachine.add_auto(
-                    'Yaw {}'.format(yaws[i]),
-                    SetVelocityState.create_set_yaw_state(yaws[i]),
-                    connector_outcomes=['succeeded'])
-                smach.StateMachine.add_auto(
-                    'Move Forward {}'.format(times[i]),
-                    SetVelocityState.create_move_forward_state(
-                        speed, rospy.Duration.from_sec(times[i])),
-                    connector_outcomes=['succeeded'])
-            else:
-                smach.StateMachine.add_auto(
-                    'Yaw {}'.format(yaws[i]),
-                    SetVelocityState.create_set_yaw_state(yaws[i]),
-                    connector_outcomes=['succeeded'])
-                smach.StateMachine.add_auto(
-                    'Move Forward {}'.format(times[i]),
-                    SetVelocityState.create_move_forward_state(
-                        -speed, rospy.Duration.from_sec(abs(times[i]))),
-                    connector_outcomes=['succeeded'])
-
+            smach.StateMachine.add_auto(
+                'Yaw {}'.format(yaws[i]),
+                SetVelocityState.create_set_yaw_state(yaws[i]),
+                connector_outcomes=['succeeded'])
+            smach.StateMachine.add_auto(
+                'Depth {}'.format(depths[i]),
+                SetVelocityState.create_set_depth_state(
+                    depths[i], tolerance=0.1),
+                connector_outcomes=['succeeded'])
+            smach.StateMachine.add_auto(
+                'Move Forward {}'.format(times[i]),
+                SetVelocityState.create_move_forward_state(
+                    speed*sign(times[i]),
+                    rospy.Duration.from_sec(abs(times[i]))),
+                connector_outcomes=['succeeded'])
             smach.StateMachine.add_auto(
                 'Stop {}'.format(i),
                 SetVelocityState.create_move_forward_state(
                     0, rospy.Duration.from_sec(stop_time)),
                 connector_outcomes=['succeeded'])
+            if i == dropper_index:
+                smach.StateMachine.add_auto(
+                    'Yaw {}'.format(torp_yaw),
+                    SetVelocityState.create_set_yaw_state(torp_yaw),
+                    connector_outcomes=['succeeded'])
+                smach.StateMachine.add_auto(
+                    'Fire',
+                    FireDropperState(),
+                    connector_outcomes=['succeeded'])
+                smach.StateMachine.add_auto(
+                    'Yaw {}'.format(-torp_yaw),
+                    SetVelocityState.create_set_yaw_state(-torp_yaw),
+                    connector_outcomes=['succeeded'])
+
+        smach.StateMachine.add_auto(
+            'Hydrophones',
+            AcousticServoState(tdoa_tol=1.4e-6),
+            connector_outcomes=['succeeded'])
         smach.StateMachine.add(
             'Sleep',
             smach_ros.ConditionState(

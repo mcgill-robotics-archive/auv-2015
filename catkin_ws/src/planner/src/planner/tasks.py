@@ -21,12 +21,22 @@ def mission_switch_wrapper(state_machine):
             'preempted': {'Monitor Mission': 'preempted'}})
     with csm:
         csm.add('Mission', state_machine)
+
+        global prev_boolean
+        prev_boolean = False
+
+        def or_filter(boolean):
+            global prev_boolean
+            ret_val = boolean or prev_boolean
+            prev_boolean = boolean
+            return ret_val
+
         csm.add(
             'Monitor Mission',
             smach_ros.MonitorState(
                 'mission',
                 Bool,
-                lambda x, y: y.data))
+                lambda x, y: or_filter(y.data)))
 
     sm = smach.StateMachine(['preempted', 'aborted'])
     with sm:

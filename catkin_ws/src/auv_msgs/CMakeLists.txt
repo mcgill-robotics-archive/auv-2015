@@ -16,6 +16,8 @@ add_message_files(
   SetVelocity.msg
   MotorCommands.msg
   SolenoidCommands.msg
+  TDOAs.msg
+  AcousticServo.msg
 
   #added by State Estimation
   RangeBearingElevation.msg
@@ -27,6 +29,9 @@ add_message_files(
   #added by IO
   RadioCommands.msg
   CPUTemperature.msg
+
+  #added by hydrophones
+  Signals.msg
 )
 
 add_service_files(FILES
@@ -41,6 +46,7 @@ add_action_files(
   SetPosition.action
   SetCVTarget.action
   InitializeHorizon.action
+  AcousticServo.action
 )
 
 generate_messages(DEPENDENCIES

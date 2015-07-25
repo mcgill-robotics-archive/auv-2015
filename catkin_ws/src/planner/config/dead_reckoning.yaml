@@ -1,9 +1,11 @@
 pause: 3
 countdown: 5
-depth: 1.7
 speed: 5
 stop_time: 3
 #yaws: [0, 0.048, 1.037]
 #times: [62.84, 30.08, 97.0]
+dropper_index: 1
+torp_yaw: 0.1
+depths: [1.7, 1.71, 1.712]
 yaws: [0, 3.189, 4.178]
 times: [62.84, -30.08, 97.0]
