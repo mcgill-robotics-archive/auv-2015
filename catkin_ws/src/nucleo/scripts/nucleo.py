@@ -38,19 +38,17 @@ def get_header(ser):
     Returns:
         Header.
     """
-    skipped = 0
     while ser.readable() and not rospy.is_shutdown():
         # Read until next line feed.
         header = ser.readline().strip()
 
         # Verify if header is valid.
         if header in headers:
-            if skipped:
-                rospy.logwarn("Skipped %d bytes", skipped)
             return header
 
         # Otherwise reset.
-        skipped += len(header)
+        if header:
+            rospy.logerr("Skipped %d bytes", len(header))
         header = ""
 
 
@@ -118,12 +116,12 @@ if __name__ == "__main__":
     INT_SIZE = 16 if TWELVE_BIT_MODE else 8
 
     # Get buffersize.
-    BUFFERSIZE = int(rospy.get_param("~buffersize", 6000))
+    BUFFERSIZE = int(rospy.get_param("~buffersize", 2048))
     RAW_BUFFERSIZE = 2 * BUFFERSIZE if TWELVE_BIT_MODE else BUFFERSIZE
 
     with Serial("/dev/nucleo", baudrate=baudrate) as ser:
         rospy.loginfo("Waiting for device...")
-        while not ser.readable():
+        while not ser.readable() and not rospy.is_shutdown():
             pass
         rospy.loginfo("Found device")
 
@@ -140,7 +138,7 @@ if __name__ == "__main__":
             rospy.logdebug("Received quadrant %d data", quadrant)
 
             # Reset if it has been too long, since packets might not match.
-            if any(received) and dt > rospy.Duration(0.5):
+            if any(received) and dt > rospy.Duration(1):
                 rospy.logwarn("Timeout %r, resetting...", dt.to_sec())
                 received = [0 for i in received]
 
