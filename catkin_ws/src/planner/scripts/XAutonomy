@@ -5,7 +5,7 @@ import smach
 import smach_ros
 import rospy
 from threading import Thread
-from planner.primitives import SetVelocityState
+from planner.primitives import SetVelocityState, FireDropperState
 from planner import tasks
 from numpy import sign
 
@@ -20,6 +20,7 @@ def create_state_machine():
     yaws = rospy.get_param('~yaws')
     times = rospy.get_param('~times')
     depths = rospy.get_param('~depths')
+    dropper_index = rospy.get_param('~dropper_index')
     if len(yaws) != len(times):
         raise ValueError('~yaws and ~times must have the same length')
 
@@ -50,6 +51,12 @@ def create_state_machine():
                 SetVelocityState.create_move_forward_state(
                     0, rospy.Duration.from_sec(stop_time)),
                 connector_outcomes=['succeeded'])
+            if i == dropper_index:
+                smach.StateMachine.add_auto(
+                    'Fire',
+                    FireDropperState(),
+                    connector_outcomes=['succeeded'])
+
         smach.StateMachine.add(
             'Sleep',
             smach_ros.ConditionState(

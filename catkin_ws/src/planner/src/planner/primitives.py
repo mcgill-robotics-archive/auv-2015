@@ -9,6 +9,23 @@ from actionlib.simple_action_client import GoalStatus
 __author__ = 'Max Krogius, Anass Al-Wohoush'
 
 
+class FireDropperState(State):
+    '''Fires a dropper'''
+    def __init__(self):
+        super(FireDropperState, self).__init__(outcomes=['succeeded'])
+
+    def execute(self, user_data):
+        global pub
+        cmd = auv_msgs.msg.SolenoidCommands()
+        cmd.port_dropper = True
+        cmd.starboard_dropper = True
+        pub = rospy.Publisher(
+            'electrical_interface/solenoid',
+            auv_msgs.msg.SolenoidCommands, queue_size=100)
+        rospy.Timer(rospy.Duration(0.1), lambda x: pub.publish(cmd))
+        return 'succeeded'
+
+
 class SetUserDataState(State):
     '''Outputs the given user data'''
 
