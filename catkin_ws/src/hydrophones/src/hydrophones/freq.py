@@ -21,7 +21,7 @@ def get_frequency_energy(signal, fs, target):
         Energy at target frequency. Ranges from 0 to 1.
     """
     # FFT signal.
-    freq = 20 * np.log10(np.abs(np.fft.rfft(signal)))
+    freq = np.abs(np.fft.rfft(signal))
 
     # Compute desired bin.
     desired_bin = int(round((target * 2 / fs) * len(freq)))
