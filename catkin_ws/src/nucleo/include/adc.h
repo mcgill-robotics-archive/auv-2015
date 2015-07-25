@@ -2,7 +2,7 @@
 #define __ADC_H
 
 #include "main.h"
-#include "peak.h"
+#include "ping.h"
 #include <string.h>
 #include "stm32f3xx_hal.h"
 #include "stm32f3xx_nucleo.h"
@@ -22,14 +22,14 @@ DMA_HandleTypeDef hdma_adc4;
 // Define which ADC is connected to the hydrophone from which quadrant.
 #define QUADRANT_I ADC3
 #define QUADRANT_II ADC2
-#define QUADRANT_III ADC1
-#define QUADRANT_IV ADC4
+#define QUADRANT_III ADC4
+#define QUADRANT_IV ADC1
 
 // Set the buffersize as a number of samples to collect per ADC.
 // The duration in seconds is equal to the sampling frequncy * BUFFERSIZE.
 // The buffersize must be large enough to hold at least the 4 ms the ping
 // lasts.
-#define BUFFERSIZE (uint32_t) 4096
+#define BUFFERSIZE (uint32_t) 2048
 
 // Data storage.
 __IO uint16_t data_1[BUFFERSIZE];

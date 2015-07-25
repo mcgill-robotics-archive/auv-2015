@@ -9,11 +9,12 @@ static const uint32_t DOUBLE_BUFFERSIZE = 2 * BUFFERSIZE;
 // Determine measurement size depending on resolution.
 #ifdef TWELVE_BIT_MODE
 static const uint8_t MEASUREMENT_SIZE = 2;
-static const uint16_t THRESHOLD = 1500;
 #else
 static const uint8_t MEASUREMENT_SIZE = 1;
-static const uint16_t THRESHOLD = 100;
 #endif
+
+// Threshold in percent.
+static const uint16_t THRESHOLD = 5;
 
 
 void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc)
@@ -132,21 +133,16 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   uint32_t sum = 0;
   char energy_buff[30];
 
-  if (Get_ADC_Instance(hadc) == 1)
+  if (Get_ADC_Instance(hadc) == 1 && 0)
   {
-    for (int i = BUFFERSIZE / 2; i < BUFFERSIZE; i += 1)
-    {
-      sum += abs((int16_t) data_1[i] - DC_OFFSET);
-    }
-
-    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    if (has_ping(data_1 + BUFFERSIZE, BUFFERSIZE, THRESHOLD))
     {
       Stop_ADC(&hadc1);
       Stop_ADC(&hadc2);
       Stop_ADC(&hadc3);
       Stop_ADC(&hadc4);
 
-      sprintf(energy_buff, "ADC1 trigger on complete: %d", 2 * sum / BUFFERSIZE);
+      sprintf(energy_buff, "ADC1 trigger on complete");
       log_debug(energy_buff);
 
       write_buffer(Get_Quadrant_Header(&hadc1), 9);
@@ -185,21 +181,15 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   }
   else if (Get_ADC_Instance(hadc) == 2)
   {
-    for (int i = BUFFERSIZE / 2; i < BUFFERSIZE; i += 1)
-    {
-      sum += abs((int16_t) data_2[i] - DC_OFFSET);
-    }
-
-    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    if (has_ping(data_2 + BUFFERSIZE, BUFFERSIZE, THRESHOLD))
     {
       Stop_ADC(&hadc1);
       Stop_ADC(&hadc2);
       Stop_ADC(&hadc3);
       Stop_ADC(&hadc4);
 
-      sprintf(energy_buff, "ADC2 trigger on complete: %d", 2 * sum / BUFFERSIZE);
+      sprintf(energy_buff, "ADC2 trigger on complete");
       log_debug(energy_buff);
-
 
       write_buffer(Get_Quadrant_Header(&hadc1), 9);
       for (int i = BUFFERSIZE; i < DOUBLE_BUFFERSIZE; i += 2)
@@ -237,19 +227,14 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
   }
   else if (Get_ADC_Instance(hadc) == 3)
   {
-    for (int i = BUFFERSIZE / 2; i < BUFFERSIZE; i += 1)
-    {
-      sum += abs((int16_t) data_3[i] - DC_OFFSET);
-    }
-
-    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    if (has_ping(data_3 + BUFFERSIZE, BUFFERSIZE, THRESHOLD))
     {
       Stop_ADC(&hadc1);
       Stop_ADC(&hadc2);
       Stop_ADC(&hadc3);
       Stop_ADC(&hadc4);
 
-      sprintf(energy_buff, "ADC3 trigger on complete: %d", 2 * sum / BUFFERSIZE);
+      sprintf(energy_buff, "ADC3 trigger on complete");
       log_debug(energy_buff);
 
       write_buffer(Get_Quadrant_Header(&hadc1), 9);
@@ -286,21 +271,16 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
       Start_ADC(&hadc4, (uint32_t*) data_4);
     }
   }
-  else if (Get_ADC_Instance(hadc) == 4)
+  else if (Get_ADC_Instance(hadc) == 4 && 0)
   {
-    for (int i = BUFFERSIZE / 2; i < BUFFERSIZE; i += 1)
-    {
-      sum += abs((int16_t) data_4[i] - DC_OFFSET);
-    }
-
-    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    if (has_ping(data_4 + BUFFERSIZE, BUFFERSIZE, THRESHOLD))
     {
       Stop_ADC(&hadc1);
       Stop_ADC(&hadc2);
       Stop_ADC(&hadc3);
       Stop_ADC(&hadc4);
 
-      sprintf(energy_buff, "ADC4 trigger on complete: %d", 2 * sum / BUFFERSIZE);
+      sprintf(energy_buff, "ADC4 trigger on complete");
       log_debug(energy_buff);
 
       write_buffer(Get_Quadrant_Header(&hadc1), 9);
@@ -346,21 +326,16 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
   uint32_t sum = 0;
   char energy_buff[30];
 
-  if (Get_ADC_Instance(hadc) == 1)
+  if (Get_ADC_Instance(hadc) == 1 && 0)
   {
-    for (int i = 0; i < BUFFERSIZE / 2; i += 1)
-    {
-      sum += abs((int16_t) data_1[i] - DC_OFFSET);
-    }
-
-    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    if (has_ping(data_1, HALF_BUFFERSIZE, THRESHOLD))
     {
       Stop_ADC(&hadc1);
       Stop_ADC(&hadc2);
       Stop_ADC(&hadc3);
       Stop_ADC(&hadc4);
 
-      sprintf(energy_buff, "ADC1 trigger on half: %d", 2 * sum / BUFFERSIZE);
+      sprintf(energy_buff, "ADC1 trigger on half");
       log_debug(energy_buff);
 
       write_buffer(Get_Quadrant_Header(&hadc1), 9);
@@ -399,19 +374,14 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
   }
   else if (Get_ADC_Instance(hadc) == 2)
   {
-    for (int i = 0; i < BUFFERSIZE / 2; i += 1)
-    {
-      sum += abs((int16_t) data_2[i] - DC_OFFSET);
-    }
-
-    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    if (has_ping(data_2, HALF_BUFFERSIZE, THRESHOLD))
     {
       Stop_ADC(&hadc1);
       Stop_ADC(&hadc2);
       Stop_ADC(&hadc3);
       Stop_ADC(&hadc4);
 
-      sprintf(energy_buff, "ADC2 trigger on half: %d", 2 * sum / BUFFERSIZE);
+      sprintf(energy_buff, "ADC2 trigger on half");
       log_debug(energy_buff);
 
       write_buffer(Get_Quadrant_Header(&hadc1), 9);
@@ -450,19 +420,14 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
   }
   else if (Get_ADC_Instance(hadc) == 3)
   {
-    for (int i = 0; i < BUFFERSIZE / 2; i += 1)
-    {
-      sum += abs((int16_t) data_3[i] - DC_OFFSET);
-    }
-
-    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    if (has_ping(data_3, HALF_BUFFERSIZE, THRESHOLD))
     {
       Stop_ADC(&hadc1);
       Stop_ADC(&hadc2);
       Stop_ADC(&hadc3);
       Stop_ADC(&hadc4);
 
-      sprintf(energy_buff, "ADC3 trigger on half: %d", 2 * sum / BUFFERSIZE);
+      sprintf(energy_buff, "ADC3 trigger on half");
       log_debug(energy_buff);
 
       write_buffer(Get_Quadrant_Header(&hadc1), 9);
@@ -499,21 +464,16 @@ void HAL_ADC_ConvHalfCpltCallback(ADC_HandleTypeDef* hadc)
       Start_ADC(&hadc4, (uint32_t*) data_4);
     }
   }
-  else if (Get_ADC_Instance(hadc) == 4)
+  else if (Get_ADC_Instance(hadc) == 4 && 0)
   {
-    for (int i = 0; i < BUFFERSIZE / 2; i += 1)
-    {
-      sum += abs((int16_t) data_4[i] - DC_OFFSET);
-    }
-
-    if (2 * sum / BUFFERSIZE >= THRESHOLD)
+    if (has_ping(data_4, HALF_BUFFERSIZE, THRESHOLD))
     {
       Stop_ADC(&hadc1);
       Stop_ADC(&hadc2);
       Stop_ADC(&hadc3);
       Stop_ADC(&hadc4);
 
-      sprintf(energy_buff, "ADC4 trigger on half: %d", 2 * sum / BUFFERSIZE);
+      sprintf(energy_buff, "ADC4 trigger on half");
       log_debug(energy_buff);
 
       write_buffer(Get_Quadrant_Header(&hadc1), 9);
