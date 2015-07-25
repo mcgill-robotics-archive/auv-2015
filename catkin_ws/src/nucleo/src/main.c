@@ -14,7 +14,7 @@ int main(void)
   // Initialize UART.
   UART_Init();
   write_buffer("\n", 1);  // Force clear communication channel.
-  write_buffer("[BOOTUP]\n", 9);  // Force clear communication channel.
+  write_buffer("[BOOTUP]\n", 9);  // Send bootup command.
   log_debug("Initialized UART");
 
 #ifdef TWELVE_BIT_MODE
@@ -28,11 +28,6 @@ int main(void)
   sprintf(clock_buff, "Running at %u Hz", SystemCoreClock);
   log_debug(clock_buff);
 
-  // Write LSI frequency.
-  char lsi_buff[32];
-  sprintf(lsi_buff, "LSI running at %u Hz", LSI_VALUE);
-  log_debug(lsi_buff);
-
   // Initialize GPIO.
   log_debug("Initializing GPIO...");
   GPIO_Init();
@@ -42,7 +37,7 @@ int main(void)
   DMA_Init();
 
   // Intialize ADCs.
-  log_debug("Initalizing ADCs...");
+  log_debug("Initializing ADCs...");
   ADC_Config(&hadc1, ADC1);
   ADC_Config(&hadc2, ADC2);
   ADC_Config(&hadc3, ADC3);
