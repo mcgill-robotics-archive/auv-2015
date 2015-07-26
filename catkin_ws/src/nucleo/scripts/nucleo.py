@@ -28,6 +28,9 @@ headers = (
     BOOTUP_HEADER
 )
 
+# Preserve messed up and skipped headers.
+corrupted_log = open("corrupted.log", "a+")
+
 
 def get_header(ser):
     """Gets next header from serial buffer.
@@ -40,15 +43,16 @@ def get_header(ser):
     """
     while ser.readable() and not rospy.is_shutdown():
         # Read until next line feed.
-        header = ser.readline().strip()
+        header = ser.readline()
 
         # Verify if header is valid.
-        if header in headers:
+        if header.strip() in headers:
             return header
 
         # Otherwise reset.
-        if header:
+        if header and header != "\n":
             rospy.logerr("Skipped %d bytes", len(header))
+            print >> corrupted_log, header,
         header = ""
 
 
@@ -65,9 +69,15 @@ def get_data(ser, header):
     # Get data.
     raw = ser.read(RAW_BUFFERSIZE)
 
-    # Determine ADC.
-    _, i = header.strip("]").split()
-    quadrant = int(i)
+    # Determine quadrant.
+    if "DATA 1" in header:
+        quadrant = 1
+    elif "DATA 2" in header:
+        quadrant = 2
+    elif "DATA 3" in header:
+        quadrant = 3
+    elif "DATA 4" in header:
+        quadrant = 4
 
     # Convert to array.
     stream = bitstring.BitStream(bytes=raw)
