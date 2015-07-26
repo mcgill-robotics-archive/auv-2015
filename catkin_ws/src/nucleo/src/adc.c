@@ -14,7 +14,7 @@ static const uint8_t MEASUREMENT_SIZE = 1;
 #endif
 
 // Threshold in percent.
-static const uint16_t THRESHOLD = 5;
+static const float32_t THRESHOLD = 0.0005;
 
 
 void ADC_Config(ADC_HandleTypeDef* hadc, ADC_TypeDef* adc)

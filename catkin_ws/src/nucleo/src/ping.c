@@ -1,5 +1,6 @@
 #include "ping.h"
 
+#define NUMBER_OF_TARGETS 2
 #define DOWNSAMPLING_RATIO 15
 #define DOWNSAMPLING_LENGTH 160
 
@@ -8,7 +9,7 @@ const arm_cfft_instance_f32 instance = {
 };
 
 
-float32_t fft(uint32_t* buff, uint32_t size, uint32_t target, float32_t fs)
+float32_t* fft(uint32_t* buff, uint32_t size)
 {
     float32_t temp_buff[size];
     for (int i = 0; i < size; i++)
@@ -21,14 +22,14 @@ float32_t fft(uint32_t* buff, uint32_t size, uint32_t target, float32_t fs)
     float32_t freq[size / 2];
     arm_cmplx_mag_f32(temp_buff, freq, size / 2);
 
-    uint32_t target_bin = (uint32_t) (target * size / fs);
+    return freq;
+}
 
-    float32_t sum = 0;
-    for (int i = 0; i < size / 2; i++)
-    {
-        sum += freq[i];
-    }
-    return freq[target_bin] / sum;
+
+float32_t get_energy_at_bin(float32_t* freq, uint32_t size, uint32_t target, float32_t fs)
+{
+    uint32_t target_bin = (uint32_t) (target * size / fs);
+    return freq[target_bin];
 }
 
 
@@ -68,7 +69,7 @@ uint32_t get_power_at_target_frequency(uint32_t* buff, uint32_t size)
 }
 
 
-uint8_t has_ping(uint32_t* buff, uint32_t size, uint32_t threshold)
+uint8_t has_ping(uint32_t* buff, uint32_t size, float32_t threshold)
 {
     // Get total power.
 
@@ -104,14 +105,28 @@ uint8_t has_ping(uint32_t* buff, uint32_t size, uint32_t threshold)
     // log_debug(details);
     // return 1;
 
-    float32_t amp = fft(buff, size, 37000, 972972.97297);
+    float32_t* freq = fft(buff, size);
 
-    if (amp > (float32_t) threshold / 10000.0)
+    float32_t sum = 0;
+    for (int i = 0; i < size / 2; i++)
     {
-        char details[30];
-        sprintf(details, "Energy at %f", amp);
-        log_debug(details);
-        return 1;
+        sum += freq[i];
+    }
+
+
+    uint32_t targets[NUMBER_OF_TARGETS] = {28000, 34000};
+
+    for (int i = 0; i < NUMBER_OF_TARGETS; i++)
+    {
+        float32_t amp = get_energy_at_bin(freq, size / 2, targets[i], 972972.97297) / sum;
+        if (amp > threshold)
+        {
+            char details[30];
+            sprintf(details, "Energy at %u Hz: %f", targets[i], amp);
+            log_debug(details);
+            return 1;
+        }
+        break;
     }
     return 0;
 }
