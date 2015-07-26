@@ -6,6 +6,7 @@
 import rospy
 import bitstring
 from serial import Serial
+from datetime import datetime
 from auv_msgs.msg import Signals
 
 __author__ = "Anass Al-Wohoush"
@@ -29,7 +30,7 @@ headers = (
 )
 
 # Preserve messed up and skipped headers.
-corrupted_log = open("corrupted.log", "a+")
+corrupted_log = open("{}_corrupted.log".format(datetime.now()), "a+")
 
 
 def get_header(ser):
