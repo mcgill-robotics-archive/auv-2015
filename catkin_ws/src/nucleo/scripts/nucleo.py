@@ -108,10 +108,10 @@ if __name__ == "__main__":
     pub = rospy.Publisher("~signals", Signals, queue_size=1)
 
     # Get baudrate.
-    baudrate = int(rospy.get_param("~baudrate", 230400))
+    baudrate = int(rospy.get_param("~baudrate", 115200))
 
     # Get whether 12 bit mode or not.
-    TWELVE_BIT_MODE = bool(rospy.get_param("~twelve_bit_mode", False))
+    TWELVE_BIT_MODE = bool(rospy.get_param("~twelve_bit_mode", True))
     rospy.loginfo("Assuming %d bit mode", 12 if TWELVE_BIT_MODE else 8)
     INT_SIZE = 16 if TWELVE_BIT_MODE else 8
 
