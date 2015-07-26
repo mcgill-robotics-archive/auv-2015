@@ -2,7 +2,6 @@
     <node name="temperature" type="temperature" pkg="status">
         <param name="max" value="70.0" />
     </node>
-    <node name="auto_shutdown" type="auto_shutdown" pkg="status"/>
     <node name="blinky_server" type="blinky_server" pkg="blinky"/>
     <node name="battery_light" type="battery_lights" pkg="status"/>
     <node name="initialize_horizon_light" type="initialize_horizon_lights" pkg="status"/>
