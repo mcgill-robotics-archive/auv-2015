@@ -38,5 +38,11 @@ topics: /temperature/cpu
 
 [mission]
 shortcut: m
-description: Mission switch
+description: mission switch
 topics:	/mission
+
+[hydrophones]
+shortcut: h
+description: hydrophones
+topics: /nucleo/signals
+        /hydrophones/tdoa
