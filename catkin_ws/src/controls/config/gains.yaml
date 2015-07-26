@@ -7,11 +7,11 @@ kp_yPos: 0.0
 ki_yPos: 0.0
 kd_yPos: 0.0
 
-kp_xHydro: 0.0
+kp_xHydro: 0.5e6
 ki_xHydro: 0.0
 kd_xHydro: 0.0
 
-kp_yHydro: 0.0
+kp_yHydro: 0.5e6
 ki_yHydro: 0.0
 kd_yHydro: 0.0
 
