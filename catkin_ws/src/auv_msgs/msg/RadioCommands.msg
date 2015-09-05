@@ -1,8 +1,8 @@
-uint16 channel1
-uint16 channel2
-uint16 channel3
-uint16 channel4
-uint16 channel5
-uint16 channel6
-uint16 channel7
-uint16 channel8
+int16 channel1
+int16 channel2
+int16 channel3
+int16 channel4
+int16 channel5
+int16 channel6
+int16 channel7
+int16 channel8

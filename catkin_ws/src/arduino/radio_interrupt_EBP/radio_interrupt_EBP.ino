@@ -1,4 +1,4 @@
-//#define USE_USB_SERIAL
+#define USE_USB_SERIAL
 
 #include "ros.h"
 #include <auv_msgs/RadioCommands.h>
@@ -6,14 +6,14 @@
 ros::NodeHandle nh;
 
 auv_msgs::RadioCommands radio_msg;
-//std_msgs::Int8 player1_msg;
-//std_msgs::Int8 player2_msg;
-//std_msgs::Int8 player3_msg;
+std_msgs::Int8 player1_msg;
+std_msgs::Int8 player2_msg;
+std_msgs::Int8 player3_msg;
 
 ros::Publisher radio_pub("radio", &radio_msg);
-//ros::Publisher player1_pub("pong/player1",  &player1_msg);
-//ros::Publisher player2_pub("pong/player2",  &player2_msg);
-//ros::Publisher player3_pub("pong/player3",  &player3_msg);
+ros::Publisher player1_pub("pong/player1",  &player1_msg);
+ros::Publisher player2_pub("pong/player2",  &player2_msg);
+ros::Publisher player3_pub("pong/player3",  &player3_msg);
 
 #define PIN_CHANNEL1          21
 #define PIN_CHANNEL2          20
@@ -130,9 +130,9 @@ void setup() {
     //ROS initialization
     nh.initNode();
     nh.advertise(radio_pub);
-    //nh.advertise(player1_pub);
-    //nh.advertise(player2_pub);
-    //nh.advertise(player3_pub);
+    nh.advertise(player1_pub);
+    nh.advertise(player2_pub);
+    nh.advertise(player3_pub);
     
 #ifndef USE_USB_SERIAL
     Serial2.transmitterEnable(TRANSMIT_ENABLE_PIN);
@@ -155,8 +155,18 @@ uint16_t boundcheck(bool timeout, uint16_t value){
     
 }
 
+int8_t parseInput(int16_t input) {
+  if (abs(input - 1500) < 25) { 
+    return  0;
+  } else if (input > 1500) {
+    return  1;
+  } else {
+    return -1;
+  }
+}
+
 void loop() {
-    if(radio_publish_timer > 50){
+    if(radio_publish_timer > 20){
       bool timed_out = radio_timeout > 20;
       radio_msg.channel1 = boundcheck(timed_out, pulseWidth[0]);
       radio_msg.channel2 = boundcheck(timed_out, pulseWidth[1]);
@@ -166,7 +176,15 @@ void loop() {
       radio_msg.channel6 = boundcheck(timed_out, pulseWidth[5]);
       radio_msg.channel7 = boundcheck(timed_out, pulseWidth[6]);
       radio_msg.channel8 = boundcheck(timed_out, pulseWidth[7]);
-      radio_pub.publish( &radio_msg );
+      
+      player1_msg.data = parseInput(pulseWidth[0]);
+      player2_msg.data = parseInput(pulseWidth[3]);
+      player3_msg.data = parseInput(pulseWidth[2]);
+      
+      radio_pub.publish(&radio_msg);
+      player1_pub.publish(&player1_msg);
+      player2_pub.publish(&player2_msg);
+      player3_pub.publish(&player3_msg);
       radio_publish_timer = 0;
       digitalWrite(PIN_LED,!digitalRead(PIN_LED));
     }  
