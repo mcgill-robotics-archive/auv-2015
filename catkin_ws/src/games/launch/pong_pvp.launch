@@ -1,0 +1,9 @@
+<launch>
+    <node pkg="games" type="pong.py" name="pong"
+        output="screen" respawn="true">
+        <param name="blinky" value="/dev/blinky" />
+        <param name="players" value="2" />
+    </node>
+    <node pkg="rosserial_python" type="serial_node.py" name="radio"
+        args="/dev/radio" output="screen" respawn="true"/>
+</launch>
