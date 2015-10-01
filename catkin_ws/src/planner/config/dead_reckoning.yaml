@@ -1,7 +1,7 @@
-pause: 3
-countdown: 5
-speed: 5
-stop_time: 5
+pause: 3  # Seconds of waiting.
+countdown: 5  # Seconds of initializing.
+speed: 5  # Speed used throughout run (no units).
+stop_time: 5  # Seconds of waiting between segments.
 
 # practice side
 #dropper_index: 1
@@ -18,8 +18,8 @@ stop_time: 5
 #depths: [1.7, 1.81, 1.812]
 #
 #Kiddy Pool
-dropper_index: -1
-torp_yaw: 0.0
-yaws: []
-times: []
-depths: []
+#dropper_index: -1
+#torp_yaw: 0.0
+yaws: [0.00, 1.57, 3.14, 4.71]  # List of yaws in rad. 
+times: [3, 3, 3, 3]  # List of times in sec.
+depths: [1.00, 1.00, 1.00, 1.00]  # List of depths in m.
