@@ -29,7 +29,7 @@ l_6y = 13.169*.0254
 l_7y = 6.331*.0254
 l_8y = 6.331*.0254
 
-T1234_to_Fx_Fy_Mz = matrix([[1,-1,0,0],[0,0,0,-1],[l_1z,l_2z,0,l_4z]])
+T1234_to_Fx_Fy_Mz = matrix([[1,-1,0,0],[0,0,-1,-1],[l_1z,l_2z,l_3z,l_4z]])
 print T1234_to_Fx_Fy_Mz
 Fx_Fy_Mz_to_T1234 = pinv(T1234_to_Fx_Fy_Mz, rcond = 1e-15)
 print Fx_Fy_Mz_to_T1234
