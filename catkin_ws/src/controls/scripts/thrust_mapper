@@ -19,21 +19,21 @@ from numpy.linalg import pinv
 l_1z = 8.176*.0254
 l_2z = 8.176*.0254
 l_3z = 18.216*.0254
-l_4z = 12.003*.0254
+l_4z = -12.003*.0254
 l_5x = 8.297*.0254
 l_6x = 8.297*.0254
-l_7x = 8.297*.0254
-l_8x = 8.297*.0254
+l_7x = -8.297*.0254
+l_8x = -8.297*.0254
 l_5y = 13.169*.0254
-l_6y = 13.169*.0254
+l_6y = -13.169*.0254
 l_7y = 6.331*.0254
-l_8y = 6.331*.0254
+l_8y = -6.331*.0254
 
-T1234_to_Fx_Fy_Mz = matrix([[-1,1,0,0],[0,0,0,1],[-l_1z,-l_2z,0,-l_4z]])
+T1234_to_Fx_Fy_Mz = matrix([[1,-1,0,0],[0,0,-1,-1],[l_1z,l_2z,-l_3z,l_4z]])
 print T1234_to_Fx_Fy_Mz
 Fx_Fy_Mz_to_T1234 = pinv(T1234_to_Fx_Fy_Mz, rcond = 1e-15)
 print Fx_Fy_Mz_to_T1234
-T5678_to_Fz_Mx_My = matrix([[-1,-1,-1,-1],[l_5x,-l_6x,-l_7x,l_8x],[l_5y,l_6y,-l_7y,-l_8y]])
+T5678_to_Fz_Mx_My = matrix([[-1,-1,-1,-1],[l_5x,-l_6x,l_7x,-l_8x],[l_5y,-l_6y,-l_7y,l_8y]])
 print T5678_to_Fz_Mx_My
 Fz_Mx_My_to_T5678 = pinv(T5678_to_Fz_Mx_My, rcond= 1e-15)
 print Fz_Mx_My_to_T5678
@@ -48,6 +48,8 @@ def Wrench_to_thrust_callback(data):
     # TODO: Use seabotics calibration too
     T1234 = t100_pwm(Fx_Fy_Mz_to_T1234*Fx_Fy_Mz)
     T5678 = t100_pwm(Fz_Mx_My_to_T5678*Fz_Mx_My)
+    print T1234
+    print T5678
 
     #T1 = surge port         \surges positive thrust towards stern
     #T2 = surge starboard     \surges positive thrust towards stern
