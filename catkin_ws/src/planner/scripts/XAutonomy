@@ -67,10 +67,10 @@ def create_state_machine():
                     SetVelocityState.create_set_yaw_state(-torp_yaw),
                     connector_outcomes=['succeeded'])
 
-        smach.StateMachine.add_auto(
-            'Hydrophones',
-            AcousticServoState(tdoa_tol=1.4e-6),
-            connector_outcomes=['succeeded'])
+        # smach.StateMachine.add_auto(
+        #     'Hydrophones',
+        #     AcousticServoState(tdoa_tol=1.4e-6),
+        #     connector_outcomes=['succeeded'])
         smach.StateMachine.add(
             'Sleep',
             smach_ros.ConditionState(

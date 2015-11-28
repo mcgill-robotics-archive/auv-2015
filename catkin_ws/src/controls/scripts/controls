@@ -139,7 +139,7 @@ def rosInit():
     rospy.init_node('controls')
 
     mission_sub = rospy.Subscriber('mission', Bool, mission_cb)
-    hydro_sub = rospy.Subscriber('hydrophones', TDOAs, hydro_cb)
+    # hydro_sub = rospy.Subscriber('hydrophones', TDOAs, hydro_cb)
     listener = tf.TransformListener()
     vel_server = SimpleActionServer(
         'controls_velocity',
@@ -155,13 +155,13 @@ def rosInit():
     pos_server.register_goal_callback(set_position_callback)
     pos_server.register_preempt_callback(set_position_preempt)
     pos_server.start()
-    hydro_server = SimpleActionServer(
-        'controls_hydro',
-        AcousticServoAction,
-        auto_start=False)
-    hydro_server.register_goal_callback(acoustic_servo_callback)
-    hydro_server.register_preempt_callback(acoustic_servo_preempt)
-    hydro_server.start()
+    # hydro_server = SimpleActionServer(
+    #     'controls_hydro',
+    #     AcousticServoAction,
+    #     auto_start=False)
+    # hydro_server.register_goal_callback(acoustic_servo_callback)
+    # hydro_server.register_preempt_callback(acoustic_servo_preempt)
+    # hydro_server.start()
     wrenchPublisher = rospy.Publisher(
         'controls/wrench',
         Wrench,
@@ -183,8 +183,7 @@ def loop(event):
 
     if not mission:
         return
-    if not (pos_server.is_active() or vel_server.is_active()
-            or hydro_server.is_active()):
+    if not (pos_server.is_active() or vel_server.is_active()):
         return
 
     try:
@@ -211,13 +210,13 @@ def loop(event):
                       + pos_proportional_error * pos_proportional_gains
                       + pos_derivative_error * pos_derivative_gains)
             angles_estimated[2] = yaw_err
-        elif hydro_server.is_active():
-            tdoas_prev = tdoas
-            tdoas_integral += tdoas * dt
-            tdoas_derivative = (tdoas - tdoas_prev)/dt
-            fx, fy = (tdoas_integral * hydro_integral_gains
-                      + tdoas * hydro_proportional_gains
-                      + tdoas_derivative * tdoas_derivative)
+        # elif hydro_server.is_active():
+        #     tdoas_prev = tdoas
+        #     tdoas_integral += tdoas * dt
+        #     tdoas_derivative = (tdoas - tdoas_prev)/dt
+        #     fx, fy = (tdoas_integral * hydro_integral_gains
+        #               + tdoas * hydro_proportional_gains
+        #               + tdoas_derivative * tdoas_derivative)
 
         proportional_error_prev = proportional_error.copy()
         proportional_error[0:3] = angles_desired - angles_estimated
@@ -243,13 +242,13 @@ def loop(event):
             feedback.x_error = pos_proportional_error[0]
             feedback.y_error = pos_proportional_error[1]
             pos_server.publish_feedback(feedback)
-        elif hydro_server.is_active():
-            feedback = AcousticServoFeedback()
-            feedback.yaw_error = proportional_error[2]
-            feedback.depth_error = proportional_error[3]
-            feedback.x_error = pos_proportional_error[0]
-            feedback.y_error = pos_proportional_error[1]
-            pos_server.publish_feedback(feedback)
+        # elif hydro_server.is_active():
+        #     feedback = AcousticServoFeedback()
+        #     feedback.yaw_error = proportional_error[2]
+        #     feedback.depth_error = proportional_error[3]
+        #     feedback.x_error = pos_proportional_error[0]
+        #     feedback.y_error = pos_proportional_error[1]
+        #     pos_server.publish_feedback(feedback)
 
         output = (integral_error * integral_gains
                   + proportional_error * proportional_gains
@@ -301,15 +300,15 @@ if __name__ == '__main__':
     pos_derivative_gains = np.array([
         rospy.get_param('~kd_xPos'),
         rospy.get_param('~kd_yPos')])
-    hydro_integral_gains = np.array([
-        rospy.get_param('~ki_xHydro'),
-        rospy.get_param('~ki_yHydro')])
-    hydro_proportional_gains = np.array([
-        rospy.get_param('~kp_xHydro'),
-        rospy.get_param('~kp_yHydro')])
-    hydro_derivative_gains = np.array([
-        rospy.get_param('~kd_xHydro'),
-        rospy.get_param('~kd_yHydro')])
+    # hydro_integral_gains = np.array([
+    #     rospy.get_param('~ki_xHydro'),
+    #     rospy.get_param('~ki_yHydro')])
+    # hydro_proportional_gains = np.array([
+    #     rospy.get_param('~kp_xHydro'),
+    #     rospy.get_param('~kp_yHydro')])
+    # hydro_derivative_gains = np.array([
+    #     rospy.get_param('~kd_xHydro'),
+    #     rospy.get_param('~kd_yHydro')])
 
     surge_coeff = rospy.get_param("~surge_coeff")
     sway_coeff = rospy.get_param("~sway_coeff")
